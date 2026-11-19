@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Compare Sail vs upstream Istio test versions for optional istioctl CI (see test-istio-version.yml).
+# Compare Sail vs upstream Istio test versions for the istioctl cron in
+# test-istio-version.yml (schedule "0 8 * * *").
 
 set -euo pipefail
 
@@ -9,8 +10,9 @@ set -euo pipefail
 #
 # Compares the newest testable Istio minor from Sail Operator releases with
 # upstream istio/istio (offset 0). When upstream's minor is greater than Sail's
-# (patch level is ignored), prints the upstream Istio version to stdout for an
-# extra CI run using istioctl. Exit 0 when applicable, exit 1 when skipped.
+# (patch level is ignored), prints the upstream Istio version to stdout so the
+# Test Istio Version 08:00 UTC cron can run with sail=false / istioctl.
+# Exit 0 when applicable, exit 1 when skipped.
 ##############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

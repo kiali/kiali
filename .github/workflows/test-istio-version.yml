@@ -4,9 +4,10 @@ on:
   schedule:
   # These are in UTC time.
   # If you change any of these, you must also change the case statement in the determine-* tasks below.
-  - cron: "0 2 * * *"
-  - cron: "0 4 * * *"
-  - cron: "0 6 * * *"
+  - cron: "0 2 * * *" # Sail, previous minor (offset 1)
+  - cron: "0 4 * * *" # Sail, two minors back (offset 2)
+  - cron: "0 6 * * *" # Sail, latest minor (offset 0) + Sail operator from main
+  - cron: "0 8 * * *" # istioctl, latest upstream Istio only when its minor is ahead of Sail (not for manual dispatch)
   workflow_dispatch:
     inputs:
       istio_version:
@@ -25,7 +26,7 @@ on:
         default: "master"
         type: string
       sail:
-        description: "sail: Install Istio with Sail (true) or istioctl (false). Use false for Istio RCs."
+        description: "sail: Install Istio with Sail (true) or istioctl (false). Use false for Istio RCs. Scheduled istioctl runs use the 0 8 * * * cron (only when upstream Istio minor is ahead of Sail)."
         required: true
         default: "true"
         type: choice
@@ -49,6 +50,7 @@ jobs:
     outputs:
       build-branch: ${{ inputs.branch_to_test }}
       istio-version: ${{ steps.determine-istio-version-to-use.outputs.istio-version }}
+      run-tests: ${{ steps.determine-run-tests.outputs.run-tests }}
       sail: ${{ steps.determine-sail-to-use.outputs.sail }}
       sail-operator-git-ref: ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}
       target-branch: ${{ inputs.branch_to_test }}
@@ -60,9 +62,13 @@ jobs:
     - name: Determine Sail / istioctl install mode
       id: determine-sail-to-use
       run: |
-        # Scheduled runs always use Sail. Manual runs honor the sail input (default true).
+        # Sail schedules use Sail. The 08:00 UTC cron uses istioctl (ahead-of-Sail only).
+        # Manual runs honor the sail input (default true); use sail=false for RCs.
         if [ "${{ github.event_name }}" == "schedule" ]; then
-          SAIL="true"
+          case "${{ github.event.schedule }}" in
+            "0 8 * * *") SAIL="false" ;;
+            *) SAIL="true" ;;
+          esac
         elif [ -n "${{ github.event.inputs.sail }}" ]; then
           SAIL="${{ github.event.inputs.sail }}"
         else
@@ -87,10 +93,36 @@ jobs:
           esac
         fi
         echo "sail-operator-git-ref=${SAIL_OPERATOR_GIT_REF}" | tee -a "$GITHUB_OUTPUT"
+    - name: Determine whether to run tests
+      id: determine-run-tests
+      run: |
+        # istioctl cron only proceeds when upstream Istio minor is ahead of Sail.
+        # Manual sail=false always runs (for RCs / explicit versions).
+        if [ "${{ github.event.schedule }}" == "0 8 * * *" ]; then
+          set +e
+          ISTIO_AHEAD="$(bash ./hack/istio/should-run-istioctl-ahead-of-sail.sh)"
+          compare_status=$?
+          set -e
+          if [ "${compare_status}" -eq 0 ]; then
+            echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-ahead=${ISTIO_AHEAD}" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "Upstream Istio is not ahead of Sail; skipping istioctl cron run."
+            echo "run-tests=false" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-ahead=" | tee -a "$GITHUB_OUTPUT"
+          fi
+        else
+          echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
+          echo "istio-version-ahead=" | tee -a "$GITHUB_OUTPUT"
+        fi
     - name: Determine Istio Version to use
       id: determine-istio-version-to-use
+      if: steps.determine-run-tests.outputs.run-tests == 'true'
       run: |
-        if [ -z "${{ github.event.inputs.istio_version }}" ]; then
+        if [ -n "${{ steps.determine-run-tests.outputs.istio-version-ahead }}" ]; then
+          ISTIO_VERSION="${{ steps.determine-run-tests.outputs.istio-version-ahead }}"
+          echo "Using upstream Istio version ahead of Sail: ${ISTIO_VERSION}"
+        elif [ -z "${{ github.event.inputs.istio_version }}" ]; then
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
             OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
             # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
@@ -118,13 +150,16 @@ jobs:
         echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
     - run: echo "target-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "build-branch -> ${{ inputs.branch_to_test }}"
+    - run: echo "run-tests -> ${{ steps.determine-run-tests.outputs.run-tests }}"
     - run: echo "sail -> ${{ steps.determine-sail-to-use.outputs.sail }}"
     - run: echo "sail-operator-git-ref -> ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}"
+    - run: echo "istio-version -> ${{ steps.determine-istio-version-to-use.outputs.istio-version }}"
 
   test_backend:
     name: Run backend linters and unit tests
     uses: ./.github/workflows/test-lint-backend.yml
     needs: [initialize]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -132,6 +167,7 @@ jobs:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -140,6 +176,7 @@ jobs:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize, test_backend, build_frontend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -147,6 +184,7 @@ jobs:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -158,6 +196,7 @@ jobs:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -169,6 +208,7 @@ jobs:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -180,6 +220,7 @@ jobs:
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -191,6 +232,7 @@ jobs:
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -202,7 +244,9 @@ jobs:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
     needs: [initialize, build_backend]
-    if: ${{ needs.initialize.outputs.istio-version >= '1.23' }}
+    if: >-
+      needs.initialize.outputs.run-tests == 'true' &&
+      needs.initialize.outputs.istio-version >= '1.23'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -214,6 +258,7 @@ jobs:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -225,6 +270,7 @@ jobs:
     name: Run backend MCP integration tests
     uses: ./.github/workflows/integration-tests-backend-mcp.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -235,6 +281,7 @@ jobs:
     name: Run frontend Ambient Multi-Primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -245,6 +292,7 @@ jobs:
     name: Run frontend AI integration tests
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -255,6 +303,7 @@ jobs:
     name: Run frontend local and offline mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -265,6 +314,7 @@ jobs:
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -275,24 +325,17 @@ jobs:
     name: Run frontend multi mesh integration tests
     uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
       sail: ${{ needs.initialize.outputs.sail }}
 
-  integration_tests_upstream_minor:
-    name: Run integration tests (istioctl, upstream minor ahead of Sail)
-    uses: ./.github/workflows/integration-tests-upstream-minor.yml
-    needs: [initialize, build_backend]
-    if: github.event.schedule == '0 6 * * *'
-    with:
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-
   codecov_merge_upload:
     if: |
       always() &&
+      needs.initialize.outputs.run-tests == 'true' &&
       (github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch') &&
       needs.integration_tests_backend.result == 'success' &&
       needs.test_backend.result == 'success'
