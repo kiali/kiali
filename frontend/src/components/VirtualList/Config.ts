@@ -1,18 +1,21 @@
 import * as React from 'react';
 import deepFreeze from 'deep-freeze';
 import { PopoverPosition } from '@patternfly/react-core';
-import { Th } from '@patternfly/react-table';
-import { AppListItem } from '../../types/AppList';
-import { AppWorkload } from 'types/App';
-import { WorkloadListItem, Workload } from '../../types/Workload';
-import { ServiceListItem } from '../../types/ServiceList';
-import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
+import type { Th } from '@patternfly/react-table';
+import type { AppListItem } from '../../types/AppList';
+import type { AppWorkload } from 'types/App';
+import type { WorkloadListItem, Workload } from '../../types/Workload';
+import type { ServiceListItem } from '../../types/ServiceList';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
-import { Health } from '../../types/Health';
+import { LabelsPopoverBody } from './LabelsHeader';
+import type { Health } from '../../types/Health';
 import { isIstioNamespace, serverConfig } from 'config/ServerConfig';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { StatefulFiltersRef } from '../Filters/StatefulFilters';
-import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
+import type { PFBadgeType } from '../../components/Pf/PfBadges';
+import { PFBadges } from '../../components/Pf/PfBadges';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { TypePopoverBody, TypePopoverHeader } from '../../pages/Namespaces/TypeHeader';
 import { HealthPopoverBody, HealthPopoverHeader } from '../../pages/Namespaces/HealthHeader';
@@ -129,6 +132,12 @@ const namespace: ResourceType<TResource> = {
 
 const labels: ResourceType<RenderResource> = {
   id: 'labels',
+  info: {
+    popover: React.createElement(LabelsPopoverBody),
+    popoverProps: {
+      position: PopoverPosition.top
+    }
+  },
   name: 'Labels',
   param: 'lb',
   title: 'Labels',

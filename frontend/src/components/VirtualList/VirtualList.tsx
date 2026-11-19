@@ -4,7 +4,7 @@ import { Caption, Table, TableGridBreakpoint, Tbody, Td, Th, Thead, Tr } from '@
 import { HistoryManager, URLParam } from '../../app/History';
 import type { RenderResource, Resource, ResourceType } from './Config';
 import { config } from './Config';
-import { VirtualItem } from './VirtualItem';
+import { getVirtualItemKey, VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, PlusCircleIcon, SearchIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from '../../store/Store';
@@ -18,6 +18,7 @@ import { sortFields } from '../../pages/Namespaces/Sorts';
 import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
 import type { SortableTh } from 'components/Table/SimpleTable';
 import { StickyTableScrollContainer } from 'components/Table/StickyTableScrollContainer';
 import { classes } from 'typestyle';
@@ -46,6 +47,21 @@ const innerScrollContainerStyle = kialiStyle({
   $nest: {
     '& td, & th': {
       whiteSpace: 'nowrap'
+    }
+  }
+});
+
+const columnHelpStyle = kialiStyle({
+  gridTemplateColumns: 'max-content max-content',
+  $nest: {
+    '& .pf-v6-c-table__text': {
+      width: 'auto'
+    },
+    '& .pf-v6-c-table__button': {
+      paddingInlineEnd: 0
+    },
+    '& .pf-v6-c-table__sort-indicator': {
+      marginInlineStart: PFSpacer.xs
     }
   }
 });
@@ -186,7 +202,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const rowItems: IRow[] = rows.map((row, index) => {
       return (
         <VirtualItem
-          key={`vItem_${index}`}
+          key={getVirtualItemKey(row)}
           item={row}
           index={index}
           columns={this.state.columns}
@@ -214,7 +230,11 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                 <Th
                   key={`column_${index}`}
                   dataLabel={title}
-                  info={column.info}
+                  info={
+                    column.info
+                      ? { ...column.info, className: classes(column.info.className, columnHelpStyle) }
+                      : undefined
+                  }
                   sort={this.getSortParams(column, index, sortBy, this.onSort)}
                   width={column.width}
                   textCenter={column.textCenter}

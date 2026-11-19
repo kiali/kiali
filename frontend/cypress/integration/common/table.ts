@@ -38,6 +38,11 @@ Then(
   }
 );
 
+When('user expands labels on the {string} row', (rowText: string) => {
+  getColWithRowText(rowText, 'Labels').find('[data-test="toggle-labels"][aria-expanded="false"]').click();
+  getColWithRowText(rowText, 'Labels').find('[data-test="toggle-labels"]').should('have.attr', 'aria-expanded', 'true');
+});
+
 Then(
   'the {string} column on the {string} row has the text {string}',
   (column: string, rowText: string, text: string) => {

@@ -410,7 +410,6 @@
   "edges with http rate > 0.5 rps": "HTTP レートが 0.5 rps を超えるエッジ",
   "edges with no traffic": "トラフィックのないエッジ",
   "edges with response time > 500ms. (requires response time edge labels)": "応答時間が 500ms を超えるエッジ（応答時間のエッジラベルが必要）",
-  "Edit": "編集",
   "Edit and test configuration changes without having to modify the CR.": "CR を変更せずに設定変更を編集してテストします。",
   "Edit annotations": "アノテーションを編集",
   "Edit labels": "ラベルを編集",

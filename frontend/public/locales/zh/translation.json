@@ -413,7 +413,6 @@
   "edges with http rate > 0.5 rps": "http 速率 > 0.5 rps 的边",
   "edges with no traffic": "无流量的边",
   "edges with response time > 500ms. (requires response time edge labels)": "响应时间 > 500ms 的边。（需要边上的响应时间标签）",
-  "Edit": "编辑",
   "Edit and test configuration changes without having to modify the CR.": "无需修改CR即可编辑和测试配置更改。",
   "Edit annotations": "编辑注释",
   "Edit labels": "编辑标签",
