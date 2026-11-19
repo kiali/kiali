@@ -666,9 +666,9 @@ func envoyMemoryStatusTrafficSignals(
 	activeClustersMax = int64(clusters)
 
 	envoyRequestRate := envoyRequestRateFromMetricsAtTime(upstreamRqTotal, upstreamRq, downstreamRq, readAt)
-	httpRequestRate := istioHTTPRequestRateAtTime(istioHTTPSource, istioHTTPDest, readAt)
+	httpRequestRate := istioHTTPRequestRateAtTime(proxyType, istioHTTPSource, istioHTTPDest, readAt)
 	httpRequestRate = maxRequestRate(envoyRequestRate, httpRequestRate)
-	tcpByteRate := istioTCPByteRateAtTime(tcpSentSource, tcpSentDest, tcpRecvSource, tcpRecvDest, readAt)
+	tcpByteRate := istioTCPByteRateAtTime(proxyType, tcpSentSource, tcpSentDest, tcpRecvSource, tcpRecvDest, readAt)
 	trafficIsByteRate = proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0)
 	requestRate = httpRequestRate
 	if trafficIsByteRate {
@@ -784,13 +784,24 @@ func sumEnvoyRequestRateAtTime(upstream, downstream prometheus.Metric, at model.
 	return sumAtTime(upstream, at) + sumAtTime(downstream, at)
 }
 
-func istioHTTPRequestRateAtTime(source, dest prometheus.Metric, at model.Time) float64 {
-	return maxRequestRate(sumAtTime(source, at), sumAtTime(dest, at))
+// combineIstioReporterRates merges source and destination reporter rates.
+// Waypoints forward the same request under both reporters, so max avoids
+// double-counting. Sidecars and gateways see disjoint inbound/outbound sets,
+// so sum is the proxy's total throughput.
+func combineIstioReporterRates(proxyType models.EnvoyProxyType, source, dest float64) float64 {
+	if proxyType == models.EnvoyProxyTypeWaypoint {
+		return maxRequestRate(source, dest)
+	}
+	return source + dest
 }
 
-func istioTCPByteRateAtTime(sentSource, sentDest, recvSource, recvDest prometheus.Metric, at model.Time) float64 {
-	sent := maxRequestRate(sumAtTime(sentSource, at), sumAtTime(sentDest, at))
-	received := maxRequestRate(sumAtTime(recvSource, at), sumAtTime(recvDest, at))
+func istioHTTPRequestRateAtTime(proxyType models.EnvoyProxyType, source, dest prometheus.Metric, at model.Time) float64 {
+	return combineIstioReporterRates(proxyType, sumAtTime(source, at), sumAtTime(dest, at))
+}
+
+func istioTCPByteRateAtTime(proxyType models.EnvoyProxyType, sentSource, sentDest, recvSource, recvDest prometheus.Metric, at model.Time) float64 {
+	sent := combineIstioReporterRates(proxyType, sumAtTime(sentSource, at), sumAtTime(sentDest, at))
+	received := combineIstioReporterRates(proxyType, sumAtTime(recvSource, at), sumAtTime(recvDest, at))
 	return sent + received
 }
 

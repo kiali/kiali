@@ -447,19 +447,49 @@ func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {
 	assert.Equal(t, 1.25, maxRequestRate(envoyOnly, sumAtTime(istio, 0)))
 }
 
-func TestIstioHTTPRequestRateAtTimeUsesMaxOfReporters(t *testing.T) {
+func TestIstioHTTPRequestRateAtTimeCombinesReportersByProxyType(t *testing.T) {
 	source := prometheus.Metric{
 		Matrix: model.Matrix{
-			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(0.27)}}},
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(95)}}},
 		},
 	}
 	dest := prometheus.Metric{
 		Matrix: model.Matrix{
-			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(200)}}},
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(95)}}},
 		},
 	}
 
-	assert.Equal(t, 200.0, istioHTTPRequestRateAtTime(source, dest, 0))
+	// Sidecar/gateway inbound and outbound are disjoint — sum is total throughput.
+	assert.Equal(t, 190.0, istioHTTPRequestRateAtTime(models.EnvoyProxyTypeSidecar, source, dest, 0))
+	assert.Equal(t, 190.0, istioHTTPRequestRateAtTime(models.EnvoyProxyTypeGateway, source, dest, 0))
+	// Waypoints report the same forwarded request under both reporters — max avoids double-counting.
+	assert.Equal(t, 95.0, istioHTTPRequestRateAtTime(models.EnvoyProxyTypeWaypoint, source, dest, 0))
+}
+
+func TestIstioTCPByteRateAtTimeCombinesReportersByProxyType(t *testing.T) {
+	sentSource := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(100)}}},
+		},
+	}
+	sentDest := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(80)}}},
+		},
+	}
+	recvSource := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(50)}}},
+		},
+	}
+	recvDest := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(40)}}},
+		},
+	}
+
+	assert.Equal(t, 270.0, istioTCPByteRateAtTime(models.EnvoyProxyTypeSidecar, sentSource, sentDest, recvSource, recvDest, 0))
+	assert.Equal(t, 150.0, istioTCPByteRateAtTime(models.EnvoyProxyTypeWaypoint, sentSource, sentDest, recvSource, recvDest, 0))
 }
 
 func TestFetchEnvoyDownstreamRequestRateUsesTotalSuffixFallback(t *testing.T) {

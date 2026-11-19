@@ -330,7 +330,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey, busy?: Envo
       );
     case 'requestRate':
       return t(
-        'Traffic rate from Istio telemetry at the latest step in the selected range. HTTP: the higher of istio_requests_total rate as source/waypoint (outbound) and as destination (inbound), queried separately. L4 proxies (waypoints, or gateways with only TCP traffic): sum of TCP sent and received byte rates (per direction, the higher of source and destination labels).'
+        'Traffic rate from Istio telemetry at the memory-peak timestamp in the selected range. HTTP: istio_requests_total rate as source/waypoint (outbound) and as destination (inbound), queried separately — summed for sidecars/gateways, higher of the two for waypoints (same request reported twice). L4 proxies (waypoints, or gateways with only TCP traffic): sum of TCP sent and received byte rates (per direction, same source/destination combine policy).'
       );
     default:
       return '';
