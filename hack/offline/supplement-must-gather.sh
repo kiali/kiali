@@ -112,9 +112,7 @@ supplement_must_gather_pod_runtime_data() {
   local ns_dir="${2}"
   local pod pod_dir cname containers_json
 
-  if [ ! -d "${ns_dir}/pods" ]; then
-    return 0
-  fi
+  mkdir -p "${ns_dir}/pods"
 
   while IFS= read -r pod; do
     [ -z "${pod}" ] && continue
@@ -162,8 +160,12 @@ supplement_must_gather_namespace() {
   namespaces_dir="$(resolve_must_gather_namespaces_dir "${must_gather_dir}")"
   ns_dir="${namespaces_dir}/${ns}"
 
+  # Sail/OSSM must-gather often already has Deployments/Services, but may omit
+  # config_dump_proxy.json (needed by offline Envoy tabs). Always refresh pod
+  # runtime data; only skip the heavier per-resource YAML dump when usable.
   if [ "${force}" != "true" ] && must_gather_namespace_usable_for_offline "${ns_dir}"; then
-    infomsg "must-gather already includes workloads and services for namespace ${ns}"
+    infomsg "must-gather already includes workloads and services for namespace ${ns}; refreshing pod logs and Envoy config dumps"
+    supplement_must_gather_pod_runtime_data "${ns}" "${ns_dir}"
     return 0
   fi
 
