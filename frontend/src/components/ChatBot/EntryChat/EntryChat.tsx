@@ -1,3 +1,4 @@
+// Assisted-by: Claude Code
 import { Message, type SourcesCardProps } from '@patternfly/chatbot';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -30,18 +31,6 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
   }
 
   if (entry.who === 'ai') {
-    const actions = entry.error
-      ? undefined
-      : {
-          copy: {
-            onClick: async () => {
-              const success = await writeMarkdownRichToClipboard(entry.text ?? '');
-              if (!success) {
-                addWarning(t('Unable to copy to clipboard.'));
-              }
-            }
-          }
-        };
     let sources: SourcesCardProps | undefined;
     if (Array.isArray(entry.references) && entry.references.length > 0) {
       const references: ReferencedDoc[] = entry.references.filter(
@@ -61,6 +50,27 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
 
     // Markdown safe content
     const safeContent = typeof entry.text === 'string' ? entry.text : entry.text ? String(entry.text) : '';
+    // Copy is offered only when there is text to copy.
+    const actions =
+      entry.error || !safeContent.trim()
+        ? undefined
+        : {
+            copy: {
+              onClick: async () => {
+                const success = await writeMarkdownRichToClipboard(safeContent);
+                if (!success) {
+                  addWarning(t('Unable to copy to clipboard.'));
+                }
+              }
+            }
+          };
+    const isEmptyAnswer =
+      !safeContent.trim() &&
+      !hasActions &&
+      !entry.isStreaming &&
+      !entry.error &&
+      !entry.isCancelled &&
+      !entry.isTruncated;
     const markdownContent = safeContent ? (
       <ChatMessageMarkdown
         content={safeContent}
@@ -106,6 +116,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
               )}
               {entry.isCancelled && <Alert isInline isPlain title={t('Cancelled')} variant="info" />}
               {truncatedAlert}
+              {isEmptyAnswer && <Alert isInline isPlain title={t('No answer was returned.')} variant="info" />}
               {entry.tools && <ResponseTools entryIndex={entryIndex} />}
               {hasActions && <Actions entryIndex={entryIndex} />}
             </>
