@@ -4,10 +4,9 @@ on:
   schedule:
   # These are in UTC time.
   # If you change any of these, you must also change the case statement in the determine-* tasks below.
-  - cron: "0 2 * * *" # Sail, previous minor (offset 1)
-  - cron: "0 4 * * *" # Sail, two minors back (offset 2)
-  - cron: "0 6 * * *" # Sail, latest minor (offset 0) + Sail operator from main
-  - cron: "0 8 * * *" # istioctl, latest upstream Istio only when its minor is ahead of Sail (not for manual dispatch)
+  - cron: "0 2 * * *" # Sail, N-1 (offset 1) — always Sail
+  - cron: "0 4 * * *" # Sail, N-2 (offset 2) — always Sail
+  - cron: "0 8 * * *" # istioctl, N only when upstream Istio tip is an RC
   workflow_dispatch:
     inputs:
       istio_version:
@@ -16,7 +15,7 @@ on:
         default: ""
         type: string
       istio_minor_version_offset:
-        description: "istio_minor_version_offset: If istio_version is not set, by default the latest Istio minor version is tested. To test the previous minor version, set this offset to 1 (i.e. 1 minor version prior to the latest minor version). Set it to 2 for two minor versions previous to the latest. This setting is ignored if istio_version is set."
+        description: "istio_minor_version_offset: If istio_version is not set, by default the latest Istio GA minor (N) is tested. Set to 1 for N-1, 2 for N-2. Ignored if istio_version is set. N-1/N-2 always use Sail; N uses Sail or istioctl based on availability (RCs require sail=false)."
         required: false
         default: 0
         type: number
@@ -26,7 +25,7 @@ on:
         default: "master"
         type: string
       sail:
-        description: "sail: Install Istio with Sail (true) or istioctl (false). Use false for Istio RCs. Scheduled istioctl runs use the 0 8 * * * cron (only when upstream Istio minor is ahead of Sail)."
+        description: "sail: Install Istio with Sail (true) or istioctl (false). Scheduled N-1/N-2 always use Sail. Scheduled N (RC) always uses istioctl. Manual runs honor this input."
         required: true
         default: "true"
         type: choice
@@ -51,7 +50,8 @@ jobs:
       build-branch: ${{ inputs.branch_to_test }}
       istio-version: ${{ steps.determine-istio-version-to-use.outputs.istio-version }}
       run-tests: ${{ steps.determine-run-tests.outputs.run-tests }}
-      sail: ${{ steps.determine-sail-to-use.outputs.sail }}
+      # Prefer sail decided with the version resolver (patch-aware); fall back to schedule/input.
+      sail: ${{ steps.determine-istio-version-to-use.outputs.sail || steps.determine-sail-to-use.outputs.sail }}
       sail-operator-git-ref: ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}
       target-branch: ${{ inputs.branch_to_test }}
     steps:
@@ -62,7 +62,7 @@ jobs:
     - name: Determine Sail / istioctl install mode
       id: determine-sail-to-use
       run: |
-        # Sail schedules use Sail. The 08:00 UTC cron uses istioctl (ahead-of-Sail only).
+        # N-1 / N-2 schedules always use Sail. The RC cron always uses istioctl.
         # Manual runs honor the sail input (default true); use sail=false for RCs.
         if [ "${{ github.event_name }}" == "schedule" ]; then
           case "${{ github.event.schedule }}" in
@@ -87,67 +87,75 @@ jobs:
         elif [ -n "${{ github.event.inputs.sail_operator_git_ref }}" ]; then
           SAIL_OPERATOR_GIT_REF="${{ github.event.inputs.sail_operator_git_ref }}"
         else
-          case "${{ github.event.schedule }}" in
-            "0 6 * * *") SAIL_OPERATOR_GIT_REF="main" ;;
-            *) SAIL_OPERATOR_GIT_REF="" ;;
-          esac
+          SAIL_OPERATOR_GIT_REF=""
         fi
         echo "sail-operator-git-ref=${SAIL_OPERATOR_GIT_REF}" | tee -a "$GITHUB_OUTPUT"
     - name: Determine whether to run tests
       id: determine-run-tests
       run: |
-        # istioctl cron only proceeds when upstream Istio minor is ahead of Sail.
+        # RC cron only proceeds when upstream Istio tip is an RC.
         # Manual sail=false always runs (for RCs / explicit versions).
         if [ "${{ github.event.schedule }}" == "0 8 * * *" ]; then
           set +e
-          ISTIO_AHEAD="$(bash ./hack/istio/should-run-istioctl-ahead-of-sail.sh)"
+          ISTIO_RC="$(bash ./hack/istio/should-run-istioctl-ahead-of-sail.sh --retries 5 --retry-interval-seconds 5)"
           compare_status=$?
           set -e
           if [ "${compare_status}" -eq 0 ]; then
             echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
-            echo "istio-version-ahead=${ISTIO_AHEAD}" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-rc=${ISTIO_RC}" | tee -a "$GITHUB_OUTPUT"
           else
-            echo "Upstream Istio is not ahead of Sail; skipping istioctl cron run."
+            echo "Upstream Istio tip is not an RC; skipping conditional N run."
             echo "run-tests=false" | tee -a "$GITHUB_OUTPUT"
-            echo "istio-version-ahead=" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-rc=" | tee -a "$GITHUB_OUTPUT"
           fi
         else
           echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
-          echo "istio-version-ahead=" | tee -a "$GITHUB_OUTPUT"
+          echo "istio-version-rc=" | tee -a "$GITHUB_OUTPUT"
         fi
     - name: Determine Istio Version to use
       id: determine-istio-version-to-use
       if: steps.determine-run-tests.outputs.run-tests == 'true'
       run: |
-        if [ -n "${{ steps.determine-run-tests.outputs.istio-version-ahead }}" ]; then
-          ISTIO_VERSION="${{ steps.determine-run-tests.outputs.istio-version-ahead }}"
-          echo "Using upstream Istio version ahead of Sail: ${ISTIO_VERSION}"
-        elif [ -z "${{ github.event.inputs.istio_version }}" ]; then
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
-            OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
-            # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
-            OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
-          else
-            case "${{ github.event.schedule }}" in
-              "0 6 * * *") OFFSET=0 ;;
-              "0 2 * * *") OFFSET=1 ;;
-              "0 4 * * *") OFFSET=2 ;;
-              *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
-            esac
-          fi
-          # Sail only publishes stable X.Y.Z; istioctl can resolve Istio releases including RCs.
-          if [ "${{ steps.determine-sail-to-use.outputs.sail }}" == "false" ]; then
-            VERSION_SOURCE="istio"
-          else
-            VERSION_SOURCE="sail"
-          fi
-          ISTIO_VERSION="$(bash ./hack/istio/determine-test-istio-version.sh --source "${VERSION_SOURCE}" --offset "${OFFSET}")"
-          echo "Resolved Istio version from source '${VERSION_SOURCE}' with offset [${OFFSET}]: ${ISTIO_VERSION}"
-        else
+        if [ -n "${{ steps.determine-run-tests.outputs.istio-version-rc }}" ]; then
+          ISTIO_VERSION="${{ steps.determine-run-tests.outputs.istio-version-rc }}"
+          echo "Using upstream Istio RC for conditional N test: ${ISTIO_VERSION}"
+          echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+          echo "sail=false" | tee -a "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if [ -n "${{ github.event.inputs.istio_version }}" ]; then
           ISTIO_VERSION="${{ github.event.inputs.istio_version }}"
           ISTIO_VERSION="${ISTIO_VERSION#v}"
+          echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+          echo "sail=${{ steps.determine-sail-to-use.outputs.sail }}" | tee -a "$GITHUB_OUTPUT"
+          exit 0
         fi
-        echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
+          OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
+          # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
+          OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
+        else
+          case "${{ github.event.schedule }}" in
+            "0 2 * * *") OFFSET=1 ;;
+            "0 4 * * *") OFFSET=2 ;;
+            *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
+          esac
+        fi
+
+        # N-1 / N-2 always use Sail. Offset 0 (N) never selects RCs here: GA reference only,
+        # Sail if available and not behind (patch included), otherwise istioctl.
+        EXTRA_ARGS=()
+        if [ "${OFFSET}" -gt 0 ]; then
+          EXTRA_ARGS+=(--force-sail)
+        elif [ "${{ steps.determine-sail-to-use.outputs.sail }}" == "false" ]; then
+          EXTRA_ARGS+=(--force-istioctl)
+        fi
+
+        ISTIO_VERSION="$(bash ./hack/istio/determine-test-istio-version.sh --offset "${OFFSET}" --retries 5 --retry-interval-seconds 5 "${EXTRA_ARGS[@]}")"
+        # Script already wrote istio-version/sail/install-method to GITHUB_OUTPUT.
+        echo "Resolved version with offset [${OFFSET}]: ${ISTIO_VERSION}"
     - run: echo "target-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "build-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "run-tests -> ${{ steps.determine-run-tests.outputs.run-tests }}"
@@ -336,7 +344,7 @@ jobs:
     if: |
       always() &&
       needs.initialize.outputs.run-tests == 'true' &&
-      (github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch') &&
+      (github.event.schedule == '0 2 * * *' || github.event_name == 'workflow_dispatch') &&
       needs.integration_tests_backend.result == 'success' &&
       needs.test_backend.result == 'success'
     name: Merge and Upload Coverage to Codecov
