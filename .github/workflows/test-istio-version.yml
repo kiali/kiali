@@ -4,18 +4,18 @@ on:
   schedule:
   # These are in UTC time.
   # If you change any of these, you must also change the case statement in the determine-* tasks below.
-  - cron: "0 2 * * *"
-  - cron: "0 4 * * *"
-  - cron: "0 6 * * *"
+  - cron: "0 2 * * *" # Sail, N-1 (offset 1) — always Sail
+  - cron: "0 4 * * *" # Sail, N-2 (offset 2) — always Sail
+  - cron: "0 6 * * *" # istioctl, N only when upstream Istio tip is an RC
   workflow_dispatch:
     inputs:
       istio_version:
-        description: "istio_version: The version of Istio to test with. Format is either #.#.# or #.#-dev. If specified, this overrides istio_minor_version_offset."
+        description: "istio_version: Istio version to test (#.#.#, #.#.#-rc.#, or #.#-dev). Overrides istio_minor_version_offset. Use with sail=false for RCs (Sail does not publish RCs)."
         required: false
         default: ""
         type: string
       istio_minor_version_offset:
-        description: "istio_minor_version_offset: If istio_version is not set, by default the latest Istio minor version is tested. To test the previous minor version, set this offset to 1 (i.e. 1 minor version prior to the latest minor version). Set it to 2 for two minor versions previous to the latest. This setting is ignored if istio_version is set."
+        description: "istio_minor_version_offset: If istio_version is not set, by default the latest Istio GA minor (N) is tested. Set to 1 for N-1, 2 for N-2. Ignored if istio_version is set. N-1/N-2 always use Sail; N uses Sail or istioctl based on availability (RCs require sail=false)."
         required: false
         default: 0
         type: number
@@ -24,8 +24,16 @@ on:
         required: true
         default: "master"
         type: string
+      sail:
+        description: "sail: Install Istio with Sail (true) or istioctl (false). Scheduled N-1/N-2 always use Sail. Scheduled N (RC) always uses istioctl. Manual runs honor this input."
+        required: true
+        default: "true"
+        type: choice
+        options:
+        - "true"
+        - "false"
       sail_operator_git_ref:
-        description: "sail_operator_git_ref: Optional Sail operator git ref (for example 'main'). If set, it overrides schedule defaults."
+        description: "sail_operator_git_ref: Optional Sail operator git ref (for example 'main'). Ignored when sail=false. If set, it overrides schedule defaults."
         required: false
         default: ""
         type: string
@@ -39,58 +47,127 @@ jobs:
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
-      target-branch: ${{ inputs.branch_to_test }}
       build-branch: ${{ inputs.branch_to_test }}
       istio-version: ${{ steps.determine-istio-version-to-use.outputs.istio-version }}
+      run-tests: ${{ steps.determine-run-tests.outputs.run-tests }}
+      # Prefer sail decided with the version resolver (patch-aware); fall back to schedule/input.
+      sail: ${{ steps.determine-istio-version-to-use.outputs.sail || steps.determine-sail-to-use.outputs.sail }}
       sail-operator-git-ref: ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}
+      target-branch: ${{ inputs.branch_to_test }}
     steps:
     - name: Check out code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ inputs.branch_to_test || github.ref_name }}
+    - name: Determine Sail / istioctl install mode
+      id: determine-sail-to-use
+      run: |
+        # N-1 / N-2 schedules always use Sail. The RC cron always uses istioctl.
+        # Manual runs honor the sail input (default true); use sail=false for RCs.
+        if [ "${{ github.event_name }}" == "schedule" ]; then
+          case "${{ github.event.schedule }}" in
+            "0 6 * * *") SAIL="false" ;;
+            *) SAIL="true" ;;
+          esac
+        elif [ -n "${{ github.event.inputs.sail }}" ]; then
+          SAIL="${{ github.event.inputs.sail }}"
+        else
+          SAIL="true"
+        fi
+        if [ "${SAIL}" != "true" ] && [ "${SAIL}" != "false" ]; then
+          echo "sail must be 'true' or 'false', got: ${SAIL}" >&2
+          exit 1
+        fi
+        echo "sail=${SAIL}" | tee -a "$GITHUB_OUTPUT"
     - name: Determine Sail Operator git ref to use
       id: determine-sail-operator-git-ref-to-use
       run: |
-        if [ -n "${{ github.event.inputs.sail_operator_git_ref }}" ]; then
+        if [ "${{ steps.determine-sail-to-use.outputs.sail }}" == "false" ]; then
+          SAIL_OPERATOR_GIT_REF=""
+        elif [ -n "${{ github.event.inputs.sail_operator_git_ref }}" ]; then
           SAIL_OPERATOR_GIT_REF="${{ github.event.inputs.sail_operator_git_ref }}"
         else
-          case "${{ github.event.schedule }}" in
-            "0 6 * * *") SAIL_OPERATOR_GIT_REF="main" ;;
-            *) SAIL_OPERATOR_GIT_REF="" ;;
-          esac
+          SAIL_OPERATOR_GIT_REF=""
         fi
         echo "sail-operator-git-ref=${SAIL_OPERATOR_GIT_REF}" | tee -a "$GITHUB_OUTPUT"
+    - name: Determine whether to run tests
+      id: determine-run-tests
+      run: |
+        # RC cron only proceeds when upstream Istio tip is an RC.
+        # Manual sail=false always runs (for RCs / explicit versions).
+        if [ "${{ github.event.schedule }}" == "0 6 * * *" ]; then
+          set +e
+          ISTIO_RC="$(bash ./hack/istio/should-run-istioctl-ahead-of-sail.sh --retries 5 --retry-interval-seconds 5)"
+          compare_status=$?
+          set -e
+          if [ "${compare_status}" -eq 0 ]; then
+            echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-rc=${ISTIO_RC}" | tee -a "$GITHUB_OUTPUT"
+          else
+            echo "Upstream Istio tip is not an RC; skipping conditional N run."
+            echo "run-tests=false" | tee -a "$GITHUB_OUTPUT"
+            echo "istio-version-rc=" | tee -a "$GITHUB_OUTPUT"
+          fi
+        else
+          echo "run-tests=true" | tee -a "$GITHUB_OUTPUT"
+          echo "istio-version-rc=" | tee -a "$GITHUB_OUTPUT"
+        fi
     - name: Determine Istio Version to use
       id: determine-istio-version-to-use
+      if: steps.determine-run-tests.outputs.run-tests == 'true'
       run: |
-        if [ -z "${{ github.event.inputs.istio_version }}" ]; then
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
-            OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
-            # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
-            OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
-          else
-            case "${{ github.event.schedule }}" in
-              "0 6 * * *") OFFSET=0 ;;
-              "0 2 * * *") OFFSET=1 ;;
-              "0 4 * * *") OFFSET=2 ;;
-              *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
-            esac
-          fi
-          VERSION_SOURCE="sail"
-          ISTIO_VERSION="$(bash ./hack/istio/determine-test-istio-version.sh --source "${VERSION_SOURCE}" --offset "${OFFSET}")"
-          echo "Resolved Istio version from source '${VERSION_SOURCE}' with offset [${OFFSET}]: ${ISTIO_VERSION}"
-        else
-          ISTIO_VERSION="${{ github.event.inputs.istio_version }}"
+        if [ -n "${{ steps.determine-run-tests.outputs.istio-version-rc }}" ]; then
+          ISTIO_VERSION="${{ steps.determine-run-tests.outputs.istio-version-rc }}"
+          echo "Using upstream Istio RC for conditional N test: ${ISTIO_VERSION}"
+          echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+          echo "sail=false" | tee -a "$GITHUB_OUTPUT"
+          exit 0
         fi
-        echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+
+        if [ -n "${{ github.event.inputs.istio_version }}" ]; then
+          ISTIO_VERSION="${{ github.event.inputs.istio_version }}"
+          ISTIO_VERSION="${ISTIO_VERSION#v}"
+          echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+          echo "sail=${{ steps.determine-sail-to-use.outputs.sail }}" | tee -a "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
+          OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
+          # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
+          OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
+        else
+          case "${{ github.event.schedule }}" in
+            "0 2 * * *") OFFSET=1 ;;
+            "0 4 * * *") OFFSET=2 ;;
+            *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
+          esac
+        fi
+
+        # N-1 / N-2 always use Sail. Offset 0 (N) never selects RCs here: GA reference only,
+        # Sail if available and not behind (patch included), otherwise istioctl.
+        EXTRA_ARGS=()
+        if [ "${OFFSET}" -gt 0 ]; then
+          EXTRA_ARGS+=(--force-sail)
+        elif [ "${{ steps.determine-sail-to-use.outputs.sail }}" == "false" ]; then
+          EXTRA_ARGS+=(--force-istioctl)
+        fi
+
+        ISTIO_VERSION="$(bash ./hack/istio/determine-test-istio-version.sh --offset "${OFFSET}" --retries 5 --retry-interval-seconds 5 "${EXTRA_ARGS[@]}")"
+        # Script already wrote istio-version/sail/install-method to GITHUB_OUTPUT.
+        echo "Resolved version with offset [${OFFSET}]: ${ISTIO_VERSION}"
     - run: echo "target-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "build-branch -> ${{ inputs.branch_to_test }}"
+    - run: echo "run-tests -> ${{ steps.determine-run-tests.outputs.run-tests }}"
+    - run: echo "sail -> ${{ steps.determine-sail-to-use.outputs.sail }}"
     - run: echo "sail-operator-git-ref -> ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}"
+    - run: echo "istio-version -> ${{ steps.determine-istio-version-to-use.outputs.istio-version }}"
 
   test_backend:
     name: Run backend linters and unit tests
     uses: ./.github/workflows/test-lint-backend.yml
     needs: [initialize]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -98,6 +175,7 @@ jobs:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -106,6 +184,7 @@ jobs:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize, test_backend, build_frontend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -113,131 +192,159 @@ jobs:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
     needs: [initialize, build_backend]
-    if: ${{ needs.initialize.outputs.istio-version >= '1.23' }}
+    if: >-
+      needs.initialize.outputs.run-tests == 'true' &&
+      needs.initialize.outputs.istio-version >= '1.23'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_backend_mcp:
     name: Run backend MCP integration tests
     uses: ./.github/workflows/integration-tests-backend-mcp.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   integration_tests_frontend_ambient_multi_primary:
     name: Run frontend Ambient Multi-Primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   integration_tests_frontend_chat:
     name: Run frontend AI integration tests
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   integration_tests_frontend_local_offline:
     name: Run frontend local and offline mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   integration_tests_frontend_multicluster_external_kiali:
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   integration_tests_frontend_multi_mesh:
     name: Run frontend multi mesh integration tests
     uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
     needs: [initialize, build_backend]
+    if: needs.initialize.outputs.run-tests == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
 
   codecov_merge_upload:
     if: |
       always() &&
-      (github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch') &&
+      needs.initialize.outputs.run-tests == 'true' &&
+      (github.event.schedule == '0 2 * * *' || github.event_name == 'workflow_dispatch') &&
       needs.integration_tests_backend.result == 'success' &&
       needs.test_backend.result == 'success'
     name: Merge and Upload Coverage to Codecov

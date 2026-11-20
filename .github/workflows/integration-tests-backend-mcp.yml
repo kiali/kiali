@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ""
+      sail:
+        description: "If true, install Istio with Sail. If false, use istioctl (supports Istio RCs)."
+        required: false
+        type: string
+        default: "true"
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
@@ -63,7 +68,7 @@ jobs:
 
     - name: Run backend mcp tools integration tests
       id: intTests
-      run: hack/run-integration-tests.sh --test-suite backend --mcp-tools true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite backend --mcp-tools true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail }}" ]; then echo "--sail ${{ inputs.sail }}"; fi)
 
     - name: Stop resource sampler
       if: always()

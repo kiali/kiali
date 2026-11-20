@@ -268,6 +268,14 @@ fi
 export ISTIO_VERSION
 
 # Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
+# Args for install-istio-via-istioctl.sh when a concrete version was requested (incl. RCs).
+# Do not pass aliases like "1.28-latest" or "*-dev": download-istio resolves those to a real
+# directory (istio-1.28.x), and --istio-version with the alias would look for a missing dir.
+ISTIOCTL_VERSION_ARG=""
+if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]] && [[ "${ISTIO_VERSION}" != *-latest ]]; then
+  ISTIOCTL_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+fi
+
 if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
   echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
 fi
@@ -478,12 +486,12 @@ setup_kind_singlecluster() {
       else
         # -net is giving issues trying to access the services inside the cluster with HTTP code 56
         # At least with Ambient 1.21
-        "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+        "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
       fi
   elif [ "${SAIL}" == "true" ]; then
     install_istio
   else
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
   local tracing_use_waypoint_name
@@ -653,7 +661,7 @@ setup_kind_tempo() {
       local hub_arg="--image-hub default"
     fi
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
 
   local tracing_use_waypoint_name
@@ -866,7 +874,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -879,7 +887,7 @@ setup_kind_multicluster() {
     if [ -n "${certs_dir}" ]; then
       external_certs_dir_arg="--certs-dir ${certs_dir}"
     fi
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-mgmt"
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
@@ -887,7 +895,8 @@ setup_kind_multicluster() {
     ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}"
+    # setup-external-controlplane.sh branches on SAIL: Sail CRs when true, classic istioctl when false.
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"
