@@ -2,9 +2,9 @@ import * as React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NamespaceTrafficPolicies } from '../NamespaceTrafficPolicies';
-import { NamespaceInfo } from '../../../types/NamespaceInfo';
-import { ControlPlane } from '../../../types/Mesh';
-import { DurationInSeconds } from 'types/Common';
+import type { NamespaceInfo } from '../../../types/NamespaceInfo';
+import type { ControlPlane } from '../../../types/Mesh';
+import type { DurationInSeconds } from 'types/Common';
 import * as API from 'services/Api';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
@@ -418,7 +418,9 @@ describe('NamespaceTrafficPolicies', () => {
         });
       });
 
-      ref.current!.onHideConfirmModal();
+      act(() => {
+        ref.current!.onHideConfirmModal();
+      });
 
       expect(ref.current!.state.confirmationModal).toBe(false);
       expect(ref.current!.state.authorizationPolicies).toEqual([]);

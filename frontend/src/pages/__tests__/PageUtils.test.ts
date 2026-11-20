@@ -19,6 +19,7 @@ rstest.mock('../../components/Filters/StatefulFilters', () => ({
 
 rstest.mock('../../app/History', () => ({
   URLParam: { NAMESPACES: 'namespaces' },
+  navigateApp: (...args: unknown[]) => mockNavigate(...args),
   router: { navigate: (...args: unknown[]) => mockNavigate(...args) }
 }));
 

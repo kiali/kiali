@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { ComponentStatus, Status } from '../../../types/IstioStatus';
-import { IstioStatusComponent, ClusterStatusMap } from '../IstioStatus';
+import type { ComponentStatus } from '../../../types/IstioStatus';
+import { Status } from '../../../types/IstioStatus';
+import type { ClusterStatusMap } from '../IstioStatus';
+import { IstioStatusComponent } from '../IstioStatus';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 import { serverConfig } from '../../../config';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { store } from '../../../store/ConfigStore';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 
 let mockStatusMap: ClusterStatusMap = {};
 

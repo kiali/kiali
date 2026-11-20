@@ -1,5 +1,5 @@
-import type { ActionType} from 'typesafe-actions';
-import { createAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
 import type { MetricsStats } from 'types/Metrics';
 

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { EnvoyDetails } from '../EnvoyDetails';
 import { EnvoyMemory } from '../EnvoyMemory';
 import { store } from '../../../store/ConfigStore';

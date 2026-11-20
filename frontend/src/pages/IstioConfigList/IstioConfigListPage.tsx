@@ -166,16 +166,16 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     configsPromises
       .then(configItems => filterByConfigValidation(configItems, configValidationFilters))
       .then(sorted => {
-        // Update the view when data is fetched
-        const updatedList = IstioConfigListFilters.sortIstioItems(
-          this.state.listItems.concat(sorted),
-          this.state.currentSortField,
-          this.state.isSortAscending
-        );
-
-        this.setState({
-          listItems: updatedList
-        });
+        // Update the view when data is fetched. Functional update: per-cluster fetches
+        // resolve independently and React 18 batches their setStates, so reading
+        // this.state here can drop a cluster's already-added items.
+        this.setState(prevState => ({
+          listItems: IstioConfigListFilters.sortIstioItems(
+            prevState.listItems.concat(sorted),
+            prevState.currentSortField,
+            prevState.isSortAscending
+          )
+        }));
       })
       .catch(istioError => {
         if (!istioError.isCanceled) {

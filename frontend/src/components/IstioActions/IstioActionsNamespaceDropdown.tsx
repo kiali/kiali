@@ -14,7 +14,7 @@ import {
 import { useKialiSelector } from 'hooks/redux';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router';
 import type { GroupVersionKind } from '../../types/IstioObjects';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
