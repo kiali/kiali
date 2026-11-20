@@ -252,6 +252,14 @@ func TestConvertToolToGoogle_FromToolDefinition_GetMetrics(t *testing.T) {
 				Type:        genai.TypeString,
 				Description: "Rate interval for metrics (e.g., '1m', '5m'). Optional, defaults to '10m'",
 			},
+			"since": {
+				Type:        genai.TypeString,
+				Description: "Start of the time range: an RFC3339 timestamp (e.g., '2026-01-02T15:04:05Z') or a duration before 'to' (e.g., '30m', '2h', '1d'). Optional, defaults to 30 minutes before 'to'",
+			},
+			"to": {
+				Type:        genai.TypeString,
+				Description: "End of the time range as an RFC3339 timestamp (e.g., '2026-01-02T16:04:05Z'). Optional, defaults to now",
+			},
 			"direction": {
 				Type:        genai.TypeString,
 				Description: "Traffic direction. Optional, defaults to 'outbound'",
