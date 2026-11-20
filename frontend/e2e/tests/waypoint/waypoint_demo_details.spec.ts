@@ -111,13 +111,8 @@ test.describe('Waypoint demo-namespace details', () => {
     await expect(page).toHaveURL(workloadDetailUrlPattern('waypoint'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
-    await workloadDetailsPage.expectEnrolledWaypointTable({
-      rows: 1,
-      name: 'echo-service',
-      namespace: 'waypoint-override',
-      labeledBy: 'namespace',
-      badgeId: 'pfbadge-S'
-    });
+    // echo-service overrides the namespace waypoint with use-this; it is not enrolled on the default gateway.
+    await workloadDetailsPage.expectNoEnrolledServices();
     await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
 

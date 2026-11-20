@@ -105,8 +105,9 @@ export class IstioConfigWizardPage extends BasePage {
     await card.getByRole('button', { name: 'Edit labels' }).click();
     await card.getByRole('button', { name: 'Add label' }).click();
     // The new entry renders as an editable label showing the "key=value" placeholder; click it
-    // to swap in the text input, then commit with Enter before saving the card.
-    await card.getByRole('button', { name: 'key=value' }).click();
+    // to swap in the text input, then commit with Enter before saving the card. The label's
+    // close button is also named "Close key=value", so match the placeholder exactly.
+    await card.getByRole('button', { name: 'key=value', exact: true }).click();
     const input = card.getByRole('textbox');
     await input.fill(`${key}=${value}`);
     await input.press('Enter');

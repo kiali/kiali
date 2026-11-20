@@ -280,8 +280,9 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(link).toBeVisible();
     await expect(link).toContainText('Istio Workload Dashboard');
     await expect(link).toHaveAttribute('title', 'View Istio Workload Dashboard in Perses');
-    // data-test and title land on the dropdown <li>; the href is on the inner anchor.
-    await expect(link.getByRole('link')).toHaveAttribute('href', /var-workload=details-v1/);
+    // data-test and title land on the dropdown <li>; the href is on the inner anchor,
+    // which MenuItem renders with role="menuitem".
+    await expect(link.getByRole('menuitem')).toHaveAttribute('href', /var-workload=details-v1/);
   }
 
   async expectOutboundMetrics(): Promise<void> {
@@ -542,6 +543,15 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(
       table.locator('td[data-label="Labeled by"]').filter({ hasText: options.labeledBy }).first()
     ).toBeVisible();
+  }
+
+  /** When every service in the namespace overrides the default waypoint, the default gateway lists no enrolled services. */
+  async expectNoEnrolledServices(): Promise<void> {
+    const title = this.getBySel('enrolled-data-title');
+    await expect(title).toBeVisible();
+    const empty = title.locator('xpath=following::*[@data-test="istio-config-empty"][1]');
+    await expect(empty).toBeVisible();
+    await expect(empty).toContainText('No enrolled services found');
   }
 
   async expectProxyStatusIcon(status: string): Promise<void> {
