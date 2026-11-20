@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	check.Contains(clusterNames, conf.KubernetesConfig.ClusterName)
 	check.Contains(clusterNames, testClusterName)
 
-	rcis, err := GetRemoteClusterInfos()
+	rcis, _, err := GetRemoteClusterInfos()
 	check.NoError(err)
 	rciConfig := rcis[testClusterName].ClientConfig
 	check.NotNil(rciConfig)
@@ -45,4 +46,65 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	restConfig = clientFactory.GetSAClient(testClusterName).ClusterInfo().ClientConfig
 	check.Equal("", restConfig.BearerTokenFile, "BearerTokenFile is never set")
 	check.Equal(rciConfig.BearerToken, restConfig.BearerToken, "BearerToken should be set to the value in the remote cluster yaml")
+}
+
+// TestDuplicateClusterSecretsKeepInventoriesDisjoint pins the loader's name reservation: two
+// mounted secrets naming the same remote must leave the active and skipped inventories
+// disjoint whichever secret sorts first - a broken definition cannot be overridden into a
+// half-active state, and a valid one cannot be shadowed into the skip registry.
+func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		first, second string
+	}{
+		{"broken sorts first", "aaa-broken", "zzz-valid"},
+		{"valid sorts first", "aaa-valid", "zzz-broken"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			check := assert.New(t)
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+			config.Set(conf)
+
+			// One secrets root, two secret directories, both naming the same cluster.
+			originalDir := RemoteClusterSecretsDir
+			root := t.TempDir()
+			RemoteClusterSecretsDir = root
+			t.Cleanup(func() { RemoteClusterSecretsDir = originalDir })
+
+			const clusterName = "TestDuplicateCluster"
+			broken := "this is not a kubeconfig"
+			valid := remoteClusterYAML
+			if tc.first == "zzz-valid" {
+				broken, valid = valid, broken
+			}
+			// Each secret directory carries a file named after the shared cluster name,
+			// as a real kiali-multi-cluster-secret does.
+			for secret, content := range map[string]string{tc.first: broken, tc.second: valid} {
+				dir := root + "/" + secret
+				if err := os.MkdirAll(dir, 0o777); err != nil {
+					t.Fatalf("failed to create secret dir: %v", err)
+				}
+				if err := os.WriteFile(dir+"/"+clusterName, []byte(content), 0o666); err != nil {
+					t.Fatalf("failed to write secret file: %v", err)
+				}
+			}
+
+			_, unprocessable, err := GetRemoteClusterInfos()
+			check.NoError(err)
+
+			// Whichever file the loader met first owns the name: the outcome is one of
+			// "active" or "unprocessable", never both, never neither.
+			infos, _, err := GetRemoteClusterInfos()
+			check.NoError(err)
+			_, active := infos[clusterName]
+			skipped := false
+			for _, name := range unprocessable {
+				if name == clusterName {
+					skipped = true
+				}
+			}
+			check.True(active != skipped, "cluster must be exactly one of active or unprocessable (active=%v, unprocessable=%v)", active, skipped)
+		})
+	}
 }

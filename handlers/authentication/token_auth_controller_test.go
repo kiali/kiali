@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -179,7 +180,7 @@ type forbiddenClient struct {
 	kubernetes.UserClientInterface
 }
 
-func (f forbiddenClient) GetNamespaces(labelSelector string) ([]v1.Namespace, error) {
+func (f forbiddenClient) GetNamespaces(_ context.Context, labelSelector string) ([]v1.Namespace, error) {
 	return nil, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "namespaces"}, "", errors.New("err"))
 }
 

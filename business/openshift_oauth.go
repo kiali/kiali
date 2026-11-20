@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	user_v1 "github.com/openshift/api/user/v1"
@@ -57,6 +58,22 @@ type OpenshiftOAuthService struct {
 	conf           *config.Config
 	kialiSAClients map[string]kubernetes.ClientInterface
 	oAuthConfigs   map[string]*oAuthConfig
+	// oAuthConfigsMutex guards all access to oAuthConfigs and oAuthConfigsBuilding after
+	// construction: a lazy insert must never race even a read of an existing entry
+	// (concurrent map read/write is a fatal panic, and an unrelated home login must not
+	// crash because a recovered remote is being rebuilt).
+	oAuthConfigsMutex sync.Mutex
+	// oAuthConfigsBuilding coalesces concurrent lazy builds per cluster: one caller polls
+	// the remote, the rest wait for its result instead of each running a minutes-long
+	// metadata retry in parallel.
+	oAuthConfigsBuilding map[string]*oAuthConfigBuild
+}
+
+// oAuthConfigBuild carries one in-flight lazy OAuth config build.
+type oAuthConfigBuild struct {
+	config *oAuthConfig
+	err    error
+	done   chan struct{}
 }
 
 // Structure that's returned by the openshift oauth authorization server.
@@ -71,6 +88,11 @@ type OAuthAuthorizationServer struct {
 // Generates an http.Client with RootCAs specified in kubeconfig along with the managed cert pool.
 // The managed cert pool includes system CAs and any additional CAs configured via the kiali-cabundle ConfigMap.
 func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Client, error) {
+	// The config passed in is ClusterInfo().ClientConfig - the original shared config, which
+	// never carries the live-call request timeout (that lives on the K8SClient's private
+	// copy). These metadata and token fetches are live round trips: bound them with the
+	// configured request timeout.
+	kubernetes.ApplyRequestTimeout(&restConfig, conf)
 	// Need to populate CAData from CAFile.
 	if err := rest.LoadTLSFiles(&restConfig); err != nil {
 		return nil, fmt.Errorf("unable to load CA info from restConfig")
@@ -121,102 +143,76 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Clie
 	}, nil
 }
 
+// oauthConfigIneligible reports why the cluster should not get an OAuth configuration,
+// or nil if it should: impersonation-mode remotes deliberately never do (the home cluster's
+// config carries the login), and a cluster the platform probe identifies as plain
+// Kubernetes has no OAuth server to talk to. Both the constructor and the lazy rebuild
+// consult this - the lazy path once missed the platform check and polled a Kubernetes
+// cluster's metadata endpoint for a minute.
+func oauthConfigIneligible(conf *config.Config, cluster string, client kubernetes.ClientInterface) error {
+	if conf.Auth.OpenShift.Impersonation.Enabled && cluster != conf.KubernetesConfig.ClusterName {
+		return fmt.Errorf("impersonation mode does not require per-cluster OAuth for cluster [%s]", cluster)
+	}
+	if !client.IsOpenShift() {
+		return fmt.Errorf("cluster [%s] is not an OpenShift cluster; it has no OAuth configuration", cluster)
+	}
+	return nil
+}
+
 // NewOpenshiftOAuthService creates a new OpenshiftOAuthService.
 // It will try to autodiscover the OAuth server configuration from each cluster.
 // It also assumes that you've created an OAuthClient for Kiali in each cluster.
+// A cluster whose OAuth configuration cannot be fetched is not fatal: the service is created
+// without that cluster's config, and the config is built lazily on first use (see
+// getOAuthConfig), so a remote that was unavailable at startup becomes loginable once it
+// recovers, without a Kiali restart.
 func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAClients map[string]kubernetes.ClientInterface, clientFactory kubernetes.ClientFactory) (*OpenshiftOAuthService, error) {
 	oAuthConfigs := make(map[string]*oAuthConfig)
+	var homeErr error
 
-	// Creating a single context for all the clusters.
-	var cancel context.CancelFunc
-	// How many times we're going to try to get the oAuth metdata.
-	// After a minute we should give up.
-	oneMinuteFromNow := time.Now().Add(time.Minute)
-	ctx, cancel = context.WithDeadline(ctx, oneMinuteFromNow)
-	defer cancel()
-
-	// TODO: We could parallelize this to potentially speed up the process.
+	// Each cluster gets its own deadline and its own goroutine: one slow or unavailable
+	// remote adds its timeout to startup once, not once per remote ahead of it, and the
+	// total stays inside the pod's startup-probe budget.
+	var oauthWg sync.WaitGroup
+	var oauthMu sync.Mutex
 	for cluster, client := range kialiSAClients {
-		if !client.IsOpenShift() {
-			log.Infof("While setting up the OAuthService, skipping cluster [%s] because it is not an OpenShift cluster", cluster)
-			continue
-		}
-
-		// When impersonation is enabled, only the home cluster needs OAuth config
-		// (for the initial user login). Remote clusters use SA + impersonation headers.
-		if conf.Auth.OpenShift.Impersonation.Enabled && cluster != conf.KubernetesConfig.ClusterName {
-			log.Debugf("Skipping OAuth config for cluster [%s] — impersonation mode does not require per-cluster OAuth", cluster)
-			continue
-		}
-
-		log.Debugf("Getting OAuth config for cluster [%s]", cluster)
-		// Use CA info from kube config.
-		url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"
-		request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request for fetching oauth server metadata from kube api server url [%s]. Likely the url is malformed. Error: %s", url, err)
-		}
-		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
-
-		httpClient, err := httpClientWithPool(conf, *client.ClusterInfo().ClientConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
-		}
-
-		var response []byte
-		err = wait.PollUntilContextCancel(ctx, time.Second*10, true, func(ctx context.Context) (bool, error) {
-			// TODO: Catch specific errors and retry only on those?
-			var err error
-			response, err = doRequest(httpClient, request)
+		oauthWg.Add(1)
+		go func(cluster string, client kubernetes.ClientInterface) {
+			defer oauthWg.Done()
+			// The eligibility checks run inside the goroutine because the platform check
+			// is a live round trip: an unavailable remote costs one timeout once, not
+			// once per remote ahead of it. An ineligible cluster is skipped uniformly,
+			// home included (an openshift-strategy install on a non-OpenShift home is a
+			// configuration error the login flow surfaces); only a build failure on the
+			// home cluster is fatal below.
+			if err := oauthConfigIneligible(conf, cluster, client); err != nil {
+				log.Infof("While setting up the OAuthService, skipping cluster [%s]: %v", cluster, err)
+				return
+			}
+			clusterCtx, cancel := context.WithTimeout(ctx, oauthConfigConstructionTimeout)
+			oAuthConfig, err := buildOAuthConfig(clusterCtx, conf, client)
+			cancel()
 			if err != nil {
-				log.Infof("Failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s. Retrying...", url, err)
-				return false, nil
+				if cluster == conf.KubernetesConfig.ClusterName {
+					// The home cluster's OAuth config is required for login: without it
+					// the auth controller cannot be built at all.
+					oauthMu.Lock()
+					homeErr = err
+					oauthMu.Unlock()
+					return
+				}
+				log.Warningf("Could not set up OAuth config for remote cluster [%s]; login to that cluster will be retried on demand. Error: %v", cluster, err)
+				return
 			}
 
-			return true, nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s", url, err)
-		}
-
-		oAuthServer := &OAuthAuthorizationServer{}
-		if err := json.Unmarshal(response, &oAuthServer); err != nil {
-			log.Error(err)
-			message := fmt.Errorf("could not parse OAuthAuthorizationServer: %v", err)
-			return nil, message
-		}
-
-		// Get the OAuthClient for Kiali. This is created by the operator or the helm chart.
-		kialiOAuthClientName := conf.Deployment.InstanceName + "-" + conf.Deployment.Namespace
-		oAuthClient, err := client.GetOAuthClient(ctx, kialiOAuthClientName)
-		if err != nil {
-			log.Errorf("Could not get OAuth client: %v", err)
-			return nil, err
-		}
-
-		if len(oAuthClient.RedirectURIs) == 0 {
-			return nil, fmt.Errorf("oAuth client has no redirect URIs")
-		}
-
-		oAuthConfig := &oAuthConfig{
-			Config: oauth2.Config{
-				ClientID:    oAuthClient.Name,
-				RedirectURL: oAuthClient.RedirectURIs[0],
-				Scopes:      []string{userScopeFull},
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  oAuthServer.AuthorizationEndpoint,
-					TokenURL: oAuthServer.TokenEndpoint,
-				},
-			},
-		}
-
-		if oAuthClient.AccessTokenMaxAgeSeconds != nil {
-			oAuthConfig.AccessTokenMaxAgeSeconds = int(*oAuthClient.AccessTokenMaxAgeSeconds)
-		} else {
-			oAuthConfig.AccessTokenMaxAgeSeconds = defaultAccessTokenAgeInSeconds
-		}
-
-		oAuthConfigs[cluster] = oAuthConfig
+			oauthMu.Lock()
+			oAuthConfigs[cluster] = oAuthConfig
+			oauthMu.Unlock()
+		}(cluster, client)
+	}
+	oauthWg.Wait()
+	if homeErr != nil {
+		return nil, homeErr
 	}
 
 	return &OpenshiftOAuthService{
@@ -225,6 +221,156 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		kialiSAClients: kialiSAClients,
 		oAuthConfigs:   oAuthConfigs,
 	}, nil
+}
+
+// oauthConfigBuildTimeout bounds a single cluster's OAuth configuration fetch on a lazy
+// rebuild, where a user is actively waiting for a login.
+const oauthConfigBuildTimeout = time.Minute
+
+// oauthConfigConstructionTimeout bounds a single cluster's OAuth configuration fetch at
+// construction: it runs on the synchronous startup path, inside the pod's startup-probe
+// budget, so it is tighter than the lazy budget.
+const oauthConfigConstructionTimeout = 30 * time.Second
+
+// buildOAuthConfig discovers a cluster's OAuth server metadata and Kiali OAuthClient and
+// assembles the cluster's OAuth configuration.
+func buildOAuthConfig(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface) (*oAuthConfig, error) {
+	// Use CA info from kube config.
+	url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request for fetching oauth server metadata from kube api server url [%s]. Likely the url is malformed. Error: %s", url, err)
+	}
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
+
+	httpClient, err := httpClientWithPool(conf, *client.ClusterInfo().ClientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
+	}
+
+	var response []byte
+	err = wait.PollUntilContextCancel(ctx, time.Second*10, true, func(ctx context.Context) (bool, error) {
+		// TODO: Catch specific errors and retry only on those?
+		var err error
+		response, err = doRequest(httpClient, request)
+		if err != nil {
+			log.Infof("Failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s. Retrying...", url, err)
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s", url, err)
+	}
+
+	oAuthServer := &OAuthAuthorizationServer{}
+	if err := json.Unmarshal(response, &oAuthServer); err != nil {
+		log.Error(err)
+		message := fmt.Errorf("could not parse OAuthAuthorizationServer: %v", err)
+		return nil, message
+	}
+
+	// Get the OAuthClient for Kiali. This is created by the operator or the helm chart.
+	kialiOAuthClientName := conf.Deployment.InstanceName + "-" + conf.Deployment.Namespace
+	oAuthClient, err := client.GetOAuthClient(ctx, kialiOAuthClientName)
+	if err != nil {
+		log.Errorf("Could not get OAuth client: %v", err)
+		return nil, err
+	}
+
+	if len(oAuthClient.RedirectURIs) == 0 {
+		return nil, fmt.Errorf("oAuth client has no redirect URIs")
+	}
+
+	oAuthConfig := &oAuthConfig{
+		Config: oauth2.Config{
+			ClientID:    oAuthClient.Name,
+			RedirectURL: oAuthClient.RedirectURIs[0],
+			Scopes:      []string{userScopeFull},
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  oAuthServer.AuthorizationEndpoint,
+				TokenURL: oAuthServer.TokenEndpoint,
+			},
+		},
+	}
+
+	if oAuthClient.AccessTokenMaxAgeSeconds != nil {
+		oAuthConfig.AccessTokenMaxAgeSeconds = int(*oAuthClient.AccessTokenMaxAgeSeconds)
+	} else {
+		oAuthConfig.AccessTokenMaxAgeSeconds = defaultAccessTokenAgeInSeconds
+	}
+
+	return oAuthConfig, nil
+}
+
+// getOAuthConfig returns the cluster's OAuth configuration, building it on demand when it was
+// not available at construction (a remote that was unreachable at startup becomes loginable
+// once it recovers, without a Kiali restart). Concurrent callers coalesce behind one build.
+func (in *OpenshiftOAuthService) getOAuthConfig(ctx context.Context, cluster string) (*oAuthConfig, error) {
+	in.oAuthConfigsMutex.Lock()
+	if oAuthConfig, found := in.oAuthConfigs[cluster]; found {
+		in.oAuthConfigsMutex.Unlock()
+		return oAuthConfig, nil
+	}
+	if building, buildingFound := in.oAuthConfigsBuilding[cluster]; buildingFound {
+		in.oAuthConfigsMutex.Unlock()
+		// Waiters can abandon the wait on their own context (a disconnected login
+		// redirects away); the shared build itself stays detached - one caller's abort
+		// must not poison the rebuild for the next.
+		select {
+		case <-building.done:
+			return building.config, building.err
+		case <-ctx.Done():
+			return nil, fmt.Errorf("abandoned waiting for the OAuth configuration of cluster [%s]: %w", cluster, ctx.Err())
+		}
+	}
+	building := &oAuthConfigBuild{done: make(chan struct{})}
+	if in.oAuthConfigsBuilding == nil {
+		in.oAuthConfigsBuilding = map[string]*oAuthConfigBuild{}
+	}
+	in.oAuthConfigsBuilding[cluster] = building
+	in.oAuthConfigsMutex.Unlock()
+
+	defer func() {
+		in.oAuthConfigsMutex.Lock()
+		delete(in.oAuthConfigsBuilding, cluster)
+		in.oAuthConfigsMutex.Unlock()
+		close(building.done)
+	}()
+
+	client := in.kialiSAClients[cluster]
+	if client == nil {
+		building.err = fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
+		return nil, building.err
+	}
+
+	// The same eligibility rules as the constructor (see oauthConfigIneligible): an
+	// explicit request for an ineligible cluster fails fast rather than polling the
+	// OpenShift metadata endpoint for the whole build deadline.
+	if err := oauthConfigIneligible(in.conf, cluster, client); err != nil {
+		building.err = err
+		return nil, building.err
+	}
+	if client == nil {
+		building.err = fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
+		return nil, building.err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), oauthConfigBuildTimeout)
+	defer cancel()
+	oAuthConfig, err := buildOAuthConfig(ctx, in.conf, client)
+	if err != nil {
+		building.err = err
+		return nil, err
+	}
+
+	in.oAuthConfigsMutex.Lock()
+	in.oAuthConfigs[cluster] = oAuthConfig
+	in.oAuthConfigsMutex.Unlock()
+
+	building.config = oAuthConfig
+	return oAuthConfig, nil
 }
 
 // Exchange exchanges the code for a token that can be used to talk to the kube API server.
@@ -239,9 +385,9 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 		return nil, fmt.Errorf("failed to create http client for oauth consumption, error: %s", err)
 	}
 
-	oAuthConfig := in.oAuthConfigs[cluster]
-	if oAuthConfig == nil {
-		return nil, fmt.Errorf("could not get OAuth config for cluster [%s]", cluster)
+	oAuthConfig, err := in.getOAuthConfig(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("could not get OAuth config for cluster [%s]: %v", cluster, err)
 	}
 
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
@@ -254,10 +400,10 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 }
 
 // AuthCodeURL returns the URL to redirect the user to for authentication.
-func (in *OpenshiftOAuthService) AuthCodeURL(verifier string, cluster string) (string, error) {
-	oAuthConfig := in.oAuthConfigs[cluster]
-	if oAuthConfig == nil {
-		return "", fmt.Errorf("could not get OAuth config for cluster [%s]", cluster)
+func (in *OpenshiftOAuthService) AuthCodeURL(ctx context.Context, verifier string, cluster string) (string, error) {
+	oAuthConfig, err := in.getOAuthConfig(ctx, cluster)
+	if err != nil {
+		return "", fmt.Errorf("could not get OAuth config for cluster [%s]: %v", cluster, err)
 	}
 
 	return oAuthConfig.AuthCodeURL("", oauth2.S256ChallengeOption(verifier)), nil
@@ -306,10 +452,10 @@ func (in *OpenshiftOAuthService) Logout(ctx context.Context, token string, clust
 	return err
 }
 
-func (in *OpenshiftOAuthService) OAuthConfig(cluster string) (*OAuthConfig, error) {
-	oAuthConfig := in.oAuthConfigs[cluster]
-	if oAuthConfig == nil {
-		return nil, fmt.Errorf("OAuth config does not exist for cluster [%s]", cluster)
+func (in *OpenshiftOAuthService) OAuthConfig(ctx context.Context, cluster string) (*OAuthConfig, error) {
+	oAuthConfig, err := in.getOAuthConfig(ctx, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("OAuth config does not exist for cluster [%s]: %v", cluster, err)
 	}
 
 	return &OAuthConfig{

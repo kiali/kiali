@@ -874,7 +874,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, KnownTrustDomains: vInfo.knownTrustDomains, KubeServiceHosts: kubeServiceHosts, MtlsDetails: *mtlsDetails, Namespaces: nsNames, PolicyAllowAny: policyAllowAny, ServiceAccounts: vInfo.saMap, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.DestinationRulesChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, ImportScope: importScope, MTLSDetails: *mtlsDetails, Namespaces: namespaces},
 		checkers.GatewayChecker{Cluster: cluster, Conf: conf, Gateways: istioConfigList.Gateways, IsGatewayToNamespace: gatewayToNamespace, WorkloadsPerNamespace: workloadsPerNamespace},
-		checkers.K8sGatewayChecker{Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster), K8sGateways: istioConfigList.K8sGateways},
+		checkers.K8sGatewayChecker{Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(context.Background(), cluster), K8sGateways: istioConfigList.K8sGateways},
 		checkers.K8sGRPCRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sHTTPRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
@@ -1257,7 +1257,7 @@ func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo
 		}
 	case kubernetes.K8sGateways:
 		objectCheckers = []checkers.ObjectChecker{
-			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
+			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(context.Background(), cluster)},
 		}
 		referenceChecker = references.K8sGatewayReferences{Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sGRPCRoutes:

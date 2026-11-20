@@ -475,19 +475,19 @@ func TestValidateNamespacesViaK8s(t *testing.T) {
 	)
 
 	t.Run("all valid", func(t *testing.T) {
-		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"argocd", "default"})
+		valid, invalid := validateNamespacesViaK8s(context.Background(), fakeClient, []string{"argocd", "default"})
 		assert.Equal(t, []string{"argocd", "default"}, valid)
 		assert.Empty(t, invalid)
 	})
 
 	t.Run("all invalid", func(t *testing.T) {
-		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"no-such-ns"})
+		valid, invalid := validateNamespacesViaK8s(context.Background(), fakeClient, []string{"no-such-ns"})
 		assert.Empty(t, valid)
 		assert.Equal(t, []string{"no-such-ns"}, invalid)
 	})
 
 	t.Run("mixed", func(t *testing.T) {
-		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"argocd", "bogus"})
+		valid, invalid := validateNamespacesViaK8s(context.Background(), fakeClient, []string{"argocd", "bogus"})
 		assert.Equal(t, []string{"argocd"}, valid)
 		assert.Equal(t, []string{"bogus"}, invalid)
 	})

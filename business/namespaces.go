@@ -100,6 +100,18 @@ func (in *NamespaceService) GetKialiSAClusterList() []string {
 // identical across instances.
 var namespaceSetFlight singleflight.Group
 
+// namespaceSetComputeTimeout bounds one cluster's accessible-set computation end to end: it
+// is a sequence of per-namespace round trips, and several individually-bounded slow successes
+// could otherwise sum past the request latency budget (the proxy in front of Kiali 504s at
+// ~30s). Sized under that budget, above the per-request client timeout.
+const namespaceSetComputeTimeout = 15 * time.Second
+
+// namespaceComputeBackoff is how long a cluster whose accessible-set computation failed is
+// skipped before retrying. The per-token cache only populates on success, so without this a
+// dead remote is re-queried back to back on every request; singleflight only coalesces
+// overlapping calls. The failure is never cached as an access denial.
+const namespaceComputeBackoff = 10 * time.Second
+
 // GetClusterNamespacesForCluster returns the user's accessible namespaces
 // for a single cluster, checking and filling the per-token cache for that
 // cluster only. The result — including an empty one — is cached, so the
@@ -136,11 +148,48 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 	// silently skipped when discovery calls fail) for every follower, and
 	// the degraded set would be cached. The NUL separator cannot occur in a
 	// cluster name, so (cluster, cacheKey) pairs cannot collide.
+	// The backoff key matches the singleflight key: one (cluster, cacheKey) computation.
+	backoffKey := cluster + "\x00" + cacheKey
 	result, err, _ := namespaceSetFlight.Do(cluster+"\x00"+cacheKey, func() (any, error) {
-		namespaces, err := in.getNamespacesByCluster(context.WithoutCancel(ctx), cluster)
+		// Bound the whole computation: it is a sequence of per-namespace round trips, and
+		// several individually-bounded slow successes could otherwise sum past the request
+		// latency budget. The deadline is detached from the caller like the rest of the
+		// computation; on expiry the cluster's set errors (the picker skips it, existing
+		// semantics) and is never cached as an empty set.
+		computeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), namespaceSetComputeTimeout)
+		defer cancel()
+
+		// Negative backoff: a cluster whose set computation just failed is not retried on
+		// every request - the token cache only populates on success, so without this a dead
+		// remote is re-queried back to back. The failure is never cached as a denial. The
+		// home cluster is exempt: it is reachable by definition, its failures are exceptional
+		// and fail loud, and retrying it keeps the behavior unchanged for the mandatory
+		// cluster.
+		if cluster != in.conf.KubernetesConfig.ClusterName {
+			if failedAt, failedErr, failed := in.kialiCache.NamespaceComputeFailedAt(backoffKey); failed && time.Since(failedAt) < namespaceComputeBackoff {
+				// Wrap the original error so its class (and API status) survives.
+				return nil, fmt.Errorf("namespaces for cluster [%s] could not be computed recently, retrying later: %w", cluster, failedErr)
+			}
+		}
+
+		namespaces, err := in.getNamespacesByCluster(computeCtx, cluster)
 		if err != nil {
+			if cluster != in.conf.KubernetesConfig.ClusterName {
+				in.kialiCache.MarkNamespaceComputeFailed(backoffKey, err)
+			}
 			return nil, err
 		}
+		if computeCtx.Err() != nil {
+			// The deadline expired while the computation was finishing (for example
+			// behind a slow mesh refresh): its result may be incomplete, and caching it
+			// would serve a truncated set for the whole token TTL. Fail instead.
+			err := fmt.Errorf("namespaces for cluster [%s] took too long to compute: %w", cluster, computeCtx.Err())
+			if cluster != in.conf.KubernetesConfig.ClusterName {
+				in.kialiCache.MarkNamespaceComputeFailed(backoffKey, err)
+			}
+			return nil, err
+		}
+		in.kialiCache.ClearNamespaceComputeFailure(backoffKey)
 		in.kialiCache.SetClusterNamespaces(cacheKey, cluster, namespaces)
 		return namespaces, nil
 	})
@@ -234,7 +283,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 	// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
 	if in.conf.Deployment.ClusterWideAccess {
 		// get the intersection of KialiSA and user namespaces
-		nss, err := in.getNamespacesUsingKialiSA(cluster, "")
+		nss, err := in.getNamespacesUsingKialiSA(ctx, cluster, "")
 		if err != nil {
 			return nil, err
 		}
@@ -244,12 +293,14 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		// We do not have cluster wide access, so we do not have permission to list namespaces. Therefore, we assume we can
 		// extract the list of accessible namespaces from the discovery selectors configuration. That list of accessible
 		// namespaces will be used as our base list which we then filter with discovery selectors down below.
-		// Note, if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
-		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
-		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		// The base list is the cluster's own effective scope - its discovery selector override when one
+		// is defined, otherwise the default accessible namespaces - resolved through the same source the
+		// remote caches and the live access check use, so discovery can never name a namespace the
+		// cluster's informers are not scoped to.
+		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
-			k8sNs, err := in.userClients[cluster].GetNamespace(ans)
+			k8sNs, err := in.userClients[cluster].GetNamespace(ctx, ans)
 			if err != nil {
 				if k8serrors.IsNotFound(err) {
 					// If a namespace is not found, then we skip it from the list of namespaces
@@ -376,7 +427,7 @@ func (in *NamespaceService) GetClusterNamespaces(ctx context.Context, cluster st
 func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	saClient, ok := in.kialiSAClients[cluster]
 	if !ok {
-		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA", cluster)
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	// The SA set is cached under its own key, deliberately distinct from the
@@ -393,16 +444,18 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	var namespaces []models.Namespace
 
 	if in.conf.Deployment.ClusterWideAccess {
-		nss, err := saClient.GetNamespaces("")
+		nss, err := saClient.GetNamespaces(ctx, "")
 		if err != nil {
 			return nil, err
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
-		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		// The cluster's own effective scope (override-aware), matching the user path and the
+		// informer scoping - see getNamespacesByCluster.
+		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
-			k8sNs, err := saClient.GetNamespace(ans)
+			k8sNs, err := saClient.GetNamespace(ctx, ans)
 			if err != nil {
 				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
 					continue
@@ -442,7 +495,29 @@ func (in *NamespaceService) CheckNamespaceAccessAllClusters(ctx context.Context,
 		return NewAccessibleNamespaceError("namespace [" + namespace + "] is not accessible in every cluster where it exists")
 	}
 
+	// A skipped cluster (registration definitively broken at startup) is invisible to the
+	// SA-client list below, but its telemetry may still be present in unscoped queries. Whether
+	// the namespace exists there cannot be evaluated, so the authorization fails closed:
+	// skipping the cluster would let its data through the unscoped query.
+	if len(in.kialiCache.SkippedClusters()) > 0 {
+		return nil, notAccessible()
+	}
+
 	for _, cluster := range in.GetKialiSAClusterList() {
+		// The revocation mark is checked before the SA membership: a partially revoked
+		// namespace is also dropped from the SA's readable set on recompute (its per-namespace
+		// GET comes back Forbidden), so checking membership first would skip the cluster and
+		// pass the unscoped query on the strength of the remaining clusters. A fully
+		// degraded cluster clears its partial marks, so its degradation is checked the same
+		// way - its recomputed SA set comes back empty (every GET Forbidden) and would
+		// otherwise place no demand on the user while its telemetry stays queryable.
+		if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+			return nil, notAccessible()
+		}
+		if _, kubeCacheErr := in.kialiCache.GetKubeCache(cluster); kubeCacheErr != nil && errors.Is(kubeCacheErr, cache.ErrClusterDegraded) {
+			return nil, notAccessible()
+		}
+
 		// The SA set tells us where the namespace exists at all; clusters
 		// without it place no demand on the user.
 		saNamespaces, err := in.GetKialiSAClusterNamespaces(ctx, cluster)
@@ -516,9 +591,15 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// The client is resolved here, rather than left to
 	// GetClusterNamespacesForCluster, because the indexed read below needs
 	// the cache key. A cluster with no user client is the same
-	// AccessibleNamespaceError the computation path produces.
+	// AccessibleNamespaceError the computation path produces - unless the cluster was
+	// skipped at startup (a definitively broken registration), which is a 404 "Kiali does
+	// not know this cluster", not an access denial, so it stays consistent with the
+	// cache-based routes.
 	client, ok := in.userClients[cluster]
 	if !ok {
+		if in.kialiCache.IsClusterSkipped(cluster) {
+			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterNotCached)
+		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
 
@@ -530,18 +611,33 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// computation is coalesced by GetClusterNamespacesForCluster's
 	// singleflight, and the warm entry stays authoritative: a namespace
 	// absent from it is simply not accessible — no recompute — in both modes.
+	//
+	// A namespace that passes the user's own authorization is then checked against the SA's
+	// partial revocation: the user may still see it, but its informers are frozen and serving
+	// the pre-revocation snapshot would show resources that may no longer exist. This gates
+	// every detail path that authorizes through GetClusterNamespace (~20 call sites).
 	if ns, inSet, setCached := in.kialiCache.ResolveClusterNamespace(cluster, client.GetCacheKey(), namespace); setCached {
-		if inSet {
-			return &ns, nil
+		if !inSet {
+			return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
 		}
-		return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
+		if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+			return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+		}
+		return &ns, nil
 	}
 
 	clusterNamespaces, err := in.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	return namespaceFromAccessibleSet(clusterNamespaces, namespace, cluster)
+	ns, err := namespaceFromAccessibleSet(clusterNamespaces, namespace, cluster)
+	if err != nil {
+		return nil, err
+	}
+	if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+		return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+	}
+	return ns, nil
 }
 
 // namespaceFromAccessibleSet returns the named namespace from the accessible
@@ -611,8 +707,8 @@ func (in *NamespaceService) waitForCacheUpdate(ctx context.Context, cluster stri
 
 // getNamespacesUsingKialiSA returns the intersection of namespaces Listed for KialiSA, narrowed by labelSelector, and those the
 // user can access (via List or Get, depending on the config)
-func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
-	nss, err := in.kialiSAClients[cluster].GetNamespaces(labelSelector)
+func (in *NamespaceService) getNamespacesUsingKialiSA(ctx context.Context, cluster string, labelSelector string) ([]core_v1.Namespace, error) {
+	nss, err := in.kialiSAClients[cluster].GetNamespaces(ctx, labelSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -629,7 +725,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 	// intersect it with the SA list so we never return namespaces that Kiali
 	// itself cannot access.
 	if !in.conf.KialiFeatureFlags.Authz.RequireNamespaceGet {
-		userNss, userErr := in.userClients[cluster].GetNamespaces(labelSelector)
+		userNss, userErr := in.userClients[cluster].GetNamespaces(ctx, labelSelector)
 		if userErr == nil {
 			saSet := make(map[string]struct{}, len(nss))
 			for _, ns := range nss {
@@ -648,14 +744,14 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 		}
 	}
 
-	return in.filterToNamespacesUserCanGet(cluster, nss)
+	return in.filterToNamespacesUserCanGet(ctx, cluster, nss)
 }
 
-func (in *NamespaceService) filterToNamespacesUserCanGet(cluster string, candidates []core_v1.Namespace) ([]core_v1.Namespace, error) {
+func (in *NamespaceService) filterToNamespacesUserCanGet(ctx context.Context, cluster string, candidates []core_v1.Namespace) ([]core_v1.Namespace, error) {
 	start := time.Now()
 	var namespaces []core_v1.Namespace
 	for _, item := range candidates {
-		if _, getNsErr := in.userClients[cluster].GetNamespace(item.Name); getNsErr == nil {
+		if _, getNsErr := in.userClients[cluster].GetNamespace(ctx, item.Name); getNsErr == nil {
 			namespaces = append(namespaces, item)
 		} else if !k8serrors.IsForbidden(getNsErr) && !k8serrors.IsNotFound(getNsErr) {
 			// NotFound is tolerated like Forbidden: a namespace deleted or

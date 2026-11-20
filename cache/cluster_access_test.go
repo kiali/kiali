@@ -20,7 +20,10 @@ type fakeAccess struct {
 	calls  int
 	denied map[string]DeniedAccess // keyed by cluster/group/resource
 	err    error
-	mu     sync.Mutex
+	// errResources fails checks for the given cluster/group/resource keys only, so a test
+	// can make one resource's recheck "unknown" while another's succeeds.
+	errResources map[string]error
+	mu           sync.Mutex
 }
 
 func (f *fakeAccess) set(cluster, group, resource string, allowed bool) {
@@ -47,6 +50,9 @@ func (f *fakeAccess) check(_ context.Context, cluster, group, resource string) (
 	f.calls++
 	if f.err != nil {
 		return DeniedAccess{}, f.err
+	}
+	if err, found := f.errResources[cluster+"/"+group+"/"+resource]; found {
+		return DeniedAccess{}, err
 	}
 	return f.denied[cluster+"/"+group+"/"+resource], nil
 }
@@ -513,4 +519,38 @@ func TestProbeKeepsPartialRevocationWhenClusterRecovers(t *testing.T) {
 	_, degraded := access.DegradedSince("west")
 	require.False(t, degraded, "pods are readable again")
 	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"), "deployments still deny bookinfo")
+}
+
+// TestProbeUnknownRecheckKeepsNeverDegradedMarks pins the recovery fix: the recovery
+// branch must not wipe the partial-revocation marks of resources that never degraded - a
+// wholesale delete destroyed marks the second pass means to re-check, so an "unknown"
+// recheck (the check cannot tell) preserved nothing.
+func TestProbeUnknownRecheckKeepsNeverDegradedMarks(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+
+	// Two resources: one degrades the cluster (pods), one holds a partial mark (deployments).
+	fake.set("west", "", "pods", false)
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+
+	// The cluster recovers on pods; the deployments recheck cannot tell (a transient error
+	// on that one resource, the two-valued "unknown").
+	*now = now.Add(2 * accessCheckDebounce)
+	fake.set("west", "", "pods", true)
+	fake.errResources = map[string]error{"west/apps/deployments": errors.New("transient")}
+	access.Probe(context.Background())
+	fake.errResources = nil
+
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "the cluster recovered")
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"),
+		"the never-degraded resource's marks survive the recovery and the unknown recheck")
+
+	// Once the recheck can tell and finds the namespace readable, the mark drops.
+	*now = now.Add(2 * accessCheckDebounce)
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	require.Empty(t, access.RevokedNamespaces("west"))
 }

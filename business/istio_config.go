@@ -3,8 +3,8 @@ package business
 import (
 	"context"
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
-	"slices"
 	"strings"
 	"sync"
 
@@ -185,18 +185,17 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		// A partially-revoked namespace serves stale informer data; the list is empty
+		// rather than frozen pre-revocation config.
+		if goerrors.Is(err, cache.ErrNamespaceRevoked) {
+			return &models.IstioConfigList{}, nil
+		}
 		// Check if the namespace exists on the cluster in multi-cluster mode.
 		// TODO: Remove this once other business methods stop looping over all clusters.
 		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err) || IsAccessibleError(err)) && len(in.userClients) > 1 {
 			return &models.IstioConfigList{}, nil
 		}
 		return nil, err
-	}
-
-	// A partially-revoked namespace serves stale informer data; serve the empty list
-	// instead of frozen pre-revocation config.
-	if slices.Contains(in.kialiCache.RevokedNamespaces(cluster), namespace) {
-		return &models.IstioConfigList{}, nil
 	}
 
 	// The SA-wide list: callers serving the config list to a user apply
@@ -273,7 +272,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 
 	saClient := in.saClients[cluster]
 	if saClient == nil {
-		return nil, fmt.Errorf("kiali ServiceAccount Client for cluster [%s] is not found or is not accessible for Kiali", cluster)
+		return nil, fmt.Errorf("kiali ServiceAccount Client for cluster [%s] is not found or is not accessible for Kiali: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	if !saClient.IsIstioAPI() && !saClient.IsGatewayAPI() {

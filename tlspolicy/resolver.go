@@ -187,6 +187,9 @@ func policyFromOpenShift(ctx context.Context, client kubernetes.ClientInterface)
 	}
 
 	restCfg := rest.CopyConfig(client.ClusterInfo().ClientConfig)
+	// A live round trip against the API server: bound it with the configured request
+	// timeout (the shared config never carries one; see kiali_internal.kubernetes_client).
+	kubernetes.ApplyRequestTimeout(restCfg, config.Get())
 	osConfigClient, err := configclientset.NewForConfig(restCfg)
 	if err != nil {
 		return config.TLSPolicy{}, fmt.Errorf("failed to initialize OpenShift config client: %w; set deployment.tls_config.source=config to use explicit policy", err)

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	goerrors "errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -55,6 +57,21 @@ func ClusterHealth(
 		}
 		cluster := parsed.Cluster()
 
+		// A skipped cluster (definitively broken registration) is 404 in both query
+		// forms - naming a namespace and the aggregate - before any user-namespace
+		// filtering can turn it into a 403 or an empty 200: Kiali does not know the
+		// cluster, matching the cache-based routes' contract. A degraded cluster (access
+		// revoked, recovers on its own) is 503 in both forms: its cached health is the
+		// frozen pre-revocation snapshot.
+		if kialiCache.IsClusterSkipped(cluster) {
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("cluster [%s]: no cache is configured for the cluster", cluster))
+			return
+		}
+		if _, kubeCacheErr := kialiCache.GetKubeCache(cluster); kubeCacheErr != nil && goerrors.Is(kubeCacheErr, cache.ErrClusterDegraded) {
+			RespondWithError(w, http.StatusServiceUnavailable, kubeCacheErr.Error())
+			return
+		}
+
 		healthType := parsed.String("type")
 
 		// Determine which health types to fetch
@@ -91,6 +108,12 @@ func ClusterHealth(
 
 		if len(nss) == 0 {
 			for _, ns := range accessibleNamespaces {
+				// The cached accessible set is deliberately unfiltered: a partially
+				// revoked namespace must not surface in the aggregate with its frozen
+				// pre-revocation health.
+				if kialiCache.IsNamespaceRevoked(cluster, ns.Name) {
+					continue
+				}
 				nss = append(nss, ns.Name)
 			}
 		} else {
@@ -101,6 +124,14 @@ func ClusterHealth(
 			for _, ns := range nss {
 				if _, ok := accessible[ns]; !ok {
 					respondNamespaceNotAccessible(w, ns)
+					return
+				}
+				// A partially-revoked namespace passes the user's accessible check (the
+				// cached sets are deliberately unfiltered), but its health is the SA's
+				// frozen pre-revocation snapshot: refuse it like the detail endpoints,
+				// with the same 503 semantics.
+				if kialiCache.IsClusterSkipped(cluster) || kialiCache.IsNamespaceRevoked(cluster, ns) {
+					RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("namespace [%s] in cluster [%s]: %s", ns, cluster, cache.ErrNamespaceRevoked.Error()))
 					return
 				}
 			}

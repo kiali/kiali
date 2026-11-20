@@ -187,6 +187,21 @@ func (a *ClusterAccess) RevokedNamespaces(cluster string) []string {
 	return a.revokedNamespacesLocked(cluster)
 }
 
+// IsNamespaceRevoked reports whether the namespace is among the cluster's partially-revoked
+// namespaces. It is a direct membership check across the per-resource sets - unlike
+// RevokedNamespaces it builds and sorts nothing - so per-request gates can call it cheaply
+// even while a large partial revocation is marked.
+func (a *ClusterAccess) IsNamespaceRevoked(cluster, namespace string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, namespaces := range a.nsRevoked[cluster] {
+		if _, revoked := namespaces[namespace]; revoked {
+			return true
+		}
+	}
+	return false
+}
+
 // revokedNamespacesLocked returns the sorted union of the cluster's partially-revoked
 // namespaces across the per-resource sets. It must be called with a.mu held.
 func (a *ClusterAccess) revokedNamespacesLocked(cluster string) []string {
@@ -247,7 +262,10 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 		}
 		// The checks ran without the lock. A resource revoked *again* while they were
 		// running must not be cleared by this probe, so re-verify the revoked set is
-		// still the one that was checked before deleting anything.
+		// still the one that was checked before deleting anything. The membership
+		// comparison misses a re-denial that keeps the set unchanged; the debounce
+		// window (10s) bounds that residual, since a fresh denial requires a newer
+		// sweep than the one whose verdict this probe is committing.
 		a.mu.Lock()
 		if !a.revokedUnchangedLocked(cluster, resources) {
 			a.mu.Unlock()
@@ -256,7 +274,11 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 		delete(a.degraded, cluster)
 		delete(a.revoked, cluster)
 		delete(a.lastCheck, cluster)
-		delete(a.nsRevoked, cluster)
+		// The never-degraded resources' partial-revocation marks survive the recovery (the
+		// degraded resources' own marks were already subsumed at degradation time); the
+		// second pass below replaces them per resource with fresh verdicts. A wholesale
+		// delete here is the bug this fixed: it destroyed marks the second pass means to
+		// re-check, so an unknown recheck preserved nothing.
 		for gr, namespaces := range remaining {
 			a.setNsRevokedLocked(cluster, gr, namespaces)
 		}
@@ -291,7 +313,7 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 				a.dropNsRevokedLocked(cluster, gr)
 			default:
 				// The cluster's marks may be gone since the snapshot: the loop above
-				// drops them when the cluster recovers, and ConfirmRevoked drops them
+				// reseeds them when the cluster recovers, and ConfirmRevoked drops them
 				// when its own check comes back all-allowed. setNsRevokedLocked
 				// re-creates the entry if needed.
 				a.setNsRevokedLocked(cluster, gr, denied.Namespaces)
@@ -384,8 +406,7 @@ func (a *ClusterAccess) setNsRevokedLocked(cluster string, gr groupResource, nam
 
 // deleteNsRevokedLocked removes the resource's namespace marks for the cluster silently,
 // without the recovery log: used when the cluster is degrading, where the data is not served
-// again either. It reports whether the cluster's last mark was removed. It must be called
-// with a.mu held.
+// again either. It must be called with a.mu held.
 func (a *ClusterAccess) deleteNsRevokedLocked(cluster string, gr groupResource) bool {
 	if a.nsRevoked[cluster] == nil {
 		return false
@@ -393,9 +414,8 @@ func (a *ClusterAccess) deleteNsRevokedLocked(cluster string, gr groupResource) 
 	delete(a.nsRevoked[cluster], gr)
 	if len(a.nsRevoked[cluster]) == 0 {
 		delete(a.nsRevoked, cluster)
-		return true
 	}
-	return false
+	return len(a.nsRevoked[cluster]) == 0
 }
 
 // dropNsRevokedLocked removes the resource's namespace marks for the cluster and logs

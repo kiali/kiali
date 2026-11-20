@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -131,9 +132,43 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 	}, nil
 }
 
-// Authenticate is not implemented for the openshift auth strategy because kiali no longer supports the implicit flow.
+// Authenticate serves GET /api/authenticate for the openshift strategy. The implicit flow it
+// once implemented is gone (login goes through the OAuth code flow at /api/auth/redirect),
+// so a GET here is a session check, not a login: a valid session - including one that holds
+// remote-cluster tokens - is validated and returned; no session yields a 401; an indeterminate
+// validation (for example, an unreachable cluster) is returned as an error rather than being
+// mislabeled an authentication failure. POST gets an honest 401: openshift login never
+// happens through a form post.
 func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	return nil, fmt.Errorf("support for OAuth's implicit flow has been removed")
+	if r.Method != http.MethodGet {
+		return nil, &AuthenticationFailureError{
+			Reason: "the implicit flow has been removed; log in via the OAuth authorization code flow",
+		}
+	}
+
+	sessions, err := o.ValidateSession(r, w)
+	if err != nil {
+		// Confirmed authentication failures are 401s, not server errors: no session at all,
+		// or a session terminated because its token can no longer view any namespace.
+		if errors.Is(err, ErrSessionNotFound) {
+			return nil, &AuthenticationFailureError{Reason: "no valid session"}
+		}
+		if errors.Is(err, ErrCannotViewNamespaces) {
+			return nil, &AuthenticationFailureError{Reason: "the session's token can no longer view any namespace"}
+		}
+		// A transient validation problem (for example, an unreachable home cluster) is not
+		// an authentication failure; return it as a plain error so the handler answers 500
+		// with its message instead of a 401.
+		return nil, err
+	}
+
+	home := o.conf.KubernetesConfig.ClusterName
+	if len(sessions) == 0 || sessions[home] == nil {
+		return nil, &AuthenticationFailureError{
+			Reason: "no valid session",
+		}
+	}
+	return sessions[home], nil
 }
 
 // checkTokenCanViewNamespaces verifies that the given token can view at least one
@@ -255,14 +290,14 @@ func (o *OpenshiftAuthController) OpenshiftAuthRedirect(w http.ResponseWriter, r
 
 	// Redirect user to consent page to ask for permission
 	// for the scopes specified above.
-	url, err := o.openshiftOAuth.AuthCodeURL(verifier, cluster)
+	url, err := o.openshiftOAuth.AuthCodeURL(r.Context(), verifier, cluster)
 	if err != nil {
 		log.Errorf("Error getting the AuthCodeURL: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	oAuthConfig, err := o.openshiftOAuth.OAuthConfig(cluster)
+	oAuthConfig, err := o.openshiftOAuth.OAuthConfig(r.Context(), cluster)
 	if err != nil {
 		log.Errorf("Error getting the OAuthConfig: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -371,17 +406,46 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
-		for _, session := range sessions {
+		// Sessions are validated concurrently: each may cost a live user-info lookup plus
+		// a namespace-visibility check, and several unavailable remotes must not stack
+		// serially in front of the home handler (each could consume the full request
+		// timeout).
+		var sessionsMu sync.Mutex
+		// Terminations collected by the validation workers: sessionStore.TerminateSession
+		// appends Set-Cookie headers to the shared http.ResponseWriter, which is not
+		// safe to touch from multiple goroutines - they are applied serially after the
+		// workers finish.
+		var terminated []string
+		validateOne := func(session *SessionData[openshiftSessionPayload]) error {
+			// A cluster skipped at startup (definitively broken registration) gets no user
+			// client and no validation: the session's token may be perfectly fine - Kiali
+			// itself is the problem. Skip it for this request and preserve the cookie; it is
+			// retried if Kiali is restarted with a fixed registration.
+			if o.clientFactory.IsClusterSkipped(session.Cluster) {
+				log.Debugf("Skipping session for cluster [%s]: the cluster is skipped by Kiali because its registration is broken", session.Cluster)
+				return nil
+			}
 			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
 				if k8serrors.IsUnauthorized(err) {
 					// The token is invalid, we should clear the session.
 					// This could be an old session for a cluster with the same name.
 					log.Debug("Token saved in session is unauthorized to this cluster. This could be an old token from another cluster with an unexpired token. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Cluster)
-					continue
+					sessionsMu.Lock()
+					terminated = append(terminated, session.Cluster)
+					sessionsMu.Unlock()
+					return nil
 				}
-				return nil, err
+				if session.Cluster != o.conf.KubernetesConfig.ClusterName {
+					// An indeterminate remote (unreachable, stalled) must not fail the whole
+					// request - that would make even home-only pages unusable for any session
+					// that includes the remote, which is exactly the outage blast radius
+					// #10545 exists to bound. Skip the session for this request and preserve
+					// its cookie; it is retried on the next request once the cluster recovers.
+					log.Warningf("Skipping session for cluster [%s]: user info could not be determined: %s", session.Cluster, err)
+					return nil
+				}
+				return err
 			}
 			// Re-check namespace visibility on every request: this also terminates
 			// pre-existing sessions of users whose access has dropped to zero,
@@ -403,19 +467,22 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			if err := o.checkTokenCanViewNamespaces(r.Context(), session.Payload.AccessToken, session.Cluster); err != nil {
 				if errors.Is(err, ErrCannotViewNamespaces) {
 					log.Debug("Token saved in session cannot view any namespace. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Cluster)
+					sessionsMu.Lock()
+					terminated = append(terminated, session.Cluster)
 					terminatedZeroAccess = true
 					if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 						terminatedZeroAccessHome = true
 					}
-					continue
+					sessionsMu.Unlock()
+					return nil
 				}
 				if session.Cluster == o.conf.KubernetesConfig.ClusterName {
-					return nil, err
+					return err
 				}
 				log.Warningf("Skipping session for cluster [%s]: namespace visibility could not be determined: %s", session.Cluster, err)
-				continue
+				return nil
 			}
+			sessionsMu.Lock()
 			if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 				homeUserName = user.Name
 				homeUserGroups = user.Groups
@@ -426,6 +493,30 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				SessionID: session.SessionID,
 				Username:  user.Name,
 			}
+			sessionsMu.Unlock()
+			return nil
+		}
+
+		var sessionsWg sync.WaitGroup
+		var validateErr error
+		for _, session := range sessions {
+			sessionsWg.Add(1)
+			go func(session *SessionData[openshiftSessionPayload]) {
+				defer sessionsWg.Done()
+				err := validateOne(session)
+				sessionsMu.Lock()
+				defer sessionsMu.Unlock()
+				if err != nil && validateErr == nil {
+					validateErr = err
+				}
+			}(session)
+		}
+		sessionsWg.Wait()
+		if validateErr != nil {
+			return nil, validateErr
+		}
+		for _, cluster := range terminated {
+			o.sessionStore.TerminateSession(r, w, cluster)
 		}
 	}
 
@@ -487,7 +578,9 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			// generic "no valid session found" (which would surface as a 500).
 			return nil, ErrCannotViewNamespaces
 		}
-		return nil, fmt.Errorf("no valid session found")
+		// A confirmed authentication failure (the sessions that existed were rejected),
+		// not a server error: Authenticate maps it to a 401.
+		return nil, fmt.Errorf("no valid session found: %w", ErrSessionNotFound)
 	}
 
 	// TODO: Eventually we shouldn't need this check if the user can somehow login to a cluster without logging into the home cluster.
@@ -525,6 +618,15 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 	}
 
 	for _, session := range sessions {
+		// A skipped cluster has no SA client, so its remote token cannot be deleted - but
+		// the local session must still be cleared: an explicit logout that leaves the
+		// cookie behind (or fails with 500 because the skipped session is processed last)
+		// keeps the user logged in to a cluster Kiali cannot even reach.
+		if o.clientFactory.IsClusterSkipped(session.Cluster) {
+			log.Debugf("Clearing local session for skipped cluster [%s]; its remote token cannot be revoked", session.Cluster)
+			o.sessionStore.TerminateSession(r, w, session.Cluster)
+			continue
+		}
 		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Cluster)
 		if err != nil {
 			err = TerminateSessionError{

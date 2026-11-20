@@ -555,13 +555,33 @@ type KialiInternalConfig struct {
 	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 	// CacheReadTimeout bounds each read of a cluster's kube cache. It must cover the first sync of a large cluster's
 	// informers. Set to 0 to disable.
-	CacheReadTimeout       time.Duration     `yaml:"cache_read_timeout,omitempty"`
-	GraphCache             GraphCacheConfig  `yaml:"graph_cache,omitempty"`
-	HealthCache            HealthCacheConfig `yaml:"health_cache,omitempty"`
-	MetricLogDurationLimit time.Duration     `yaml:"metric_log_duration_limit,omitempty"`
+	CacheReadTimeout       time.Duration          `yaml:"cache_read_timeout,omitempty"`
+	GraphCache             GraphCacheConfig       `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig      `yaml:"health_cache,omitempty"`
+	KubernetesClient       KubernetesClientConfig `yaml:"kubernetes_client,omitempty"`
+	MetricLogDurationLimit time.Duration          `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
 	UrlServiceVersion string `yaml:"url_service_version" json:"urlServiceVersion"`
+}
+
+// KubernetesClientConfig bounds Kiali's Kubernetes client calls. These settings exist as an
+// escape hatch for unusual environments (for example, a WAN link to a remote cluster whose
+// connection establishment is slower than the default budget); they are undocumented like the
+// rest of kiali_internal and subject to change.
+type KubernetesClientConfig struct {
+	// DialTimeout bounds connection establishment (DNS + TCP connect) on the configs that feed
+	// controller-runtime's informer caches, where a request timeout cannot be used because it
+	// would kill long watches. It must sit well below the access check timeout so that checks
+	// against a blackholed cluster fail at the dial instead of consuming the whole check budget.
+	// Set to 0 to disable.
+	DialTimeout time.Duration `yaml:"dial_timeout,omitempty"`
+	// RequestTimeout bounds each live (non-informer) API request made through Kiali's
+	// Kubernetes clients: without it, a remote that accepts connections but stalls hangs every
+	// request that awaits it for the kernel TCP timeout. It is deliberately NOT applied to the
+	// informer configs, where it would kill long watches. A preconfigured timeout on an
+	// incoming config is never loosened. Set to 0 to disable.
+	RequestTimeout time.Duration `yaml:"request_timeout,omitempty"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -1219,6 +1239,10 @@ func NewConfig() (c *Config) {
 			},
 			HealthCache: HealthCacheConfig{
 				Enabled: true,
+			},
+			KubernetesClient: KubernetesClientConfig{
+				DialTimeout:    2 * time.Second,  // set to 0 to disable
+				RequestTimeout: 10 * time.Second, // set to 0 to disable
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},
@@ -2104,8 +2128,13 @@ func namespaceNamesFromDiscoverySelectors(selectors DiscoverySelectorsType) ([]s
 		} else if len(selector.MatchExpressions) > 1 {
 			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 		} else if len(selector.MatchLabels) == 1 {
-			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok {
+			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok && namespaceName != "" {
 				namespaceNames = append(namespaceNames, namespaceName)
+			} else if ok {
+				// An empty name is not merely useless: an empty namespace key means "all
+				// namespaces" to controller-runtime's cache scoping, silently broadening the
+				// access scope instead of narrowing it.
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match a non-empty label named kubernetes.io/metadata.name: %v", selector))
 			} else {
 				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match the label named kubernetes.io/metadata.name: %v", selector))
 			}
@@ -2113,7 +2142,13 @@ func namespaceNamesFromDiscoverySelectors(selectors DiscoverySelectorsType) ([]s
 			expr := selector.MatchExpressions[0]
 			if len(expr.Values) > 0 {
 				if expr.Key == "kubernetes.io/metadata.name" && expr.Operator == metav1.LabelSelectorOpIn {
-					namespaceNames = append(namespaceNames, expr.Values...)
+					for _, value := range expr.Values {
+						if value == "" {
+							errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector values must be non-empty namespace names: %v", selector))
+							continue
+						}
+						namespaceNames = append(namespaceNames, value)
+					}
 				} else {
 					errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match the label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 				}

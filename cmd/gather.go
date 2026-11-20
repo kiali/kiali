@@ -159,7 +159,7 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 				return fmt.Errorf("failed to write manifest: %v", err)
 			}
 
-			mgr, kubeCaches, err := newManager(conf, log.Logger(), cf, nil)
+			mgr, kubeCaches, err := newManager(ctx, conf, log.Logger(), cf, nil)
 			if err != nil {
 				return fmt.Errorf("unable to setup manager: %s", err)
 			}
@@ -170,12 +170,16 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 				}
 			}()
 
-			cache, err := cache.NewKialiCache(context.Background(), cf.GetSAClients(), asReaders(kubeCaches), *conf)
+			// newManager may have skipped definitively broken remote registrations; build
+			// the rest of the gather pipeline from the factory's post-skip view so the
+			// collected data consistently excludes them.
+			cache, err := cache.NewKialiCache(context.Background(), cf.GetSAClients(), asReaders(kubeCaches), *conf,
+				cache.WithSkippedClusters(cf.SkippedClusters()))
 			if err != nil {
 				return fmt.Errorf("unable to setup cache: %s", err)
 			}
 
-			discovery := istio.NewDiscovery(clients, cache, conf)
+			discovery := istio.NewDiscovery(cf.GetSAClients(), cache, conf)
 
 			layer, err := business.NewLayerWithSAClients(
 				conf,

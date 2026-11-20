@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	goerrors "errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -84,6 +85,15 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 				// If a cluster is not found, not accessible, or the namespace is
 				// absent from it, then we skip it
 				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
+				continue
+			}
+
+			// A partially-revoked namespace on one cluster is skip-class in an aggregate
+			// list: the healthy clusters' services must not be discarded with it. A request
+			// that explicitly targets the revoked cluster propagates the error (the caller
+			// named it, so the 503 is the honest answer), matching the detail endpoints.
+			if goerrors.Is(err, cache.ErrNamespaceRevoked) && criteria.Cluster == "" {
+				log.Debugf("Skipping revoked namespace [%s] on cluster [%s] in aggregate service list: %s", criteria.Namespace, cluster, err.Error())
 				continue
 			}
 

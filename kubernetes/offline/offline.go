@@ -172,7 +172,7 @@ func (nrc *noopReadCloser) Close() error {
 
 // StreamPodLogs overrides the embedded FakeK8sClient method to read logs from local files
 // for offline mode testing. This reads from the offline data directory structure.
-func (c *OfflineClient) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (c *OfflineClient) StreamPodLogs(_ context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	// If container is specified, try to find logs for that specific container
 	if opts != nil && opts.Container != "" {
 		containerName := opts.Container
