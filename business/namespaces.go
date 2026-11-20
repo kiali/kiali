@@ -292,7 +292,8 @@ func (in *NamespaceService) decorateNamespaces(ctx context.Context, namespaces [
 
 	// Revisions for control plane namespaces from the mesh.
 	cpRevisionsByNamespace := make(map[string][]string)
-	if mesh, err := in.discovery.Mesh(ctx); err == nil {
+	mesh, meshErr := in.discovery.Mesh(ctx)
+	if meshErr == nil {
 		for _, cp := range mesh.ControlPlanes {
 			if cp.Cluster != nil && cp.Cluster.Name == cluster {
 				rev := cp.Revision
@@ -329,6 +330,10 @@ func (in *NamespaceService) decorateNamespaces(ctx context.Context, namespaces [
 			if in.kialiCache.IsAmbientEnabled(cluster) {
 				ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
 				in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+			}
+		} else if namespaces[i].Revision == "" && meshErr == nil && mesh != nil {
+			if cp, err := mesh.ControlPlaneForNamespace(cluster, namespaces[i].Name); err == nil && cp != nil && !cp.IsMaistra() {
+				namespaces[i].Revision = cp.EffectiveRevision(cluster)
 			}
 		}
 	}

@@ -137,6 +137,9 @@ type ControlPlane struct {
 	// ID is the control plane ID as known by istiod.
 	ID string `json:"id"`
 
+	// IsAmbient indicates if PILOT_ENABLE_AMBIENT=true is set on the control plane deployment.
+	IsAmbient bool `json:"-"`
+
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.
 	IsGatewayToNamespace bool `json:"-"`
@@ -214,6 +217,18 @@ type ControlPlane struct {
 
 	// Version is the version of the controlplane.
 	Version *ExternalServiceInfo `json:"version,omitempty"`
+}
+
+// EffectiveRevision returns the tag name for cluster when present, otherwise Revision
+// (falling back to DefaultRevisionLabel when Revision is empty).
+func (c ControlPlane) EffectiveRevision(cluster string) string {
+	if c.Tag != nil && (cluster == "" || c.Tag.Cluster == "" || c.Tag.Cluster == cluster) && c.Tag.Name != "" {
+		return c.Tag.Name
+	}
+	if c.Revision == "" {
+		return DefaultRevisionLabel
+	}
+	return c.Revision
 }
 
 // IsMaistra determines if the controlplane is Maistra or not.

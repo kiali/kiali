@@ -542,3 +542,71 @@ func fakeMeshPeerAuthenticationWithMtlsMode(name, mTLSmode string) []*security_v
 func fakeMeshPeerAuthentication(name string, mtls *api_security_v1.PeerAuthentication_MutualTLS) []*security_v1.PeerAuthentication {
 	return []*security_v1.PeerAuthentication{data.CreateEmptyMeshPeerAuthentication(name, mtls)}
 }
+
+// Assisted-by: Google Antigravity
+func TestAmbientNamespaceMTLSWithCustomIstioCRRevision(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = true
+	kubernetes.SetConfig(t, *conf)
+
+	ambientLabels := map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue}
+	meshPA := fakeStrictPeerAuthn("default", "istio-custom")
+
+	objs := []runtime.Object{
+		kubetest.FakeNamespace("istio-custom"),
+		kubetest.FakeNamespaceWithLabels("orders-ambient", ambientLabels),
+	}
+	objs = append(objs, kubernetes.ToRuntimeObjects(meshPA)...)
+
+	k8s := kubetest.NewFakeK8sClient(objs...)
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IsAmbient:       true,
+				IstiodName:      "istiod-custom-mesh",
+				IstiodNamespace: "istio-custom",
+				ManagedNamespaces: []models.Namespace{
+					{
+						Cluster:   conf.KubernetesConfig.ClusterName,
+						IsAmbient: true,
+						Labels:    ambientLabels,
+						Name:      "orders-ambient",
+						Revision:  "custom-mesh",
+					},
+				},
+				MeshConfig:    meshConfigWithAutomTLSEnabled,
+				Revision:      "custom-mesh",
+				RootNamespace: "istio-custom",
+			}},
+		},
+	}
+
+	tlsService := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).Build().TLS
+
+	meshWide, err := tlsService.MeshWidemTLSStatus(context.Background(), conf.KubernetesConfig.ClusterName, "custom-mesh")
+	assert.NoError(err)
+	assert.Equal(MTLSEnabled, meshWide.Status)
+
+	nsStatus, err := tlsService.NamespaceWidemTLSStatus(context.Background(), "orders-ambient", conf.KubernetesConfig.ClusterName)
+	assert.NoError(err)
+	assert.Equal(MTLSUnsetInheritedStrict, nsStatus.Status)
+
+	clusterStatuses, err := tlsService.ClusterWideNSmTLSStatus(
+		context.Background(),
+		[]models.Namespace{
+			{Name: "istio-custom"},
+			{Name: "orders-ambient", IsAmbient: true, Labels: ambientLabels},
+		},
+		conf.KubernetesConfig.ClusterName,
+	)
+	assert.NoError(err)
+	assert.Len(clusterStatuses, 2)
+	statusByNS := map[string]string{}
+	for _, s := range clusterStatuses {
+		statusByNS[s.Namespace] = s.Status
+	}
+	assert.Equal(MTLSEnabled, statusByNS["istio-custom"])
+	assert.Equal(MTLSUnsetInheritedStrict, statusByNS["orders-ambient"])
+}

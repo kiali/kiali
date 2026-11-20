@@ -2,6 +2,7 @@ package istio
 
 const (
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
+	istiodAmbientEnvKey                   = "PILOT_ENABLE_AMBIENT"
 	istiodAppLabelValue                   = "istiod"
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"
 	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
