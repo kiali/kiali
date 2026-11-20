@@ -66,4 +66,40 @@ func TestFindManagingIstiod(t *testing.T) {
 		assert.Equal(t, "istio-a", result.Namespace)
 		assert.Same(t, istiodA, result)
 	})
+
+	// Assisted-by: Google Antigravity
+	t.Run("matches custom Istio CR revision without tag when ztunnel has explicit rev", func(t *testing.T) {
+		meshMap := mesh.NewMeshMap()
+		customIstiod := newIstiod("istio-custom", "istiod-custom-mesh", "", "1.24.0")
+		cp := customIstiod.Metadata[mesh.InfraData].(models.ControlPlane)
+		cp.IsAmbient = true
+		cp.Revision = "custom-mesh"
+		customIstiod.Metadata[mesh.InfraData] = cp
+		customIstiod.Metadata[mesh.IsAmbient] = true
+		meshMap["custom"] = customIstiod
+
+		assert.Same(t, customIstiod, findManagingIstiod(meshMap, cluster, "custom-mesh", "1.24.0"))
+	})
+
+	t.Run("connects unlabeled ztunnel to ambient istiod over sidecar istiod in hybrid multi-mesh", func(t *testing.T) {
+		meshMap := mesh.NewMeshMap()
+		// Sidecar istiod in istio-a sorts alphabetically before istio-z, so without ambient awareness it would win.
+		sidecarIstiod := newIstiod("istio-a", "istiod-sidecar", "", "1.24.0")
+		cpSidecar := sidecarIstiod.Metadata[mesh.InfraData].(models.ControlPlane)
+		cpSidecar.Revision = "sidecar-mesh"
+		sidecarIstiod.Metadata[mesh.InfraData] = cpSidecar
+		meshMap["sidecar"] = sidecarIstiod
+
+		ambientIstiod := newIstiod("istio-z", "istiod-custom-mesh", "", "1.24.0")
+		cpAmbient := ambientIstiod.Metadata[mesh.InfraData].(models.ControlPlane)
+		cpAmbient.IsAmbient = true
+		cpAmbient.Revision = "custom-mesh"
+		ambientIstiod.Metadata[mesh.InfraData] = cpAmbient
+		ambientIstiod.Metadata[mesh.IsAmbient] = true
+		meshMap["ambient"] = ambientIstiod
+
+		result := findManagingIstiod(meshMap, cluster, models.DefaultRevisionLabel, "1.24.0")
+		require.NotNil(t, result)
+		assert.Same(t, ambientIstiod, result)
+	})
 }

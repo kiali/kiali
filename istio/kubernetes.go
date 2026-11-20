@@ -105,6 +105,21 @@ func GetRevision(namespace models.Namespace) string {
 	return rev
 }
 
+// isUnlabeledAmbientNamespace reports whether namespace is enrolled in Ambient mode
+// without an explicit revision, sidecar injection, or Maistra membership label.
+func isUnlabeledAmbientNamespace(namespace models.Namespace) bool {
+	const maistraMemberOfLabel = "maistra.io/member-of"
+	const maistraIgnoreNamespaceLabel = "maistra.io/ignore-namespace"
+	if _, hasMaistraIgnoreLabel := namespace.Labels[maistraIgnoreNamespaceLabel]; !hasMaistraIgnoreLabel {
+		if _, hasMemberOfLabel := namespace.Labels[maistraMemberOfLabel]; hasMemberOfLabel {
+			return false
+		}
+	}
+	_, hasRevLabel := namespace.Labels[config.IstioRevisionLabel]
+	injectionEnabled := namespace.Labels[config.IstioInjectionLabelName] == models.IstioInjectionEnabledLabelValue
+	return !injectionEnabled && !hasRevLabel && namespace.IsAmbient
+}
+
 func GetIstiodRevisions(ctx context.Context, kubeCache ctrlclient.Reader, namespace string) ([]string, error) {
 	podLabels := map[string]string{
 		config.IstioAppLabel: istiodAppLabelValue,
