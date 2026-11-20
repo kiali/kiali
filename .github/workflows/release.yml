@@ -390,12 +390,11 @@ jobs:
     - name: Build and push image
       run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
-    - name: Configure git
+    - name: Configure kiali-bot git
       if: ${{ needs.initialize.outputs.release_type != 'publish' }}
-      run: |
-        git config user.email 'kiali-dev@googlegroups.com'
-
-        git config user.name 'kiali-bot'
+      uses: ./.github/actions/configure-kiali-bot-git
+      with:
+        signing-key: ${{ secrets.KIALI_BOT_SIGNING_KEY }}
 
     - name: Create tag
       if: ${{ needs.initialize.outputs.release_type != 'publish' }}
