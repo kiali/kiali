@@ -128,7 +128,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "react-virtualized": "9.x",
     "redux": "~5.0.1",
-    "redux-persist": "5.10.0",
+    "redux-persist": "^6.0.0",
     "redux-persist-transform-filter": "^0.0.22",
     "redux-thunk": "~3.1.0",
     "regression": "^2.0.1",
