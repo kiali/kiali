@@ -17,6 +17,7 @@ import {
   buildEnvoyMemoryTabUrl,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
+  envoyMemoryStatusUsesWorkingSet,
   formatEnvoyMemoryBytes,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
@@ -41,9 +42,9 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
     props.lastRefreshAt,
     fetchEnabled
   );
-  // Tooltip has reversed theme (light theme = dark background), so link colors are inverted
-  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
-  const linkColor = darkTheme ? PFColors.LinkTooltipDarkTheme : PFColors.LinkTooltipLightTheme;
+  // Default PF tooltip is dark when Kiali uses the light theme; use a lighter link color there.
+  const kialiDarkTheme = useKialiColorScheme() === ColorScheme.DARK;
+  const linkColor = kialiDarkTheme ? PFColors.Link : PFColors.LightBlue400;
 
   if (!hasEnvoyMemoryWorkload(props.workload)) {
     return null;
@@ -86,7 +87,10 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
         <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
       </div>
       <div>
-        <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}
+        <strong>
+          {envoyMemoryStatusUsesWorkingSet(summary) ? t('Working set (max)') : t('Allocated memory (max)')}:
+        </strong>{' '}
+        {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}
       </div>
       {memoryLimitBytes > 0 && percentOfLimit !== undefined && (
         <div>
@@ -107,8 +111,8 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
       </div>
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>
-        <Link to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())} style={{ color: linkColor }}>
-          {t('Envoy overview tab')}
+        <Link style={{ color: linkColor }} to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())}>
+          {t('Envoy Memory tab')}
         </Link>
       </div>
     </div>

@@ -147,19 +147,21 @@ describe('EnvoyMemoryUtils', () => {
   });
 
   it('describes the active warning threshold', () => {
-    expect(
-      envoyMemoryThresholdHelp({
-        largeConfigClustersThreshold: 100,
-        memoryLimitBytes: 1024 * 1024 * 1024,
-        memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
-        proxyType: 'sidecar'
-      })
-    ).toContain('70.0%');
+    const withLimit = envoyMemoryThresholdHelp({
+      largeConfigClustersThreshold: 100,
+      memoryLimitBytes: 1024 * 1024 * 1024,
+      memoryMetric: 'working_set',
+      memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
+      proxyType: 'sidecar'
+    });
+    expect(withLimit).toContain('70.0%');
+    expect(withLimit).toContain('working set');
 
     expect(
       envoyMemoryThresholdHelp({
         largeConfigClustersThreshold: 100,
         memoryLimitBytes: 0,
+        memoryMetric: 'working_set',
         memoryThresholdBytes: 100 * 1024 * 1024,
         proxyType: 'sidecar'
       })

@@ -11655,6 +11655,17 @@ associated configuration.
 
 
 
+### <span id="envoy-memory-metric"></span> EnvoyMemoryMetric
+
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| EnvoyMemoryMetric | string| string | |  |  |
+
+
+
 ### <span id="envoy-memory-summary"></span> EnvoyMemorySummary
 
 
@@ -11668,10 +11679,15 @@ associated configuration.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ActiveClustersMax | int64 (formatted integer)| `int64` |  | |  |  |
 | ActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| ActiveConnectionsObserved | boolean| `bool` |  | |  |  |
+| BusyActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| BusyRequestRatePerSecond | double (formatted number)| `float64` |  | |  |  |
+| BusyTCPBytesPerSecond | double (formatted number)| `float64` |  | |  |  |
 | ConfigCountsPod | string| `string` |  | |  |  |
 | LargeConfigClustersThreshold | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryLimitBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryMaxBytes | int64 (formatted integer)| `int64` |  | |  |  |
+| MemoryMetric | [EnvoyMemoryMetric](#envoy-memory-metric)| `EnvoyMemoryMetric` |  | |  |  |
 | MemoryThresholdBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryUsedPercent | double (formatted number)| `float64` |  | |  |  |
 | RequestRate | double (formatted number)| `float64` |  | |  |  |
