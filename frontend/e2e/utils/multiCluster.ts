@@ -308,13 +308,11 @@ export const clickMiniGraphNode = async (
     expect(node).toBeTruthy();
     nodeId = node!.id;
   }).toPass({ intervals: [3_000], timeout: 60_000 });
-  if (type === 'app') {
-    // App boxes render as group nodes whose bounding-box center is routinely crossed by an
-    // edge path, so a real pointer click there hits the edge instead of the group. Dispatch
-    // the click on the group element itself.
-    const group = page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`);
-    await group.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
-  } else {
-    await page.locator(`[data-id="${nodeId}"]`).click();
-  }
+  // Node groups are routinely not painted at their bounding-box center: group interiors are
+  // crossed by edge paths, and plain nodes can have the center fall in the gap between the
+  // node badge and its label. A real pointer click at the center then hits the pan surface
+  // (<rect fill-opacity="0">) or an edge instead of the node. Dispatch the click on the node
+  // element itself so the React handler fires regardless of what covers that point.
+  const node = page.locator(`[data-id="${nodeId}"]`).first();
+  await node.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
 };

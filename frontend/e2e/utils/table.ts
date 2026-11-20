@@ -38,6 +38,19 @@ export const getColWithRowText = (page: Page, rowSearchText: string, colName: st
     .locator(`td[data-label="${colName}"]`);
 };
 
+// ListLabels renders at most 2 labels and collapses the rest behind a "N more" toggle.
+// Expand the cell first so assertions can see every label of the row.
+export const expectLabelsInRow = async (page: Page, rowSearchText: string, ...labels: string[]): Promise<void> => {
+  const cell = getColWithRowText(page, rowSearchText, 'Labels');
+  const toggle = cell.getByTestId('toggle-labels');
+  if (await toggle.isVisible()) {
+    await toggle.click();
+  }
+  for (const label of labels) {
+    await expect(cell).toContainText(label);
+  }
+};
+
 export const ensureObjectsInTable = async (page: Page, ...names: string[]): Promise<void> => {
   const rows = page.locator('tbody tr');
   const rowCount = await rows.count();

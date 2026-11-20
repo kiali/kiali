@@ -274,14 +274,13 @@ export class WorkloadDetailsPage extends BasePage {
 
   async expectPersesLinkInInboundMetrics(): Promise<void> {
     await openDetailsTab(this.page, 'Inbound Metrics');
-    const cardBody = this.page.locator('.pf-v6-c-card__body');
-    const link = cardBody.locator('#perses_link_0');
+    // Perses links live in the tab actions toolbar "Dashboards" dropdown, not on the metrics cards.
+    await this.getBySel('istio-dashboards-toggle').click();
+    const link = this.getBySel('istio-dashboard-link-perses-0');
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('title', 'Istio Mesh Dashboard');
-    await expect(link).toHaveAttribute('target', '_blank');
-    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    await expect(link).toContainText('View in Perses');
-    await expect(link).toHaveAttribute('href', /istio-mesh-dashboard/);
+    await expect(link).toContainText('Istio Workload Dashboard');
+    await expect(link).toHaveAttribute('title', 'View Istio Workload Dashboard in Perses');
+    await expect(link).toHaveAttribute('href', /var-workload=details-v1/);
   }
 
   async expectOutboundMetrics(): Promise<void> {

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/kialiFixtures';
-import { expectColumnTextOnRow, expectHealthIconInRow, getColWithRowText } from '../../utils/table';
+import { expectColumnTextOnRow, expectHealthIconInRow, expectLabelsInRow, getColWithRowText } from '../../utils/table';
 import { linkSelector } from '../../utils/linkSelector';
 import {
   enableUseWaypointNameIfNeeded,
@@ -36,9 +36,12 @@ test.describe('Waypoint (bookinfo)', () => {
     await expect(page.locator('tbody').getByRole('row').filter({ hasText: 'waypoint' })).toBeVisible();
     await expectHealthIconInRow(page, 'waypoint');
 
-    const labels = getColWithRowText(page, 'waypoint', 'Labels');
-    await expect(labels).toContainText('gateway.istio.io/managed=istio.io-mesh-controller');
-    await expect(labels).toContainText('gateway.networking.k8s.io/gateway-name=waypoint');
+    await expectLabelsInRow(
+      page,
+      'waypoint',
+      'gateway.istio.io/managed=istio.io-mesh-controller',
+      'gateway.networking.k8s.io/gateway-name=waypoint'
+    );
     await expect(getColWithRowText(page, 'waypoint', 'Type')).toContainText('Deployment');
 
     const details = getColWithRowText(page, 'waypoint', 'Details');
@@ -81,7 +84,7 @@ test.describe('Waypoint (bookinfo)', () => {
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectWaypointServicesData();
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
   });
 

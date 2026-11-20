@@ -101,10 +101,16 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async editLabels(key: string, value: string): Promise<void> {
-    await this.getBySel('edit-labels').click();
-    await this.page.locator('input[id="labelInputForKey_0"]').fill(key);
-    await this.page.locator('input[id="labelInputForValue_0"]').fill(value);
-    await this.getBySel('save-button').click();
+    const card = this.getBySel('istio-config-labels-card');
+    await card.getByRole('button', { name: 'Edit labels' }).click();
+    await card.getByRole('button', { name: 'Add label' }).click();
+    // The new entry renders as an editable label showing the "key=value" placeholder; click it
+    // to swap in the text input, then commit with Enter before saving the card.
+    await card.getByRole('button', { name: 'key=value' }).click();
+    const input = card.getByRole('textbox');
+    await input.fill(`${key}=${value}`);
+    await input.press('Enter');
+    await card.getByRole('button', { name: 'Save' }).click();
   }
 
   async editAnnotations(key: string, value: string): Promise<void> {

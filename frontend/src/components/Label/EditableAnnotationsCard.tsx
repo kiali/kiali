@@ -83,6 +83,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
         <Button
           variant="plain"
           size="sm"
+          data-test="edit-annotations"
           onClick={onEditClick ?? (() => setShowEditor(true))}
           icon={canEdit ? <KialiIcon.PencilAlt /> : <KialiIcon.ExpandArrows />}
         />
