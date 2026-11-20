@@ -9,6 +9,9 @@ func TestPluralResourceName(t *testing.T) {
 		kind     string
 		expected string
 	}{
+		{AuthorizationPoliciesType, "authorizationpolicies"},
+		{DestinationRuleType, "destinationrules"},
+		{EnvoyFilterType, "envoyfilters"},
 		{K8sGatewayType, "gateways"},
 		{K8sGatewayClassType, "gatewayclasses"},
 		{K8sGRPCRouteType, "grpcroutes"},
@@ -18,6 +21,16 @@ func TestPluralResourceName(t *testing.T) {
 		{K8sTCPRouteType, "tcproutes"},
 		{K8sTLSRouteType, "tlsroutes"},
 		{K8sUDPRouteType, "udproutes"},
+		{PeerAuthenticationsType, "peerauthentications"},
+		{RequestAuthenticationsType, "requestauthentications"},
+		{ServiceEntryType, "serviceentries"},
+		{SidecarType, "sidecars"},
+		{TelemetryType, "telemetries"},
+		{TrafficExtensionType, "trafficextensions"},
+		{VirtualServiceType, "virtualservices"},
+		{WasmPluginType, "wasmplugins"},
+		{WorkloadEntryType, "workloadentries"},
+		{WorkloadGroupType, "workloadgroups"},
 	}
 
 	for _, tt := range tests {
@@ -31,10 +44,10 @@ func TestPluralResourceName(t *testing.T) {
 }
 
 func TestPluralResourceNameFallback(t *testing.T) {
-	// Types not in PluralNames should return the Kind unchanged (used for
-	// Istio types that still use wildcard resources: ["*"] in RBAC).
-	got := PluralResourceName("DestinationRule")
-	if got != "DestinationRule" {
-		t.Errorf("PluralResourceName(%q) = %q, want %q (fallback to Kind)", "DestinationRule", got, "DestinationRule")
+	// Types not in PluralNames return the Kind unchanged, which only matches
+	// RBAC rules granting resources: ["*"].
+	got := PluralResourceName("ProxyConfig")
+	if got != "ProxyConfig" {
+		t.Errorf("PluralResourceName(%q) = %q, want %q (fallback to Kind)", "ProxyConfig", got, "ProxyConfig")
 	}
 }

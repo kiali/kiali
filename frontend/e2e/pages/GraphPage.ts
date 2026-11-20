@@ -855,8 +855,9 @@ export class GraphPage extends BasePage {
     await tooltipTrigger.hover({ force: true });
     await tooltipTrigger.dispatchEvent('mouseenter');
     // Other PF tooltips (e.g. the graph layout selector) can linger visible in the
-    // DOM, so an unscoped getByRole('tooltip') hits strict-mode violations.
-    await expect(this.page.getByRole('tooltip').filter({ hasText: VIEW_ONLY_TOOLTIP })).toBeVisible();
+    // DOM, and successive hovers of these items leave escaped view-only tooltips
+    // behind — both make an unscoped getByRole('tooltip') hit strict-mode violations.
+    await expect(this.page.getByRole('tooltip').filter({ hasText: VIEW_ONLY_TOOLTIP }).first()).toBeVisible();
   }
 
   async expectSidePanelKebabItemEnabledInViewOnly(menuKey: string): Promise<void> {

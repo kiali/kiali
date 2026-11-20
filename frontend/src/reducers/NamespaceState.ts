@@ -1,9 +1,9 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { NamespaceState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { NamespaceState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
-import { Namespace } from '../types/Namespace';
+import type { Namespace } from '../types/Namespace';
 
 function filterDuplicateNamespaces(namespaces: Namespace[]): Namespace[] {
   const nsMap = new Map<string, Namespace>();
@@ -38,7 +38,7 @@ export const NamespaceStateReducer = (
   action: KialiAppAction
 ): NamespaceState => {
   switch (action.type) {
-    case getType(NamespaceActions.toggleActiveNamespace):
+    case getType(NamespaceActions.toggleActiveNamespace): {
       const namespaceIndex = state.activeNamespaces.findIndex(namespace => namespace.name === action.payload.name);
       if (namespaceIndex === -1) {
         return updateState(state, {
@@ -49,6 +49,7 @@ export const NamespaceStateReducer = (
         activeNamespaces.splice(namespaceIndex, 1);
         return updateState(state, { activeNamespaces });
       }
+    }
 
     case getType(NamespaceActions.setActiveNamespaces):
       return updateState(state, { activeNamespaces: filterDuplicateNamespaces(action.payload) });
@@ -61,7 +62,7 @@ export const NamespaceStateReducer = (
         isFetching: true
       });
 
-    case getType(NamespaceActions.receiveList):
+    case getType(NamespaceActions.receiveList): {
       const names = action.payload.list.map(ns => ns.name);
       const validActive = state.activeNamespaces.filter(an => names.includes(an.name));
       let updatedActive = {};
@@ -76,6 +77,7 @@ export const NamespaceStateReducer = (
         namespacesPerCluster: namespacesPerCluster(action.payload.list),
         ...updatedActive
       });
+    }
 
     case getType(NamespaceActions.requestFailed):
       return updateState(state, {

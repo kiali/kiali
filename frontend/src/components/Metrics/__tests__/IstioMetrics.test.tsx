@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { IstioMetrics } from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import { MounterMocker } from 'services/__mocks__/MounterMocker';
-import { ChartModel, DashboardModel } from 'types/Dashboards';
+import type { ChartModel, DashboardModel } from 'types/Dashboards';
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -76,8 +76,6 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
@@ -115,7 +113,11 @@ describe('Metrics for a service', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {
@@ -170,8 +172,6 @@ describe('Metrics for a service', () => {
 
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
@@ -209,7 +209,11 @@ describe('Inbound Metrics for a workload', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {

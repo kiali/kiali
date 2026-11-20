@@ -74,6 +74,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	for _, namespaceInfo := range o.Namespaces {
 		zl.Trace().Msgf("Build traffic map for namespace [%v]", namespaceInfo)
 		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
+		dropUnavailableClusterNodes(namespaceTrafficMap, globalInfo)
 
 		// The appenders can add/remove/alter nodes for the namespace
 		appenderNamespaceInfo := appender.NewAppenderNamespaceInfo(namespaceInfo.Name)
@@ -114,6 +115,67 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	}
 
 	return trafficMap
+}
+
+// dropUnavailableClusterNodes removes the nodes of remote clusters whose Kiali
+// service-account cache cannot serve reads - access revoked and torn down, or no cache
+// configured for the cluster - before the appenders run. The appenders enrich nodes with
+// config, health and services through that cache, and its errors propagate as panics that
+// fail the whole graph with a 500; a degraded remote must instead be skipped, like the mesh
+// resolution skips it. Only clusters Kiali knows about (gi.Clusters) are considered:
+// telemetry can carry cluster labels that are not Kiali clusters (e.g. "unknown" external
+// traffic), and those nodes are left alone. The home cluster is not skippable: its cache
+// being unavailable fails the graph.
+//
+// A cluster with no cache configured is a configuration error - the cluster name appears
+// in the configuration but no connected cluster matches it (a typo, or a cluster that does
+// not exist in this environment), so no cache was ever created and it will not recover
+// until the configuration is fixed. Unlike the per-cluster API handlers, which fail the
+// request for such a cluster, aggregating surfaces like this one skip it: one
+// misconfigured cluster name must not take down the graph for every other cluster.
+func dropUnavailableClusterNodes(trafficMap graph.TrafficMap, gi *appender.GlobalInfo) {
+	knownClusters := make(map[string]struct{}, len(gi.Clusters))
+	for _, cluster := range gi.Clusters {
+		knownClusters[cluster.Name] = struct{}{}
+	}
+	homeCluster := gi.Conf.KubernetesConfig.ClusterName
+	// One skip decision per cluster: the helper logs each drop when it decides it.
+	decided := make(map[string]bool, len(knownClusters))
+	dropped := false
+	for id, node := range trafficMap {
+		if _, known := knownClusters[node.Cluster]; !known {
+			continue
+		}
+		skip, seen := decided[node.Cluster]
+		if !seen {
+			var err error
+			skip, err = gi.Business.SkipUnavailableClusterForAggregate(node.Cluster, "building the graph")
+			if err != nil {
+				// The home cluster is not skippable: fail the graph rather than render it
+				// without the home data.
+				graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
+			}
+			decided[node.Cluster] = skip
+			dropped = dropped || skip
+		}
+		if skip {
+			delete(trafficMap, id)
+		}
+	}
+	if !dropped {
+		return
+	}
+	// Appenders and the response join edges to nodes by Dest.ID; an edge whose
+	// destination was dropped would dangle, so strip those too.
+	for _, node := range trafficMap {
+		keptEdges := make([]*graph.Edge, 0, len(node.Edges))
+		for _, edge := range node.Edges {
+			if _, ok := trafficMap[edge.Dest.ID]; ok {
+				keptEdges = append(keptEdges, edge)
+			}
+		}
+		node.Edges = keptEdges
+	}
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
@@ -478,11 +540,15 @@ func addTraffic(ctx context.Context, trafficMap graph.TrafficMap, metric string,
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
 			addEdgeTraffic(val, protocol, code, flags, host, injectedService, dest, edgeTSHash)
-			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			if !destIsWaypoint {
+				addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			}
 		}
 	} else {
 		if addEdgeTraffic(val, protocol, code, flags, host, source, dest, edgeTSHash) {
-			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			if !destIsWaypoint {
+				addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			}
 		}
 	}
 }
@@ -577,6 +643,9 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 	}
 
 	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.Namespace, n, o, globalInfo)
+
+	// Drop unavailable clusters' nodes before the appenders fetch through their caches.
+	dropUnavailableClusterNodes(trafficMap, globalInfo)
 
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 
@@ -1013,6 +1082,9 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 	}
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildAggregateNodeTrafficMap(ctx, o.Namespace.Name, n, o, globalInfo)
+
+	// Drop unavailable clusters' nodes before the appenders fetch through their caches.
+	dropUnavailableClusterNodes(trafficMap, globalInfo)
 
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 

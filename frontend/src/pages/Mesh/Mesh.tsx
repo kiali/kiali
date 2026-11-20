@@ -53,6 +53,8 @@ import { elems, setObserved } from 'helpers/GraphHelpers';
 import { MeshTourStops } from './MeshHelpTour';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
+import { useKialiSelector } from 'hooks/redux';
+import { namespaceItemsSelector } from 'store/Selectors';
 
 const DEFAULT_NODE_SIZE = 100;
 const NAMESPACE_NODE_SIZE = 70;
@@ -114,6 +116,8 @@ const TopologyContent: React.FC<{
   showLegend,
   toggleLegend
 }) => {
+  const namespaceItems = useKialiSelector(namespaceItemsSelector);
+
   //
   // SelectedIds State
   //
@@ -268,7 +272,7 @@ const TopologyContent: React.FC<{
           style: { padding: [35, 35, 35, 35] },
           type: 'group'
         };
-        setNodeLabel(group, nodeMap);
+        setNodeLabel(group, nodeMap, namespaceItems);
         nodeMap.set(data.id, group);
 
         return group;
@@ -287,7 +291,7 @@ const TopologyContent: React.FC<{
           type: 'node',
           width: size
         };
-        setNodeLabel(node, nodeMap);
+        setNodeLabel(node, nodeMap, namespaceItems);
         nodeMap.set(data.id, node);
 
         return node;
@@ -396,7 +400,17 @@ const TopologyContent: React.FC<{
 
     // notify that the graph has been updated
     setUpdateTime(Date.now());
-  }, [controller, meshData, highlighter, layout, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
+  }, [
+    controller,
+    meshData,
+    highlighter,
+    layout,
+    namespaceItems,
+    onReady,
+    setDetailsLevel,
+    setSelectedIds,
+    setUpdateTime
+  ]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
@@ -572,20 +586,16 @@ export const Mesh: React.FC<{
   showLegend,
   toggleLegend
 }) => {
-  //create controller on startup and register factories
-  const [controller, setController] = React.useState<Visualization>();
-  const [highlighter, setHighlighter] = React.useState<MeshHighlighter>();
-
-  // Set up the controller one time
-  React.useEffect(() => {
+  // Create controller once on mount (lazy init avoids setState-in-effect).
+  const [controller] = React.useState(() => {
     console.debug('New Controller!');
     const c = new Visualization();
     c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
     c.registerComponentFactory(meshComponentFactory);
-    setController(c);
-    setHighlighter(new MeshHighlighter(c));
-  }, []);
+    return c;
+  });
+  const [highlighter] = React.useState(() => new MeshHighlighter(controller));
 
   const setLayoutByName = (layout: MeshLayout): void => {
     const validLayout = getValidMeshLayout(layout);

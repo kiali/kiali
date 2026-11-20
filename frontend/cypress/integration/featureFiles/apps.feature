@@ -19,7 +19,8 @@ Feature: Kiali Apps List page
     And user sees Health information for Apps
     And user sees Name information for Apps
     And user sees Namespace information for Apps
-    And user sees Labels information for Apps
+    When user expands labels on the "details" row
+    Then user sees Labels information for Apps
     And user sees Details information for Apps
     And the "Cluster" column "disappears"
 

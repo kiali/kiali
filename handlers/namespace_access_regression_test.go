@@ -344,7 +344,7 @@ func TestListEndpointsFailClosedWhenSetNotComputable(t *testing.T) {
 			resp, err := http.Get(ts.URL + tc.url)
 			require.NoError(err)
 			actual, _ := io.ReadAll(resp.Body)
-			assert.Equal(http.StatusInternalServerError, resp.StatusCode, string(actual))
+			assert.Equal(http.StatusForbidden, resp.StatusCode, string(actual))
 		})
 	}
 }

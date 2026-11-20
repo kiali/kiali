@@ -1,21 +1,23 @@
 import { router } from 'app/History';
-import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
-import { TracingInfo } from 'types/TracingInfo';
+import type { DecoratedGraphNodeData } from 'types/Graph';
+import { BoxByType, NodeType } from 'types/Graph';
+import type { TracingInfo } from 'types/TracingInfo';
 import { isMultiCluster, Paths } from 'config';
 import { isParentKiosk, kioskNavigateAction } from '../../../components/Kiosk/KioskActions';
-import { GraphElement } from '@patternfly/react-topology';
+import type { GraphElement } from '@patternfly/react-topology';
+import { dismissContextMenu } from 'utils/ContextMenuUtils';
 type LinkParams = { cluster?: string; name: string; namespace: string; type: string };
 
 const getLinkParamsForNode = (node: DecoratedGraphNodeData): LinkParams | undefined => {
   const namespace: string = node.isServiceEntry ? node.isServiceEntry.namespace : node.namespace;
 
-  let cluster = node.cluster;
+  const cluster = node.cluster;
   let name: string | undefined = undefined;
   let type: string | undefined = undefined;
 
   switch (node.nodeType) {
     case NodeType.APP:
-    case NodeType.BOX:
+    case NodeType.BOX: {
       // only app boxes have full context menus
       const isBox = node.isBox;
 
@@ -30,6 +32,7 @@ const getLinkParamsForNode = (node: DecoratedGraphNodeData): LinkParams | undefi
         }
       }
       break;
+    }
     case NodeType.SERVICE:
       type = node.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
       name = node.service;
@@ -66,6 +69,7 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string): void => {
       router.navigate(o.url);
     }
   }
+  dismissContextMenu();
 };
 
 export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingInfo): ContextMenuOption[] => {
@@ -85,7 +89,7 @@ export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingIn
 const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingInfo): ContextMenuOption[] => {
   const { namespace, type, name, cluster } = linkParams;
 
-  let options: ContextMenuOption[] = [];
+  const options: ContextMenuOption[] = [];
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
   let concat = '?';
 

@@ -1,15 +1,22 @@
 export type EnvoyMemoryCause = 'ok' | 'configuration' | 'traffic' | 'unknown';
 
+export type EnvoyMemoryMetric = 'allocated' | 'working_set';
+
 export type EnvoyProxyType = 'sidecar' | 'waypoint' | 'gateway';
 
 export type EnvoyMemorySummary = {
   activeClustersMax: number;
   activeConnections: number;
+  activeConnectionsObserved: boolean;
+  busyActiveConnections?: number;
+  busyRequestRatePerSecond?: number;
+  busyTCPBytesPerSecond?: number;
   cause: EnvoyMemoryCause;
   configCountsPod?: string;
   largeConfigClustersThreshold: number;
   memoryLimitBytes: number;
   memoryMaxBytes: number;
+  memoryMetric: EnvoyMemoryMetric;
   memoryThresholdBytes: number;
   memoryUsedPercent: number;
   proxyType: EnvoyProxyType;

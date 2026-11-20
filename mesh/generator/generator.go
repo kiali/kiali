@@ -181,6 +181,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 		// if included, add any waypoints
 		if o.IncludeWaypoints {
+			ctx = business.ContextWithGatewayWaypointSplitCache(ctx)
 			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {
 				// fetch the detail for each waypoint because we need the waypoint workloads and/or services
 				criteria := business.WorkloadCriteria{
@@ -195,15 +196,17 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				}
 
 				infraData := struct {
-					Annotations         map[string]string
-					Labels              map[string]string
-					TemplateAnnotations map[string]string
-					TemplateLabels      map[string]string
+					Annotations                 map[string]string
+					Labels                      map[string]string
+					TemplateAnnotations         map[string]string
+					TemplateLabels              map[string]string
+					WaypointTrafficSplitConfigs []models.GatewayWaypointTrafficSplitConfig `json:"WaypointTrafficSplitConfigs,omitempty"`
 				}{
-					Annotations:         wp.Annotations,
-					Labels:              wp.Labels,
-					TemplateAnnotations: wp.TemplateAnnotations,
-					TemplateLabels:      wp.TemplateLabels,
+					Annotations:                 wp.Annotations,
+					Labels:                      wp.Labels,
+					TemplateAnnotations:         wp.TemplateAnnotations,
+					TemplateLabels:              wp.TemplateLabels,
+					WaypointTrafficSplitConfigs: wp.WaypointTrafficSplitConfigs,
 				}
 
 				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, infraData, version, false, "")

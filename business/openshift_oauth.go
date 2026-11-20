@@ -108,8 +108,16 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Clie
 	conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
 
 	return &http.Client{
-		Timeout:   restConfig.Timeout,
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout: restConfig.Timeout,
+		Transport: &http.Transport{
+			// The OpenShift OAuth server is usually reached in-cluster, but in
+			// egress-controlled environments it may require a proxy. Unlike
+			// OpenID, there is no config-based proxy setting for this client,
+			// so the standard HTTP_PROXY/HTTPS_PROXY/NO_PROXY env vars are the
+			// only mechanism.
+			Proxy:           http.ProxyFromEnvironment,
+			TLSClientConfig: tlsConfig,
+		},
 	}, nil
 }
 

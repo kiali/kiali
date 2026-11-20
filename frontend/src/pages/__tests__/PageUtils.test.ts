@@ -6,7 +6,8 @@ import {
   hasAnnotationsChanged,
   LAST_APPLIED_ANNOTATION,
   preserveHiddenAnnotations,
-  navigateToFilteredList
+  navigateToFilteredList,
+  partitionByIstio
 } from '../PageUtils';
 
 const mockResetFilters = rstest.fn();
@@ -18,6 +19,7 @@ rstest.mock('../../components/Filters/StatefulFilters', () => ({
 
 rstest.mock('../../app/History', () => ({
   URLParam: { NAMESPACES: 'namespaces' },
+  navigateApp: (...args: unknown[]) => mockNavigate(...args),
   router: { navigate: (...args: unknown[]) => mockNavigate(...args) }
 }));
 
@@ -397,5 +399,22 @@ describe('hasAnnotationsChanged', () => {
     };
     const userVisible = { 'app.kubernetes.io/name': 'updated' };
     expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
+  });
+});
+
+describe('partitionByIstio', () => {
+  it('preserves Istio-first and alphabetical ordering when keys are numeric', () => {
+    const labels = { '2': 'two', '10': 'ten', 'istio.io/rev': 'default', app: 'ratings', 'ISTIO.io/z': 'enabled' };
+
+    expect(partitionByIstio(labels)).toEqual({
+      istioCount: 2,
+      sorted: [
+        ['ISTIO.io/z', 'enabled'],
+        ['istio.io/rev', 'default'],
+        ['10', 'ten'],
+        ['2', 'two'],
+        ['app', 'ratings']
+      ]
+    });
   });
 });

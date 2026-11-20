@@ -302,6 +302,12 @@ func getIstioAction(ctx context.Context, businessLayer *business.Layer, clusterN
 		if err != nil {
 			return []Action{}, err
 		}
+
+		// This serves user-facing navigation actions, so it is a boundary of
+		// the config list: prune the types the user cannot list so the
+		// actions match what a detail request lets them read (#10515).
+		businessLayer.IstioConfig.FilterByUserListRBAC(ctx, clusterName, istioConfig)
+
 		istioObjectsFiltered := filterIstioObjectsByName(istioConfig, resourceName)
 		actions = GetActionsForIstioObjects(istioObjectsFiltered, clusterName)
 	} else {

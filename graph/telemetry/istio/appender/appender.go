@@ -492,6 +492,23 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *Globa
 		return ns.Cluster
 	})
 
+	// A cluster whose service-account cache cannot serve reads has no workloads or
+	// services to list: skip it, failing for the home cluster. This matters most for
+	// callers that pass a nil traffic map (e.g. the idle-node appender) and therefore see
+	// every accessible cluster, bypassing the drop's reduction. The skip is silent:
+	// dropUnavailableClusterNodes already logged the drop once for this graph build, and
+	// this filter runs per appender, per namespace.
+	homeCluster := gi.Conf.KubernetesConfig.ClusterName
+	clusterNames = sliceutil.Filter(clusterNames, func(clusterName string) bool {
+		skip, err := gi.Business.SkipUnavailableClusterSilent(clusterName)
+		if err != nil {
+			// The home cluster is not skippable: fail the graph rather than render it
+			// without the home data.
+			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
+		}
+		return !skip
+	})
+
 	if trafficMap == nil {
 		return clusterNames
 	}

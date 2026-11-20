@@ -2,7 +2,7 @@ import type { GlobalState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { GlobalActions } from '../actions/GlobalActions';
 import type { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   colorScheme: '',

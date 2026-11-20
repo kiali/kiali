@@ -383,7 +383,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                 </DescriptionListGroup>
                 {nsInfo.tlsStatus && (
                   <DescriptionListGroup data-test="details-mtls">
-                    <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
+                    <DescriptionListTerm>mTLS</DescriptionListTerm>
                     <DescriptionListDescription>
                       <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
                     </DescriptionListDescription>

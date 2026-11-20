@@ -211,6 +211,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 			Host: "http://127.0.0.2:9443",
 		},
 	}
+	primaryClient.AllowAllSelfSubjectAccessReviews()
 	remoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
@@ -220,6 +221,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		kubetest.FakeNamespaceWithLabels("data-plane-3", defaultInjection),
 		kubetest.FakeNamespaceWithLabels("data-plane-4", revLabel),
 	)
+	remoteClient.AllowAllSelfSubjectAccessReviews()
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: primaryClient,
 		"cluster-remote":                  remoteClient,

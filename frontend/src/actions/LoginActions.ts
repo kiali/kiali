@@ -1,6 +1,6 @@
-import type { ActionType} from 'typesafe-actions';
-import { createAction, createStandardAction } from 'typesafe-actions';
-import type { LoginSession} from '../store/Store';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { LoginSession } from '../store/Store';
 import { LoginStatus } from '../store/Store';
 import { ActionKeys } from './ActionKeys';
 

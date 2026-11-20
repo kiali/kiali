@@ -98,7 +98,7 @@ jobs:
         ref: ${{ needs.check-trigger.outputs.pr-sha }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      uses: Azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
       with:
         version: "v3.18.4"
 
@@ -134,7 +134,7 @@ jobs:
 
     - name: Run mcpchecker evaluation
       id: mcpchecker
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       with:
@@ -184,7 +184,7 @@ jobs:
         ref: ${{ needs.check-trigger.outputs.pr-sha }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      uses: Azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
       with:
         version: "v3.18.4"
 
@@ -219,7 +219,7 @@ jobs:
 
     - name: Run mcpchecker multicluster evaluation
       id: mcpchecker
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       with:
@@ -351,7 +351,7 @@ jobs:
     - name: Run single-cluster diff
       id: mcpchecker-diff-single
       if: steps.normalize.outputs.has-single == 'true' && steps.baseline-single.outputs.has-baseline == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       with:
         base-results: ${{ steps.baseline-single.outputs.baseline-file }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
@@ -361,7 +361,7 @@ jobs:
     - name: Run multicluster diff
       id: mcpchecker-diff-multicluster
       if: steps.normalize.outputs.has-multicluster == 'true' && steps.baseline-multicluster.outputs.has-baseline == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       with:
         base-results: ${{ steps.baseline-multicluster.outputs.baseline-file }}
         current-results: tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
@@ -528,7 +528,7 @@ jobs:
     - name: Run baseline diff
       id: baseline-diff
       if: needs.run-evaluation.result == 'success' && steps.previous-baseline.outputs.has-previous == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       with:
         base-results: ${{ steps.previous-baseline.outputs.path }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
@@ -538,7 +538,7 @@ jobs:
     - name: Run multicluster baseline diff
       id: baseline-diff-multicluster
       if: needs.run-evaluation-multicluster.result == 'success' && steps.previous-baseline.outputs.has-previous-multicluster == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@3fb7133d6c70a222c9f0d86b58910e2ac2676b64 # v0.0.23
       with:
         base-results: ${{ steps.previous-baseline.outputs.path-multicluster }}
         current-results: tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json

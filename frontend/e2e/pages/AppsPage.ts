@@ -5,6 +5,7 @@ import {
   checkHealthStatusInTable,
   ensureObjectsInTable,
   expectHealthIconInRow,
+  expectLabelsInRow,
   expectOnlyHealthyApps,
   expectOnlyRow,
   expectTableContainsRow,
@@ -34,10 +35,7 @@ export class AppsPage extends ListPage {
 
     await expect(getColWithRowText(this.page, DETAILS_APP, 'Namespace')).toContainText('bookinfo');
 
-    const labelsCell = getColWithRowText(this.page, DETAILS_APP, 'Labels');
-    await expect(labelsCell).toContainText('app=details');
-    await expect(labelsCell).toContainText('service=details');
-    await expect(labelsCell).toContainText('version=v1');
+    await expectLabelsInRow(this.page, DETAILS_APP, 'app=details', 'service=details', 'version=v1');
 
     const detailsCell = getColWithRowText(this.page, DETAILS_APP, 'Details');
     await expect(detailsCell).toContainText('bookinfo-gateway');

@@ -10,8 +10,21 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { Datapoint, Metric } from 'types/Metrics';
 import { infoStyle } from 'styles/IconStyle';
 import { summaryTitle } from './TargetPanelCommon';
+import { kialiStyle } from 'styles/StyleUtils';
+import { noShrinkStyle } from 'styles/FlexStyles';
+import { PFSpacer } from 'styles/PfSpacer';
+
+const metricsHeaderStyle = kialiStyle({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: PFSpacer.sm,
+  justifyContent: 'space-between',
+  textAlign: 'left',
+  width: '100%'
+});
 
 type ControlPlaneProps = {
+  dashboards?: React.ReactNode;
   istiodContainerCpu?: Metric[];
   istiodContainerMemory?: Metric[];
   istiodProcessCpu?: Metric[];
@@ -111,8 +124,9 @@ export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (prop
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <div>
+      <div className={metricsHeaderStyle}>
         <div className={summaryTitle}>{props.type ? `${component} ${t('Metrics')}` : t('Metrics')}</div>
+        {props.dashboards && <div className={noShrinkStyle}>{props.dashboards}</div>}
       </div>
       <div
         style={{

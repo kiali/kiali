@@ -506,16 +506,19 @@ setup_kind_singlecluster() {
     # Chart 0.23+ mounts /etc/perses/plugins itself; do not re-add that volume in values.yaml.
     ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
 
-          PERSES_ARGS=(
-        "--set" "external_services.perses.enabled=true"
-        "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
-        "--set" "external_services.perses.external_url=http://localhost:4000"
-        "--set" "external_services.perses.project=istio"
-        "--set" "external_services.perses.dashboards[0].name=Istio Mesh Dashboard"
-        "--set" "external_services.perses.dashboards[0].variables.namespace=var-namespace"
-        "--set" "external_services.perses.dashboards[0].variables.workload=var-workload"
-        "--set" "external_services.perses.dashboards[0].variables.datasource=var-datasource"
-      )
+    PERSES_ARGS=(
+      "--set" "external_services.perses.enabled=true"
+      "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
+      "--set" "external_services.perses.external_url=http://localhost:4000"
+      "--set" "external_services.perses.project=istio"
+      "--set" "external_services.perses.dashboards[0].name=Istio Mesh Dashboard"
+      "--set" "external_services.perses.dashboards[0].variables.namespace=var-namespace"
+      "--set" "external_services.perses.dashboards[0].variables.datasource=var-datasource"
+      "--set" "external_services.perses.dashboards[1].name=Istio Workload Dashboard"
+      "--set" "external_services.perses.dashboards[1].variables.namespace=var-namespace"
+      "--set" "external_services.perses.dashboards[1].variables.workload=var-workload"
+      "--set" "external_services.perses.dashboards[1].variables.datasource=var-datasource"
+    )
   fi
 
   fi # KIALI_ONLY != true

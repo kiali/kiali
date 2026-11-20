@@ -82,6 +82,9 @@ func TestIstioConfigListAllValidationsFiltered(t *testing.T) {
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("victim-ns"),
 	)
+	// The read path filters validations by the user's per-type list RBAC;
+	// allow the reviews so the seeded bookinfo entries stay visible.
+	userFake.AllowAllSelfSubjectAccessReviews()
 	userClient := newRestrictedNamespaceClient(userFake, "victim-ns", []string{"bookinfo"})
 	ts, kialiCache := setupIstioConfigListAllEndpoint(t, sa, userClient)
 

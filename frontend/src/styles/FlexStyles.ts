@@ -56,6 +56,13 @@ export const noShrinkStyle = kialiStyle({
   flexShrink: 0
 });
 
+// Dashboards + Actions buttons on detail page tab bars.
+export const detailTabActionsStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  gap: PFSpacer.sm
+});
+
 // Top margin for Cards rendered inside tab content areas.
 export const tabCardStyle = kialiStyle({
   marginTop: '1rem'

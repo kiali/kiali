@@ -13,7 +13,7 @@ Then('user presses the Play button', () => {
 });
 
 Then('user sees the slider', () => {
-  cy.get('div[id="replay-slider"]').should('be.visible');
+  cy.getBySel('replay-slider').should('be.visible');
 });
 
 Then('user presses the {string} speed button', speed => {
@@ -29,5 +29,5 @@ When('user presses the Replay Close button', () => {
 });
 
 Then('user no longer sees the slider', () => {
-  cy.get('div[id="replay-slider"]').should('not.exist');
+  cy.getBySel('replay-slider').should('not.exist');
 });

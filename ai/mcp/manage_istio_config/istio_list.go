@@ -123,6 +123,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		return fmt.Sprintf("Error while getting istio config: %s", err.Error()), http.StatusOK
 	}
 
+	// This tool is a user-facing boundary of the config list: prune the
+	// types the user cannot list so the list matches what a detail request
+	// lets them read (#10515). Internal consumers of the business list keep
+	// the SA-wide view.
+	businessLayer.IstioConfig.FilterByUserListRBAC(ctx, cluster, istioConfig)
+
 	// Extract native objects for compact output
 	virtualServices := istioConfig.VirtualServices
 	destinationRules := istioConfig.DestinationRules

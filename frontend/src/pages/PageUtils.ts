@@ -188,13 +188,13 @@ export const buildWorkloadMetadataPatch = (
 
 export const partitionByIstio = (
   entries: Record<string, string>
-): { istioCount: number; sorted: Record<string, string> } => {
+): { istioCount: number; sorted: [string, string][] } => {
   const keys = Object.keys(entries);
   const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
   const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
-  const sorted: Record<string, string> = {};
+  const sorted: [string, string][] = [];
   for (const k of [...istioKeys, ...otherKeys]) {
-    sorted[k] = entries[k];
+    sorted.push([k, entries[k]]);
   }
   return { sorted, istioCount: istioKeys.length };
 };

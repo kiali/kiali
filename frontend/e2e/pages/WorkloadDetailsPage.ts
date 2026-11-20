@@ -274,14 +274,15 @@ export class WorkloadDetailsPage extends BasePage {
 
   async expectPersesLinkInInboundMetrics(): Promise<void> {
     await openDetailsTab(this.page, 'Inbound Metrics');
-    const cardBody = this.page.locator('.pf-v6-c-card__body');
-    const link = cardBody.locator('#perses_link_0');
+    // Perses links live in the tab actions toolbar "Dashboards" dropdown, not on the metrics cards.
+    await this.getBySel('istio-dashboards-toggle').click();
+    const link = this.getBySel('istio-dashboard-link-perses-0');
     await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('title', 'Istio Mesh Dashboard');
-    await expect(link).toHaveAttribute('target', '_blank');
-    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    await expect(link).toContainText('View in Perses');
-    await expect(link).toHaveAttribute('href', /istio-mesh-dashboard/);
+    await expect(link).toContainText('Istio Workload Dashboard');
+    await expect(link).toHaveAttribute('title', 'View Istio Workload Dashboard in Perses');
+    // data-test and title land on the dropdown <li>; the href is on the inner anchor,
+    // which MenuItem renders with role="menuitem".
+    await expect(link.getByRole('menuitem')).toHaveAttribute('href', /var-workload=details-v1/);
   }
 
   async expectOutboundMetrics(): Promise<void> {
@@ -505,7 +506,9 @@ export class WorkloadDetailsPage extends BasePage {
   }
 
   async expectWaypointInfoFor(type: string): Promise<void> {
-    await expect(this.getBySel('waypointfor-title')).toContainText(type);
+    await expect(this.getBySel('waypointfor-title')).toContainText('Waypoint for');
+    // The scope value renders capitalized ("Service") while callers pass the enum value ("service").
+    await expect(this.getBySel('waypointfor-scope')).toHaveText(new RegExp(`^${type}$`, 'i'));
     await expect(this.page.getByRole('grid').locator('td[data-label="RDS"]')).toContainText('IGNORED');
   }
 
@@ -540,6 +543,15 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(
       table.locator('td[data-label="Labeled by"]').filter({ hasText: options.labeledBy }).first()
     ).toBeVisible();
+  }
+
+  /** When every service in the namespace overrides the default waypoint, the default gateway lists no enrolled services. */
+  async expectNoEnrolledServices(): Promise<void> {
+    const title = this.getBySel('enrolled-data-title');
+    await expect(title).toBeVisible();
+    const empty = title.locator('xpath=following::*[@data-test="istio-config-empty"][1]');
+    await expect(empty).toBeVisible();
+    await expect(empty).toContainText('No enrolled services found');
   }
 
   async expectProxyStatusIcon(status: string): Promise<void> {

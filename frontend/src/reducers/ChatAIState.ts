@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux';
-import type { AIRightView, AIState, ChatAIState } from '../store/Store';
+import type { AIRightView, ChatAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
@@ -19,7 +19,9 @@ export const INITIAL_AI_METRICS_STATE = INITIAL_AI_RIGHT_VIEW_STATE;
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   allowed: false,
   alwaysNavigate: false,
+  chatContext: '',
   chatHistory: ImmutableList(),
+  chatbotVisible: false,
   conversationID: '',
   defaultProvider: '',
   displayMode: ChatbotDisplayMode.default,
@@ -62,8 +64,14 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     case getType(ChatAIActions.setSelectedModel): {
       return updateState(state, { selectedModel: action.payload.model });
     }
+    case getType(ChatAIActions.setChatbotVisible): {
+      return updateState(state, { chatbotVisible: action.payload.visible });
+    }
     case getType(ChatAIActions.setChatHistoryClear): {
-      return updateState(state, { chatHistory: ImmutableList() });
+      return updateState(state, { chatHistory: ImmutableList(), chatContext: '' });
+    }
+    case getType(ChatAIActions.setChatContext): {
+      return updateState(state, { chatContext: action.payload });
     }
     case getType(ChatAIActions.setChatHistoryAdd): {
       const history = state.chatHistory.push(ImmutableMap(action.payload.entry));
@@ -148,7 +156,7 @@ const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: Kia
 };
 
 // This Reducer allows changes to the 'ai' portion of Redux Store
-export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
+export const AiStateReducer = combineReducers({
   chat: ChatAiStateReducer,
   consumption: AiConsumptionStateReducer,
   enabled: AiEnabledReducer

@@ -5,6 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const SHOW_MORE_TRESHOLD = 2;
 
@@ -33,6 +34,7 @@ const labelsContainerStyle = kialiStyle({
 });
 
 export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
+  const { t } = useKialiTranslation();
   const [expanded, setExpanded] = React.useState<boolean>(props.expanded ?? false);
 
   const labelKeys = Object.keys(props.labels ?? {});
@@ -70,7 +72,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
     ) : undefined;
   });
 
-  const renderEmptyLabels = <span> No {props.type ? props.type : 'labels'} </span>;
+  const renderEmptyLabels = <span> {props.type ? `No ${props.type}` : t('No labels')} </span>;
 
   const tooltip = props.tooltipMessage ? (
     <Tooltip

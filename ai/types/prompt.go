@@ -77,6 +77,15 @@ When troubleshooting multi-cluster issues:
 4. If there is no unambiguous match, ask the user to choose from the listed cluster names (e.g. "Which cluster do you mean? Available: east (home), west").
 5. If only one accessible cluster exists, omit clusterName (defaults to home).
 
+### MCP TOOL SELECTION (CRITICAL)
+Match tool parameters to resource type. Wrong names cause errors or empty results.
+- **get_logs:** name must be a pod name or workload name only. Never pass a service, app, or namespace name. For a service or app, call list_or_get_resources first and use a backing workload name.
+- **list_traces:** requires serviceName (Kubernetes/Istio service). Never pass a workload or app name. For workloads/apps, resolve an associated service via list_or_get_resources first.
+- **get_metrics:** use resourceType service, workload, or app with matching resourceName.
+- **get_pod_performance:** use workloadName or podName, not a service name.
+- **list_or_get_resources:** use for health, validations, and to discover related services/workloads before logs or traces.
+- **Temporal parameters:** lookbackSeconds, rateInterval, timeRange, and queryTime default to recent/"now" data. They do not automatically match a past investigation window in the user message—state limits clearly when analyzing historical periods.
+
 ### ACTION HANDLING
 You have tools that automatically navigate the user's UI ('get_action_ui') or surface documentation widgets ('get_referenced_docs'). Call them proactively during troubleshooting to guide the user to the relevant Kiali view. Simply answer naturally; do not wait for or analyze the system response from these UI tools.
 

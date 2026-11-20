@@ -10,8 +10,7 @@ import type {
   Node,
   NodeModel,
   Edge,
-  GraphAreaSelectedEventListener,
-  GraphLayoutEndEventListener
+  GraphAreaSelectedEventListener
 } from '@patternfly/react-topology';
 import {
   createTopologyControlButtons,
@@ -62,6 +61,9 @@ import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'pages/Graph/GraphScore';
 import { TrafficAnimation } from '../Graph/TrafficAnimation/TrafficRenderer';
 import { GraphHighlighter } from './GraphHighlighter';
+import { useKialiSelector } from 'hooks/redux';
+import { namespaceItemsSelector } from 'store/Selectors';
+import { enrichActiveNamespaces } from 'utils/WaypointTrafficUtils';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
@@ -165,10 +167,11 @@ const TopologyContent: React.FC<{
   updateSummary
 }) => {
   const [updateModelTime, setUpdateModelTime] = React.useState(0);
+  const namespaceItems = useKialiSelector(namespaceItemsSelector);
 
   const graphSettings: GraphSettings = React.useMemo(() => {
     return {
-      activeNamespaces: graphData.fetchParams.namespaces,
+      activeNamespaces: enrichActiveNamespaces(graphData.fetchParams.namespaces, namespaceItems),
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
       showOutOfMesh: showOutOfMesh,
@@ -176,7 +179,7 @@ const TopologyContent: React.FC<{
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphSettings;
-  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, namespaceItems, showOutOfMesh, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -339,6 +342,15 @@ const TopologyContent: React.FC<{
       });
     }
   }, [controller]);
+
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
 
   //
   // update model on graphData change
@@ -535,6 +547,13 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (graphData.elementsChanged && hasContent) {
+        initialLayout = true;
+        isReady = false;
+        layoutInProgress = LayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => {
         controller.getGraph().setData({
@@ -601,6 +620,10 @@ const TopologyContent: React.FC<{
           setObserved(() => target.setData(data));
         }
       }
+
+      if (layoutInProgress === LayoutType.Layout) {
+        controller.getGraph().layout();
+      }
     };
 
     console.debug(`TG: updateModel`);
@@ -657,17 +680,23 @@ const TopologyContent: React.FC<{
   }, [controller, focusNode, isMiniGraph, setSelectedIds]);
 
   React.useEffect(() => {
-    console.debug(`TG: controller changed`);
-    initialLayout = true;
-    isReady = false;
-  }, [controller]);
-
-  React.useEffect(() => {
     console.debug(`TG: graphData changed, elementsChanged=${graphData.elementsChanged}`);
     if (graphData.elementsChanged) {
       graphLayout(controller, LayoutType.Layout);
     }
   }, [controller, graphData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: graphSettings changed`);
@@ -726,8 +755,6 @@ const TopologyContent: React.FC<{
       }
     }
   );
-
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 

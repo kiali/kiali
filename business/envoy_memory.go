@@ -17,16 +17,17 @@ import (
 )
 
 const (
-	sidecarHighMemoryBytes = 100 * 1024 * 1024
+	// Typical istio-proxy working set often exceeds 100 MiB with normal mesh config; keep modest headroom.
+	sidecarHighMemoryBytes = 128 * 1024 * 1024
 	gatewayHighMemoryBytes = 256 * 1024 * 1024
 	// Bookinfo alone can approach ~50 clusters without scoping; keep headroom for small meshes.
 	sidecarLargeConfigClusters = 100
 	gatewayLargeConfigClusters = 150
 	envoyMemoryLimitRatio      = 0.7
-	idleRequestRatePerSecond   = 0.1
-	idleActiveConnections      = 5
-	// Waypoints expose L4 byte rates; treat below this as idle for classification.
-	idleTCPBytesPerSecond = 100.0
+	// Cause heuristics aligned loosely with Istio sidecar benchmarks (~1000 req/s, 4 client conns).
+	busyRequestRatePerSecond = 100.0
+	busyActiveConnections    = 10
+	busyTCPBytesPerSecond    = 256 * 1024
 	// Rough estimate of Envoy config memory contribution per active cluster.
 	// There is no explicit config-vs-traffic memory split; this is a ballpark for UI guidance.
 	roughConfigBytesPerCluster = 50 * 1024
@@ -69,23 +70,35 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}
 
 	var (
-		memoryMetric    prometheus.Metric
-		clustersMetric  prometheus.Metric
-		upstreamRqTotal prometheus.Metric
-		upstreamRq      prometheus.Metric
-		downstreamRq    prometheus.Metric
-		istioRq         prometheus.Metric
-		tcpOpened       prometheus.Metric
-		tcpClosed       prometheus.Metric
-		tcpByteRate     float64
-		memoryLimit     float64
+		allocatedMetric    prometheus.Metric
+		clustersMetric     prometheus.Metric
+		downstreamCxActive prometheus.Metric
+		downstreamRq       prometheus.Metric
+		istioHTTPDest      prometheus.Metric
+		istioHTTPSource    prometheus.Metric
+		memoryLimits       map[string]float64
+		tcpClosed          prometheus.Metric
+		tcpOpened          prometheus.Metric
+		tcpRecvDest        prometheus.Metric
+		tcpRecvSource      prometheus.Metric
+		tcpSentDest        prometheus.Metric
+		tcpSentSource      prometheus.Metric
+		upstreamCxActive   prometheus.Metric
+		upstreamRq         prometheus.Metric
+		upstreamRqTotal    prometheus.Metric
+		workingSetMetric   prometheus.Metric
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(17)
 	go func() {
 		defer wg.Done()
-		memoryMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+		allocatedMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		// Working set is the most broadly available pressure signal for the istio-proxy cgroup.
+		workingSetMetric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", appendEnvoyProxyContainerLabel(envoyLabels), "", "", q)
 	}()
 	go func() {
 		defer wg.Done()
@@ -107,11 +120,14 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}()
 	go func() {
 		defer wg.Done()
-		istioRq = in.prom.FetchRateRange(ctx, "istio_requests_total", istioRequestLabels, "", q)
+		istioHTTPSource = in.prom.FetchRateRange(ctx, "istio_requests_total", []string{istioRequestLabels[0]}, "", q)
 	}()
 	go func() {
 		defer wg.Done()
-		// Prefer Istio TCP connection counters: Envoy cx gauges are often disabled / stuck at 1.
+		istioHTTPDest = in.prom.FetchRateRange(ctx, "istio_requests_total", []string{istioRequestLabels[1]}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
 		tcpOpened = fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_opened_total", istioSourceLabels, istioDestLabels, q)
 	}()
 	go func() {
@@ -120,46 +136,94 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}()
 	go func() {
 		defer wg.Done()
-		tcpByteRate = fetchIstioTCPByteRate(ctx, in.prom, istioSourceLabels, istioDestLabels, q)
+		upstreamCxActive = in.prom.FetchRange(ctx, "envoy_cluster_upstream_cx_active", envoyLabels, "", "", q)
 	}()
 	go func() {
 		defer wg.Done()
-		memoryLimit = resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
+		downstreamCxActive = in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpSentSource = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{istioSourceLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpSentDest = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{istioDestLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpRecvSource = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{istioSourceLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpRecvDest = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{istioDestLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		memoryLimits = resolveEnvoyProxyMemoryLimits(ctx, in.prom, workload, envoyLabels, q.End)
 	}()
 	wg.Wait()
 
-	memoryMax := maxLatestValue(memoryMetric)
-	activeClustersMax := int64(maxLatestValue(clustersMetric))
-	activeConnections := activeTCPConnections(tcpOpened, tcpClosed)
-
 	proxyType := envoyProxyType(workload)
-	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
-	httpRequestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
-	// Use TCP byte rate for waypoints, or when HTTP request rate is absent and TCP bytes are present.
-	trafficIsByteRate := proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0)
-	requestRate := httpRequestRate
-	if trafficIsByteRate {
-		requestRate = tcpByteRate
-	}
-
 	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
-	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
-	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate, trafficIsByteRate)
+	memory := selectEnvoyStatusMemory(
+		absoluteThreshold,
+		allocatedMetric,
+		workingSetMetric,
+		memoryLimits,
+	)
+	statusAt := memory.PeakAt
+	activeClustersMax, requestRate, trafficIsByteRate, activeConnections, connectionsObserved :=
+		envoyMemoryStatusTrafficSignals(
+			proxyType,
+			statusAt,
+			memory.Pod,
+			clustersMetric,
+			upstreamRqTotal,
+			upstreamRq,
+			downstreamRq,
+			istioHTTPSource,
+			istioHTTPDest,
+			tcpSentSource,
+			tcpSentDest,
+			tcpRecvSource,
+			tcpRecvDest,
+			tcpOpened,
+			tcpClosed,
+			upstreamCxActive,
+			downstreamCxActive,
+		)
+
+	cause := classifyEnvoyMemory(
+		memory.ThresholdBytes,
+		largeConfigClusters,
+		memory.MaxBytes,
+		activeClustersMax,
+		activeConnections,
+		requestRate,
+		trafficIsByteRate,
+		connectionsObserved,
+	)
 
 	var memoryUsedPercent float64
-	if memoryLimit > 0 {
-		memoryUsedPercent = (memoryMax / memoryLimit) * 100
+	if memory.LimitBytes > 0 {
+		memoryUsedPercent = (memory.MaxBytes / memory.LimitBytes) * 100
 	}
 
 	return &models.EnvoyMemorySummary{
 		ActiveClustersMax:            activeClustersMax,
 		ActiveConnections:            activeConnections,
+		ActiveConnectionsObserved:    connectionsObserved,
+		BusyActiveConnections:        busyActiveConnections,
+		BusyRequestRatePerSecond:     busyRequestRatePerSecond,
+		BusyTCPBytesPerSecond:        busyTCPBytesPerSecond,
 		Cause:                        cause,
-		ConfigCountsPod:              podWithMaxLatestMemory(memoryMetric),
+		ConfigCountsPod:              memory.Pod,
 		LargeConfigClustersThreshold: largeConfigClusters,
-		MemoryLimitBytes:             int64(memoryLimit),
-		MemoryMaxBytes:               int64(memoryMax),
-		MemoryThresholdBytes:         int64(memoryThreshold),
+		MemoryLimitBytes:             int64(memory.LimitBytes),
+		MemoryMaxBytes:               int64(memory.MaxBytes),
+		MemoryMetric:                 memory.Metric,
+		MemoryThresholdBytes:         int64(memory.ThresholdBytes),
 		MemoryUsedPercent:            memoryUsedPercent,
 		ProxyType:                    proxyType,
 		RequestRate:                  requestRate,
@@ -189,8 +253,17 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 	return models.EnvoyProxyTypeSidecar
 }
 
-func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
-	// Missing envoy_server_memory_allocated samples (empty query), not elevated memory.
+func classifyEnvoyMemory(
+	memoryThreshold float64,
+	largeConfigThreshold int64,
+	memoryBytes float64,
+	activeClusters int64,
+	activeConnections int64,
+	trafficRate float64,
+	trafficIsByteRate bool,
+	connectionsObserved bool,
+) models.EnvoyMemoryCause {
+	// Missing status memory samples (empty query), not elevated memory.
 	if memoryBytes == 0 {
 		return models.EnvoyMemoryCauseUnknown
 	}
@@ -198,20 +271,39 @@ func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, me
 		return models.EnvoyMemoryCauseOK
 	}
 
-	idleTraffic := trafficRate < idleRequestRatePerSecond
-	if trafficIsByteRate {
-		idleTraffic = trafficRate < idleTCPBytesPerSecond
-	}
-	idle := idleTraffic && activeConnections < idleActiveConnections
 	largeConfig := activeClusters > largeConfigThreshold
+	busy := envoyMemoryBusyTraffic(
+		activeConnections,
+		connectionsObserved,
+		trafficRate,
+		trafficIsByteRate,
+	)
 
-	if idle && largeConfig {
+	if largeConfig {
+		if busy {
+			return models.EnvoyMemoryCauseTraffic
+		}
 		return models.EnvoyMemoryCauseConfiguration
 	}
-	if !idle {
+	if busy {
 		return models.EnvoyMemoryCauseTraffic
 	}
 	return models.EnvoyMemoryCauseUnknown
+}
+
+func envoyMemoryBusyTraffic(
+	activeConnections int64,
+	connectionsObserved bool,
+	trafficRate float64,
+	trafficIsByteRate bool,
+) bool {
+	if connectionsObserved && activeConnections >= busyActiveConnections {
+		return true
+	}
+	if trafficIsByteRate {
+		return trafficRate >= busyTCPBytesPerSecond
+	}
+	return trafficRate >= busyRequestRatePerSecond
 }
 
 func envoyMemoryAbsoluteThresholds(proxyType models.EnvoyProxyType) (highMemoryBytes float64, largeConfigClusters int64) {
@@ -223,6 +315,10 @@ func envoyMemoryAbsoluteThresholds(proxyType models.EnvoyProxyType) (highMemoryB
 	}
 }
 
+// computeEnvoyMemoryThreshold returns 70% of the proxy memory limit when set,
+// otherwise the absolute threshold. Working set uses this directly; the
+// allocated fallback caps it at the absolute threshold (see
+// selectHighestMemoryPressure).
 func computeEnvoyMemoryThreshold(absoluteThreshold, proxyMemoryLimitBytes float64) float64 {
 	if proxyMemoryLimitBytes > 0 {
 		return proxyMemoryLimitBytes * envoyMemoryLimitRatio
@@ -231,27 +327,104 @@ func computeEnvoyMemoryThreshold(absoluteThreshold, proxyMemoryLimitBytes float6
 	return absoluteThreshold
 }
 
-func resolveEnvoyProxyMemoryLimit(ctx context.Context, prom prometheus.ClientInterface, workload *models.Workload, labels string, queryTime time.Time) float64 {
-	limit := envoyProxyMemoryLimitFromAnnotations(workload)
-	if prom != nil && prom.API() != nil && labels != "" {
-		query := fmt.Sprintf(
-			`max(container_spec_memory_limit_bytes%s)`,
-			appendEnvoyProxyContainerLabel(labels),
-		)
-		if promLimit := promInstantScalar(ctx, prom, query, queryTime); promLimit > limit {
-			limit = promLimit
+type envoyMemorySelection struct {
+	LimitBytes     float64
+	MaxBytes       float64
+	Metric         models.EnvoyMemoryMetric
+	PeakAt         model.Time
+	Pod            string
+	ThresholdBytes float64
+}
+
+type podPeakSample struct {
+	at     model.Time
+	metric models.EnvoyMemoryMetric
+	value  float64
+}
+
+// selectEnvoyStatusMemory prefers the istio-proxy cgroup working set because it
+// remains available when Istio filters Envoy stats. The fallback to Envoy
+// allocated memory is per pod: a kubelet scrape gap can leave working set
+// missing for individual pods while other pods of the workload report it.
+func selectEnvoyStatusMemory(
+	absoluteThreshold float64,
+	allocatedMetric prometheus.Metric,
+	workingSetMetric prometheus.Metric,
+	memoryLimits map[string]float64,
+) envoyMemorySelection {
+	peaksByPod := peakSamplesByPod(workingSetMetric, models.EnvoyMemoryMetricWorkingSet)
+	for pod, peak := range peakSamplesByPod(allocatedMetric, models.EnvoyMemoryMetricAllocated) {
+		if _, ok := peaksByPod[pod]; !ok {
+			peaksByPod[pod] = peak
 		}
 	}
 
-	return limit
+	return selectHighestMemoryPressure(peaksByPod, memoryLimits, absoluteThreshold)
 }
 
-func envoyProxyMemoryLimitFromAnnotations(workload *models.Workload) float64 {
-	if workload == nil {
-		return 0
+// selectHighestMemoryPressure picks the pod with the highest memory pressure
+// (peak value relative to its threshold). Pods are visited in name order so
+// equal-pressure ties resolve deterministically instead of by map iteration
+// order.
+func selectHighestMemoryPressure(peaksByPod map[string]podPeakSample, memoryLimits map[string]float64, absoluteThreshold float64) envoyMemorySelection {
+	selection := envoyMemorySelection{Metric: models.EnvoyMemoryMetricAllocated, ThresholdBytes: absoluteThreshold}
+	pods := make([]string, 0, len(peaksByPod))
+	for pod := range peaksByPod {
+		pods = append(pods, pod)
+	}
+	sort.Strings(pods)
+
+	bestPressure := 0.0
+	for _, pod := range pods {
+		peak := peaksByPod[pod]
+		limit := memoryLimits[pod]
+		threshold := computeEnvoyMemoryThreshold(absoluteThreshold, limit)
+		if peak.metric == models.EnvoyMemoryMetricAllocated && limit > 0 {
+			// Envoy allocated is not cgroup usage, so it keeps the absolute
+			// threshold unless the proxy limit is small enough that 70% of it
+			// is a tighter OOM-proximity guard.
+			threshold = min(absoluteThreshold, limit*envoyMemoryLimitRatio)
+		}
+		pressure := peak.value / threshold
+		if pressure < bestPressure {
+			continue
+		}
+		if pressure == bestPressure && peak.at <= selection.PeakAt {
+			continue
+		}
+		bestPressure = pressure
+		selection = envoyMemorySelection{
+			LimitBytes:     limit,
+			MaxBytes:       peak.value,
+			Metric:         peak.metric,
+			PeakAt:         peak.at,
+			Pod:            pod,
+			ThresholdBytes: threshold,
+		}
+	}
+	return selection
+}
+
+func resolveEnvoyProxyMemoryLimits(ctx context.Context, prom prometheus.ClientInterface, workload *models.Workload, labels string, queryTime time.Time) map[string]float64 {
+	limits := envoyProxyMemoryLimitsFromAnnotations(workload)
+	if prom != nil && prom.API() != nil && labels != "" {
+		query := fmt.Sprintf(`container_spec_memory_limit_bytes%s`, appendEnvoyProxyContainerLabel(labels))
+		for pod, promLimit := range promInstantPodValues(ctx, prom, query, queryTime) {
+			if promLimit > limits[pod] {
+				limits[pod] = promLimit
+			}
+		}
 	}
 
-	max := 0.0
+	return limits
+}
+
+func envoyProxyMemoryLimitsFromAnnotations(workload *models.Workload) map[string]float64 {
+	limits := map[string]float64{}
+	if workload == nil {
+		return limits
+	}
+
 	for _, pod := range workload.Pods {
 		if pod == nil || pod.Annotations == nil {
 			continue
@@ -260,12 +433,12 @@ func envoyProxyMemoryLimitFromAnnotations(workload *models.Workload) float64 {
 		if !ok {
 			continue
 		}
-		if bytes := parseMemoryQuantity(raw); bytes > max {
-			max = bytes
+		if bytes := parseMemoryQuantity(raw); bytes > limits[pod.Name] {
+			limits[pod.Name] = bytes
 		}
 	}
 
-	return max
+	return limits
 }
 
 func parseMemoryQuantity(raw string) float64 {
@@ -282,26 +455,30 @@ func appendEnvoyProxyContainerLabel(labels string) string {
 	return fmt.Sprintf(`%s,container="%s"}`, trimmed, models.IstioProxy)
 }
 
-func promInstantScalar(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time) float64 {
+func promInstantPodValues(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time) map[string]float64 {
+	values := map[string]float64{}
 	result, _, err := prom.API().Query(ctx, query, queryTime)
 	if err != nil {
-		return 0
+		return values
 	}
 
 	vector, ok := result.(model.Vector)
-	if !ok || len(vector) == 0 {
-		return 0
+	if !ok {
+		return values
 	}
 
-	max := 0.0
 	for _, sample := range vector {
+		pod := string(sample.Metric[model.LabelName("pod")])
+		if pod == "" {
+			continue
+		}
 		value := float64(sample.Value)
-		if value > max {
-			max = value
+		if value > values[pod] {
+			values[pod] = value
 		}
 	}
 
-	return max
+	return values
 }
 
 // BuildWorkloadMetricLabels builds Prometheus label selectors scoped to a workload.
@@ -437,64 +614,236 @@ func buildIstioWorkloadLabels(namespace, workloadName, prefix string, conf *conf
 	return lb.Build()
 }
 
-func maxLatestValue(metric prometheus.Metric) float64 {
+// peakSamplesByPod keeps the peak sample in the selected interval for each pod and its timestamp.
+// This preserves short-lived pressure across an istio-proxy container restart.
+func peakSamplesByPod(metric prometheus.Metric, metricKind models.EnvoyMemoryMetric) map[string]podPeakSample {
+	peaksByPod := map[string]podPeakSample{}
+	for _, stream := range metric.Matrix {
+		pod := string(stream.Metric[model.LabelName("pod")])
+		for _, sample := range stream.Values {
+			value := float64(sample.Value)
+			peak := peaksByPod[pod]
+			if value > peak.value || (value == peak.value && sample.Timestamp > peak.at) {
+				peaksByPod[pod] = podPeakSample{at: sample.Timestamp, metric: metricKind, value: value}
+			}
+		}
+	}
+	return peaksByPod
+}
+
+// envoyMemoryStatusTrafficSignals derives cause inputs at the memory peak timestamp,
+// falling back to latest samples when the peak time is unknown.
+func envoyMemoryStatusTrafficSignals(
+	proxyType models.EnvoyProxyType,
+	at model.Time,
+	statusPod string,
+	clustersMetric prometheus.Metric,
+	upstreamRqTotal, upstreamRq, downstreamRq prometheus.Metric,
+	istioHTTPSource, istioHTTPDest prometheus.Metric,
+	tcpSentSource, tcpSentDest, tcpRecvSource, tcpRecvDest prometheus.Metric,
+	tcpOpened, tcpClosed, upstreamCxActive, downstreamCxActive prometheus.Metric,
+) (activeClustersMax int64, requestRate float64, trafficIsByteRate bool, activeConnections int64, connectionsObserved bool) {
+	readAt := at
+	if readAt == 0 {
+		readAt = latestSampleTime(
+			clustersMetric,
+			upstreamRqTotal,
+			upstreamRq,
+			downstreamRq,
+			istioHTTPSource,
+			istioHTTPDest,
+			tcpOpened,
+			tcpClosed,
+			upstreamCxActive,
+			downstreamCxActive,
+		)
+	}
+
+	clusters := maxPodScalarAtTime(clustersMetric, statusPod, readAt)
+	if clusters == 0 {
+		clusters = maxScalarAtTime(clustersMetric, readAt)
+	}
+	activeClustersMax = int64(clusters)
+
+	envoyRequestRate := envoyRequestRateFromMetricsAtTime(upstreamRqTotal, upstreamRq, downstreamRq, readAt)
+	httpRequestRate := istioHTTPRequestRateAtTime(proxyType, istioHTTPSource, istioHTTPDest, readAt)
+	httpRequestRate = maxRequestRate(envoyRequestRate, httpRequestRate)
+	tcpByteRate := istioTCPByteRateAtTime(proxyType, tcpSentSource, tcpSentDest, tcpRecvSource, tcpRecvDest, readAt)
+	trafficIsByteRate = proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0)
+	requestRate = httpRequestRate
+	if trafficIsByteRate {
+		requestRate = tcpByteRate
+	}
+
+	activeConnections, connectionsObserved = resolveActiveConnectionsAtTime(
+		tcpOpened,
+		tcpClosed,
+		upstreamCxActive,
+		downstreamCxActive,
+		httpRequestRate,
+		trafficIsByteRate,
+		readAt,
+	)
+	return activeClustersMax, requestRate, trafficIsByteRate, activeConnections, connectionsObserved
+}
+
+func latestSampleTime(metrics ...prometheus.Metric) model.Time {
+	var latest model.Time
+	for _, metric := range metrics {
+		for _, stream := range metric.Matrix {
+			if len(stream.Values) == 0 {
+				continue
+			}
+			if ts := stream.Values[len(stream.Values)-1].Timestamp; ts > latest {
+				latest = ts
+			}
+		}
+	}
+	return latest
+}
+
+// sampleValueAt returns the most recent sample at or before the requested
+// time, so a scrape gap in one series at the memory-peak step does not read
+// every signal as zero. An at of 0 returns the latest sample.
+func sampleValueAt(samples []model.SamplePair, at model.Time) (float64, bool) {
+	if len(samples) == 0 {
+		return 0, false
+	}
+	if at == 0 {
+		return float64(samples[len(samples)-1].Value), true
+	}
+	index := -1
+	for i, sample := range samples {
+		if sample.Timestamp > at {
+			break
+		}
+		index = i
+	}
+	if index < 0 {
+		return 0, false
+	}
+	return float64(samples[index].Value), true
+}
+
+func maxScalarAtTime(metric prometheus.Metric, at model.Time) float64 {
 	max := 0.0
 	for _, stream := range metric.Matrix {
-		if len(stream.Values) == 0 {
+		value, ok := sampleValueAt(stream.Values, at)
+		if !ok || value <= max {
 			continue
 		}
-		value := float64(stream.Values[len(stream.Values)-1].Value)
-		if value > max {
-			max = value
-		}
+		max = value
 	}
 	return max
 }
 
-// podWithMaxLatestMemory returns the pod label for the series with the highest latest memory sample.
-func podWithMaxLatestMemory(metric prometheus.Metric) string {
-	bestPod := ""
-	bestValue := 0.0
-	for _, stream := range metric.Matrix {
-		if len(stream.Values) == 0 {
-			continue
-		}
-		value := float64(stream.Values[len(stream.Values)-1].Value)
-		if value <= bestValue {
-			continue
-		}
-		pod := string(stream.Metric[model.LabelName("pod")])
-		if pod == "" {
-			continue
-		}
-		bestValue = value
-		bestPod = pod
+func maxPodScalarAtTime(metric prometheus.Metric, pod string, at model.Time) float64 {
+	if pod == "" {
+		return maxScalarAtTime(metric, at)
 	}
-	return bestPod
+	max := 0.0
+	for _, stream := range metric.Matrix {
+		if string(stream.Metric[model.LabelName("pod")]) != pod {
+			continue
+		}
+		value, ok := sampleValueAt(stream.Values, at)
+		if !ok || value <= max {
+			continue
+		}
+		max = value
+	}
+	return max
 }
 
-func sumLatestValues(metric prometheus.Metric) float64 {
+func sumAtTime(metric prometheus.Metric, at model.Time) float64 {
 	sum := 0.0
+	found := false
 	for _, stream := range metric.Matrix {
-		if len(stream.Values) == 0 {
+		value, ok := sampleValueAt(stream.Values, at)
+		if !ok {
 			continue
 		}
-		sum += float64(stream.Values[len(stream.Values)-1].Value)
+		sum += value
+		found = true
+	}
+	if !found {
+		return 0
 	}
 	return sum
 }
 
-func sumEnvoyRequestRate(upstream, downstream prometheus.Metric) float64 {
-	return sumLatestValues(upstream) + sumLatestValues(downstream)
+func envoyRequestRateFromMetricsAtTime(upstreamTotal, upstream, downstream prometheus.Metric, at model.Time) float64 {
+	rate := sumEnvoyRequestRateAtTime(upstreamTotal, downstream, at)
+	if rate == 0 {
+		rate = sumEnvoyRequestRateAtTime(upstream, downstream, at)
+	}
+	return rate
 }
 
-func envoyRequestRateFromMetrics(upstreamTotal, upstream, downstream prometheus.Metric) float64 {
-	rate := sumEnvoyRequestRate(upstreamTotal, downstream)
-	if rate == 0 {
-		rate = sumEnvoyRequestRate(upstream, downstream)
-	}
+func sumEnvoyRequestRateAtTime(upstream, downstream prometheus.Metric, at model.Time) float64 {
+	return sumAtTime(upstream, at) + sumAtTime(downstream, at)
+}
 
-	return rate
+// combineIstioReporterRates merges source and destination reporter rates.
+// Waypoints forward the same request under both reporters, so max avoids
+// double-counting. Sidecars and gateways see disjoint inbound/outbound sets,
+// so sum is the proxy's total throughput.
+func combineIstioReporterRates(proxyType models.EnvoyProxyType, source, dest float64) float64 {
+	if proxyType == models.EnvoyProxyTypeWaypoint {
+		return maxRequestRate(source, dest)
+	}
+	return source + dest
+}
+
+func istioHTTPRequestRateAtTime(proxyType models.EnvoyProxyType, source, dest prometheus.Metric, at model.Time) float64 {
+	return combineIstioReporterRates(proxyType, sumAtTime(source, at), sumAtTime(dest, at))
+}
+
+func istioTCPByteRateAtTime(proxyType models.EnvoyProxyType, sentSource, sentDest, recvSource, recvDest prometheus.Metric, at model.Time) float64 {
+	sent := combineIstioReporterRates(proxyType, sumAtTime(sentSource, at), sumAtTime(sentDest, at))
+	received := combineIstioReporterRates(proxyType, sumAtTime(recvSource, at), sumAtTime(recvDest, at))
+	return sent + received
+}
+
+func activeTCPConnectionsAtTime(opened, closed prometheus.Metric, at model.Time) int64 {
+	active := sumAtTime(opened, at) - sumAtTime(closed, at)
+	if active < 0 {
+		return 0
+	}
+	return int64(active)
+}
+
+func envoyActiveConnectionsAtTime(upstreamCx, downstreamCx prometheus.Metric, at model.Time) int64 {
+	return int64(sumAtTime(upstreamCx, at) + sumAtTime(downstreamCx, at))
+}
+
+// resolveActiveConnectionsAtTime prefers Istio TCP opened/closed deltas for L4 workloads.
+// HTTP sidecars often report net zero on those counters while Envoy cx gauges still reflect load.
+func resolveActiveConnectionsAtTime(
+	tcpOpened, tcpClosed, upstreamCx, downstreamCx prometheus.Metric,
+	httpRequestRate float64,
+	trafficIsByteRate bool,
+	at model.Time,
+) (active int64, observed bool) {
+	tcpObserved := istioTCPConnectionMetricsPresent(tcpOpened, tcpClosed)
+	tcpActive := activeTCPConnectionsAtTime(tcpOpened, tcpClosed, at)
+	envoyObserved := envoyConnectionMetricsPresent(upstreamCx, downstreamCx)
+	envoyActive := envoyActiveConnectionsAtTime(upstreamCx, downstreamCx, at)
+	httpTraffic := !trafficIsByteRate && httpRequestRate >= busyRequestRatePerSecond
+
+	if tcpObserved && tcpActive > 0 {
+		return tcpActive, true
+	}
+	if httpTraffic && envoyObserved && envoyActive > 0 {
+		return envoyActive, true
+	}
+	if tcpObserved {
+		return tcpActive, true
+	}
+	if envoyObserved {
+		return envoyActive, true
+	}
+	return 0, false
 }
 
 func maxRequestRate(candidates ...float64) float64 {
@@ -507,12 +856,12 @@ func maxRequestRate(candidates ...float64) float64 {
 	return max
 }
 
-func activeTCPConnections(opened, closed prometheus.Metric) int64 {
-	active := sumLatestValues(opened) - sumLatestValues(closed)
-	if active < 0 {
-		return 0
-	}
-	return int64(active)
+func istioTCPConnectionMetricsPresent(opened, closed prometheus.Metric) bool {
+	return len(opened.Matrix) > 0 || len(closed.Matrix) > 0
+}
+
+func envoyConnectionMetricsPresent(upstreamCx, downstreamCx prometheus.Metric) bool {
+	return len(upstreamCx.Matrix) > 0 || len(downstreamCx.Matrix) > 0
 }
 
 // fetchIstioTCPConnections loads a TCP counter for this workload as source or destination.
@@ -530,20 +879,6 @@ func fetchIstioTCPConnections(
 	source := prom.FetchRange(ctx, metricName, sourceLabels, "", "sum", q)
 	dest := prom.FetchRange(ctx, metricName, destLabels, "", "sum", q)
 	return prometheus.Metric{Matrix: append(source.Matrix, dest.Matrix...)}
-}
-
-// fetchIstioTCPByteRate returns combined TCP sent+received byte rate for this workload.
-func fetchIstioTCPByteRate(
-	ctx context.Context,
-	prom prometheus.ClientInterface,
-	sourceLabels string,
-	destLabels string,
-	q *prometheus.RangeQuery,
-) float64 {
-	labels := []string{sourceLabels, destLabels}
-	sent := prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", labels, "", q)
-	received := prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", labels, "", q)
-	return sumLatestValues(sent) + sumLatestValues(received)
 }
 
 func fetchEnvoyDownstreamRequestRate(ctx context.Context, prom prometheus.ClientInterface, labels string, q *prometheus.RangeQuery) prometheus.Metric {

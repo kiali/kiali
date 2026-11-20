@@ -29,7 +29,9 @@ Feature: Kiali Istio Config wizard
     And user sees the "Create Sidecar" config wizard
     And user types "mysidecarwithlabels" in the "name" input
     And user clicks on Edit Labels
-    And user adds key "app" and value "details" for and saves
+    And user cancels editing labels
+    And user clicks on Edit Labels
+    And user adds label key "app" and value "details" and saves
     And user clicks on Edit Annotations
     And user adds key "key1" and value "value1" for and saves
     And user previews the configuration
