@@ -75,7 +75,9 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async expectErrorMessage(message: string): Promise<void> {
-    await expect(this.page.locator('h4')).toContainText(message);
+    // The wizard error renders as a PF alert; the page's "Labels"/"Annotations" card
+    // titles are also h4 elements, so scope to the alert's heading.
+    await expect(this.page.getByRole('alert').getByRole('heading')).toContainText(message);
   }
 
   async expectInputEmpty(id: string): Promise<void> {
