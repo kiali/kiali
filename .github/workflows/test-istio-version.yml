@@ -6,7 +6,7 @@ on:
   # If you change any of these, you must also change the case statement in the determine-* tasks below.
   - cron: "0 2 * * *" # Sail, N-1 (offset 1) — always Sail
   - cron: "0 4 * * *" # Sail, N-2 (offset 2) — always Sail
-  - cron: "0 8 * * *" # istioctl, N only when upstream Istio tip is an RC
+  - cron: "0 6 * * *" # istioctl, N only when upstream Istio tip is an RC
   workflow_dispatch:
     inputs:
       istio_version:
@@ -66,7 +66,7 @@ jobs:
         # Manual runs honor the sail input (default true); use sail=false for RCs.
         if [ "${{ github.event_name }}" == "schedule" ]; then
           case "${{ github.event.schedule }}" in
-            "0 8 * * *") SAIL="false" ;;
+            "0 6 * * *") SAIL="false" ;;
             *) SAIL="true" ;;
           esac
         elif [ -n "${{ github.event.inputs.sail }}" ]; then
@@ -95,7 +95,7 @@ jobs:
       run: |
         # RC cron only proceeds when upstream Istio tip is an RC.
         # Manual sail=false always runs (for RCs / explicit versions).
-        if [ "${{ github.event.schedule }}" == "0 8 * * *" ]; then
+        if [ "${{ github.event.schedule }}" == "0 6 * * *" ]; then
           set +e
           ISTIO_RC="$(bash ./hack/istio/should-run-istioctl-ahead-of-sail.sh --retries 5 --retry-interval-seconds 5)"
           compare_status=$?
