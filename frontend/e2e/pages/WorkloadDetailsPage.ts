@@ -280,7 +280,8 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(link).toBeVisible();
     await expect(link).toContainText('Istio Workload Dashboard');
     await expect(link).toHaveAttribute('title', 'View Istio Workload Dashboard in Perses');
-    await expect(link).toHaveAttribute('href', /var-workload=details-v1/);
+    // data-test and title land on the dropdown <li>; the href is on the inner anchor.
+    await expect(link.getByRole('link')).toHaveAttribute('href', /var-workload=details-v1/);
   }
 
   async expectOutboundMetrics(): Promise<void> {
@@ -504,7 +505,9 @@ export class WorkloadDetailsPage extends BasePage {
   }
 
   async expectWaypointInfoFor(type: string): Promise<void> {
-    await expect(this.getBySel('waypointfor-title')).toContainText(type);
+    await expect(this.getBySel('waypointfor-title')).toContainText('Waypoint for');
+    // The scope value renders capitalized ("Service") while callers pass the enum value ("service").
+    await expect(this.getBySel('waypointfor-scope')).toHaveText(new RegExp(`^${type}$`, 'i'));
     await expect(this.page.getByRole('grid').locator('td[data-label="RDS"]')).toContainText('IGNORED');
   }
 

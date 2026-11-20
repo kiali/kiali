@@ -308,11 +308,20 @@ export const clickMiniGraphNode = async (
     expect(node).toBeTruthy();
     nodeId = node!.id;
   }).toPass({ intervals: [3_000], timeout: 60_000 });
-  // Node groups are routinely not painted at their bounding-box center: group interiors are
-  // crossed by edge paths, and plain nodes can have the center fall in the gap between the
-  // node badge and its label. A real pointer click at the center then hits the pan surface
-  // (<rect fill-opacity="0">) or an edge instead of the node. Dispatch the click on the node
-  // element itself so the React handler fires regardless of what covers that point.
-  const node = page.locator(`[data-id="${nodeId}"]`).first();
-  await node.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+  // A dispatched click only reaches React handlers when the dispatch target is the handler's
+  // element or one of its (fiber-tree) descendants — React re-dispatches synthetic events along
+  // the component tree, not the DOM path of the [data-id] wrapper, which is an ancestor of the
+  // interactive <g>. Target a descendant of the interactive <g> instead, so the click fires
+  // regardless of what covers the node's bounding-box center (edge paths, the pan surface).
+  // Group nodes (app boxes) portal their interactive content into the groups layer, where the
+  // LayerContainer <g data-id> is a React descendant of the onClick <g>. Plain nodes carry the
+  // badge shape (.pf-topology__node__background) inside the onClick <g>; PF exposes no test
+  // hook on it, a sanctioned last-resort class use (see e2e/AGENTS.md sanctioned exceptions).
+  if (type === 'app') {
+    const group = page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`);
+    await group.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+  } else {
+    const shape = page.locator(`[data-id="${nodeId}"] .pf-topology__node__background`).first();
+    await shape.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+  }
 };
