@@ -84,20 +84,27 @@ export class WorkloadsPage extends ListPage {
   }
 
   async expectOnlyWorkloadsWithAppLabel(): Promise<void> {
-    const regex = /app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=/;
-    const rows = this.page.locator('tbody tr');
-    const count = await rows.count();
-    for (let i = 0; i < count; i++) {
-      await expect(rows.nth(i).locator('td[data-label="Labels"]')).toContainText(regex);
-    }
+    await this.expectEachRowLabelsCellToContain(/app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=/);
   }
 
   async expectOnlyWorkloadsWithVersionLabel(): Promise<void> {
-    const regex = /version=|service\.istio\.io\/canonical-revision=|app\.kubernetes\.io\/version=/;
+    await this.expectEachRowLabelsCellToContain(
+      /version=|service\.istio\.io\/canonical-revision=|app\.kubernetes\.io\/version=/
+    );
+  }
+
+  private async expectEachRowLabelsCellToContain(regex: RegExp): Promise<void> {
     const rows = this.page.locator('tbody tr');
     const count = await rows.count();
     for (let i = 0; i < count; i++) {
-      await expect(rows.nth(i).locator('td[data-label="Labels"]')).toContainText(regex);
+      const labelsCell = rows.nth(i).locator('td[data-label="Labels"]');
+      // With many labels, PF collapses the rest behind an "N more" toggle; the
+      // hidden labels are not in the DOM until the toggle is clicked.
+      const overflow = labelsCell.getByRole('button', { name: /\d+ more/ });
+      if ((await overflow.count()) > 0) {
+        await overflow.click();
+      }
+      await expect(labelsCell).toContainText(regex);
     }
   }
 
