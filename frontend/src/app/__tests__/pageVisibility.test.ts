@@ -3,7 +3,7 @@ import { GlobalActions } from '../../actions/GlobalActions';
 import { store } from '../../store/ConfigStore';
 import { registerPageVisibilitySync, syncPageVisibilityToStore } from '../pageVisibility';
 
-const setDocumentVisibilityState = (state: string): void => {
+const setDocumentVisibilityState = (state: DocumentVisibilityState): void => {
   Object.defineProperty(document, 'visibilityState', {
     configurable: true,
     get: () => state
@@ -27,10 +27,9 @@ describe('pageVisibility', () => {
   });
 
   describe('syncPageVisibilityToStore', () => {
-    const cases: { expectedVisible: boolean; state: string }[] = [
+    const cases: { expectedVisible: boolean; state: DocumentVisibilityState }[] = [
       { state: 'visible', expectedVisible: true },
-      { state: 'hidden', expectedVisible: false },
-      { state: 'prerender', expectedVisible: false }
+      { state: 'hidden', expectedVisible: false }
     ];
 
     cases.forEach(({ state, expectedVisible }) => {
