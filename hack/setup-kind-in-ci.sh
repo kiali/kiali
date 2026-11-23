@@ -229,7 +229,7 @@ else
 fi
 infomsg "Kiali deployment image: ${KIALI_IMAGE_NAME}:${KIALI_IMAGE_TAG} (pull policy: ${KIALI_IMAGE_PULL_POLICY})"
 
-# CI sets TARGET_BRANCH from github.base_ref (e.g. v2.33 on release-branch PRs). Default master is for local runs only.
+# Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
 
 # Default Istio patch per Kiali release branch.
@@ -258,8 +258,8 @@ if [ -z "${ISTIO_VERSION}" ]; then
   ISTIO_VERSION="$(kiali_default_istio_version_for_branch "${TARGET_BRANCH}" 2>/dev/null || true)"
 fi
 
-# Release-image runs: some workflows leave TARGET_BRANCH unset or unrelated while KIALI_VERSION points at a release tag.
-# Align Istio with KIALI_IMAGE_TAG and use that tag for helm-charts lookup below.
+# Release-image runs: TARGET_BRANCH may be master (or a PR branch) while Kiali under test is e.g. v2.27.
+# Align Istio with the image tag and use that tag for helm-charts lookup below.
 if [ -z "${ISTIO_VERSION}" ] && [ "${KIALI_VERSION}" != "dev" ]; then
   TARGET_BRANCH="${KIALI_IMAGE_TAG}"
   ISTIO_VERSION="$(kiali_default_istio_version_for_branch "${TARGET_BRANCH}" 2>/dev/null || true)"
