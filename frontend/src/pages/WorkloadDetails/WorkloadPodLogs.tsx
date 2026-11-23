@@ -74,6 +74,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { classes } from 'typestyle';
 import { editorStyle } from 'styles/EditorStyle';
 import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import { filterLogEntries, getLogFilterRegexError, type WorkloadPodLogEntry } from './WorkloadPodLogsFilter';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -114,57 +115,7 @@ type ContainerOption = {
   name: string;
 };
 
-type Entry = {
-  logEntry?: LogEntry;
-  span?: Span;
-  timestamp: string;
-  timestampUnix: TimeInSeconds;
-};
-
-function getLogFilterRegexError(value: string, useRegex: boolean, label: 'Hide' | 'Show'): string | undefined {
-  if (!value || !useRegex) {
-    return undefined;
-  }
-
-  try {
-    RegExp(value);
-    return undefined;
-  } catch (e) {
-    return e instanceof Error ? `${label}: ${e.message}` : undefined;
-  }
-}
-
-function filterLogEntries(entries: Entry[], showValue: string, hideValue: string, useRegex: boolean): Entry[] {
-  let filteredEntries = entries;
-
-  if (showValue) {
-    if (useRegex) {
-      try {
-        const regexp = RegExp(showValue);
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
-      } catch {
-        // invalid show pattern: skip show filter
-      }
-    } else {
-      filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
-    }
-  }
-
-  if (hideValue) {
-    if (useRegex) {
-      try {
-        const regexp = RegExp(hideValue);
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
-      } catch {
-        // invalid hide pattern: skip hide filter
-      }
-    } else {
-      filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
-    }
-  }
-
-  return filteredEntries;
-}
+type Entry = WorkloadPodLogEntry;
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
@@ -408,8 +359,16 @@ const tabStyle = kialiStyle({
 
 export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private readonly logsRef: React.RefObject<any>;
+  private filteredLogEntriesCache: {
+    entries: Entry[];
+    hideLogValue: string;
+    result: Entry[];
+    showLogValue: string;
+    useRegex: boolean;
+  } | null = null;
   private podOptions: string[] = [];
   private promises: PromisesRegistry = new PromisesRegistry();
+  private visibleLogEntries: Entry[] = [];
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -821,6 +780,34 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
+  private getFilteredLogEntries = (): Entry[] => {
+    if (!this.state.entries) {
+      return [];
+    }
+
+    const { entries, hideLogValue, showLogValue, useRegex } = this.state;
+    const cached = this.filteredLogEntriesCache;
+
+    if (
+      cached &&
+      cached.entries === entries &&
+      cached.hideLogValue === hideLogValue &&
+      cached.showLogValue === showLogValue &&
+      cached.useRegex === useRegex
+    ) {
+      return cached.result;
+    }
+
+    const result = filterLogEntries(entries, showLogValue, hideLogValue, useRegex);
+    this.filteredLogEntriesCache = { entries, hideLogValue, result, showLogValue, useRegex };
+
+    return result;
+  };
+
+  private renderLogLineForList = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
+    return this.renderLogLine({ index, style }, this.visibleLogEntries);
+  };
+
   private renderLogLine = (
     { index, style }: { index: number; style: React.CSSProperties },
     logEntries: Entry[]
@@ -981,9 +968,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       </MenuGroup>
     ];
 
-    const logEntries = this.state.entries
-      ? filterLogEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)
-      : [];
+    const logEntries = this.getFilteredLogEntries();
+    this.visibleLogEntries = logEntries;
 
     return (
       <div key="logsDiv" id="logsDiv" className={logsDiv}>
@@ -1071,7 +1057,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 ref={this.logsRef}
                 rowHeight={22}
                 rowCount={logEntries.length}
-                rowRenderer={({ index, style }) => this.renderLogLine({ index, style }, logEntries)}
+                rowRenderer={this.renderLogLineForList}
                 height={height}
                 width={width}
                 scrollToIndex={logEntries.length - 1}
@@ -1280,10 +1266,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
       const value = (event.target as HTMLInputElement).value;
 
-      this.setState({
-        showClearShowLogButton: !!value,
-        showError: getLogFilterRegexError(value, this.state.useRegex, 'Show'),
-        showLogValue: value
+      this.setState(prevState => {
+        const showError = getLogFilterRegexError(value, prevState.useRegex, 'Show');
+
+        return {
+          showClearShowLogButton: !!value,
+          showError,
+          showLogValue: showError ? prevState.showLogValue : value
+        };
       });
     }
   };
@@ -1315,10 +1305,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
       const value = (event.target as HTMLInputElement).value;
 
-      this.setState({
-        hideError: getLogFilterRegexError(value, this.state.useRegex, 'Hide'),
-        hideLogValue: value,
-        showClearHideLogButton: !!value
+      this.setState(prevState => {
+        const hideError = getLogFilterRegexError(value, prevState.useRegex, 'Hide');
+
+        return {
+          hideError,
+          hideLogValue: hideError ? prevState.hideLogValue : value,
+          showClearHideLogButton: !!value
+        };
       });
     }
   };
