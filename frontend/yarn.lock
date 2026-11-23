@@ -1727,7 +1727,6 @@ __metadata:
     "@testing-library/jest-dom": "npm:^6.9.1"
     "@testing-library/react": "npm:^14.3.1"
     "@testing-library/user-event": "npm:^14.6.1"
-    "@types/deep-freeze": "npm:^0.1.5"
     "@types/js-yaml": "npm:^4.0.9"
     "@types/lodash-es": "npm:4.17.x"
     "@types/node": "npm:^24.0.0"
@@ -1738,7 +1737,6 @@ __metadata:
     axios-mock-adapter: "npm:^2.1.0"
     cypress: "npm:^15.16.0"
     cypress-multi-reporters: "npm:^2.0.5"
-    deep-freeze: "npm:0.0.1"
     dompurify: "npm:^3.4.17"
     esbuild: "npm:^0.27.7"
     eslint: "npm:^10.8.0"
@@ -3497,13 +3495,6 @@ __metadata:
   version: 4.0.2
   resolution: "@types/deep-eql@npm:4.0.2"
   checksum: 10c0/bf3f811843117900d7084b9d0c852da9a044d12eb40e6de73b552598a6843c21291a8a381b0532644574beecd5e3491c5ff3a0365ab86b15d59862c025384844
-  languageName: node
-  linkType: hard
-
-"@types/deep-freeze@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "@types/deep-freeze@npm:0.1.5"
-  checksum: 10c0/cb568f0adbbcb0f3af3533a522e67de357c7ec7a9049d6a7799c4825162c843431302874c1c63668e21f78d8ddad0562f9968011736f27c34d659d161ff64d4c
   languageName: node
   linkType: hard
 
@@ -6016,13 +6007,6 @@ __metadata:
     which-collection: "npm:^1.0.1"
     which-typed-array: "npm:^1.1.13"
   checksum: 10c0/a48244f90fa989f63ff5ef0cc6de1e4916b48ea0220a9c89a378561960814794a5800c600254482a2c8fd2e49d6c2e196131dc983976adb024c94a42dfe4949f
-  languageName: node
-  linkType: hard
-
-"deep-freeze@npm:0.0.1":
-  version: 0.0.1
-  resolution: "deep-freeze@npm:0.0.1"
-  checksum: 10c0/b32c878395df6ca0e07d065750e14bc1651ec76e99490bca25e5844f7321676d7045d4eb4123892a0d4f08c38e4b7fa46d6e834782c095723447c0ee2ad0340b
   languageName: node
   linkType: hard
 
