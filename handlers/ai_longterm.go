@@ -307,8 +307,12 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 		switch windowStr {
 		case "weekly":
 			fromTime = now.AddDate(0, 0, -7*12) // Default to 12 weeks back
+			// Bucket timestamps are at UTC midnight; strip wall-clock time so
+			// the boundary week is not excluded.
+			fromTime = time.Date(fromTime.Year(), fromTime.Month(), fromTime.Day(), 0, 0, 0, 0, time.UTC)
 		case "monthly":
 			fromTime = now.AddDate(0, -12, 0) // Default to 12 months back
+			fromTime = time.Date(fromTime.Year(), fromTime.Month(), 1, 0, 0, 0, 0, time.UTC)
 		default:
 			// It's a duration window (e.g. 2592000 = 30d)
 			window, err := parseUsageDuration(windowStr)
