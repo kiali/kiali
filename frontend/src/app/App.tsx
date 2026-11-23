@@ -12,7 +12,7 @@ import { LoginPage } from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
 
 const syncPageVisibilityToStore = (): void => {
-  // visible | hidden | prerender — treat prerender like hidden (same as legacy visibilityjs).
+  // visible | hidden | prerender — treat prerender like hidden.
   if (document.visibilityState === 'visible') {
     store.dispatch(GlobalActions.setPageVisibilityVisible());
   } else {
