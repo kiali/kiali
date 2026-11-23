@@ -2,7 +2,6 @@ import axios from 'axios';
 import * as React from 'react';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 import { Provider } from 'react-redux';
-import * as Visibility from 'visibilityjs';
 import { GlobalActions } from '../actions/GlobalActions';
 import { Navigation } from '../components/Nav/Navigation';
 import { persistor, store } from '../store/ConfigStore';
@@ -12,21 +11,17 @@ import { StartupInitializer } from './StartupInitializer';
 import { LoginPage } from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
 
-Visibility.change((_e, state) => {
-  // There are 3 states, visible, hidden and prerender, consider prerender as hidden.
-  // https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilityState
-  if (state === 'visible') {
+const syncPageVisibilityToStore = (): void => {
+  // visible | hidden | prerender — treat prerender like hidden (same as legacy visibilityjs).
+  if (document.visibilityState === 'visible') {
     store.dispatch(GlobalActions.setPageVisibilityVisible());
   } else {
     store.dispatch(GlobalActions.setPageVisibilityHidden());
   }
-});
+};
 
-if (Visibility.hidden()) {
-  store.dispatch(GlobalActions.setPageVisibilityHidden());
-} else {
-  store.dispatch(GlobalActions.setPageVisibilityVisible());
-}
+document.addEventListener('visibilitychange', syncPageVisibilityToStore);
+syncPageVisibilityToStore();
 
 const getIsLoadingState = (): boolean => {
   const state = store.getState();
