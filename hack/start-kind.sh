@@ -16,6 +16,7 @@ ENABLE_KEYCLOAK="false"
 ENABLE_HYDRA="false"
 ENABLE_IMAGE_REGISTRY="false"
 IMAGE=""
+SINGLE_NODE="${SINGLE_NODE:-true}"
 LOAD_BALANCER_RANGE="255.70-255.84"
 KEYCLOAK_ISSUER_URI=""
 KEYCLOAK_CERTS_DIR=""
@@ -70,6 +71,11 @@ Options:
 -n|--name
     Name of the kind cluster.
     Default: kiali-testing
+-sn|--single-node <true|false>
+    If true, the KinD cluster will have only a control-plane node (no worker).
+    Set to false to add a worker node (historically needed for MetalLB).
+    Can also be set via SINGLE_NODE env var.
+    Default: true
 HELP
 }
 
@@ -89,6 +95,7 @@ while [[ $# -gt 0 ]]; do
     -kiu|--keycloak-issuer-uri)   KEYCLOAK_ISSUER_URI="$2";   shift;shift; ;;
     -lbr|--load-balancer-range)   LOAD_BALANCER_RANGE="$2";   shift;shift; ;;
     -n|--name)                    NAME="$2";                  shift;shift; ;;
+    -sn|--single-node)            SINGLE_NODE="$2";           shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -273,10 +280,18 @@ if [ "${ENABLE_HYDRA}" == "true" ] && [ -z "${HYDRA_CERTS_DIR}" ]; then
 fi
 
 start_kind() {
-  # Due to: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982 we need two nodes.
+  # See: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982
+  # A worker node was historically required for MetalLB. Use --single-node true to
+  # test without one (reduces resource usage significantly in CI).
   infomsg "Kind cluster to be created with name [${NAME}]"
   infomsg "networking.ipFamily will be set to [${IP_FAMILY}]"
+  infomsg "single-node: [${SINGLE_NODE}]"
   KIND_NODE_IMAGE=${IMAGE:+image: ${IMAGE}}
+  local worker_node=""
+  if [ "${SINGLE_NODE}" != "true" ]; then
+    worker_node="  - role: worker
+    ${KIND_NODE_IMAGE}"
+  fi
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -287,8 +302,7 @@ nodes:
   - role: control-plane
     ${KIND_NODE_IMAGE}
 $(echo_keycloak_mount)$(echo_hydra_mount)
-  - role: worker
-    ${KIND_NODE_IMAGE}
+${worker_node}
 $(echo_image_registry_cluster_config)
 EOF
 }
