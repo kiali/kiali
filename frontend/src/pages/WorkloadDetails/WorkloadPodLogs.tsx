@@ -368,7 +368,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   } | null = null;
   private podOptions: string[] = [];
   private promises: PromisesRegistry = new PromisesRegistry();
-  private readonly visibleLogEntriesRef = React.createRef<Entry[]>();
+  private readonly visibleLogEntriesRef: React.MutableRefObject<Entry[]> = { current: [] };
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -805,7 +805,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private renderLogLineForList = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
-    return this.renderLogLine({ index, style }, this.visibleLogEntriesRef.current ?? []);
+    return this.renderLogLine({ index, style }, this.visibleLogEntriesRef.current);
   };
 
   private renderLogLine = (
