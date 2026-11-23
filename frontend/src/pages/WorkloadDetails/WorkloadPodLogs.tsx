@@ -31,7 +31,6 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { memoize } from 'lodash-es';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -121,6 +120,51 @@ type Entry = {
   timestamp: string;
   timestampUnix: TimeInSeconds;
 };
+
+function getLogFilterRegexError(value: string, useRegex: boolean, label: 'Hide' | 'Show'): string | undefined {
+  if (!value || !useRegex) {
+    return undefined;
+  }
+
+  try {
+    RegExp(value);
+    return undefined;
+  } catch (e) {
+    return e instanceof Error ? `${label}: ${e.message}` : undefined;
+  }
+}
+
+function filterLogEntries(entries: Entry[], showValue: string, hideValue: string, useRegex: boolean): Entry[] {
+  let filteredEntries = entries;
+
+  if (showValue) {
+    if (useRegex) {
+      try {
+        const regexp = RegExp(showValue);
+        filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
+      } catch {
+        // invalid show pattern: skip show filter
+      }
+    } else {
+      filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
+    }
+  }
+
+  if (hideValue) {
+    if (useRegex) {
+      try {
+        const regexp = RegExp(hideValue);
+        filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
+      } catch {
+        // invalid hide pattern: skip hide filter
+      }
+    } else {
+      filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
+    }
+  }
+
+  return filteredEntries;
+}
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
@@ -366,59 +410,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private readonly logsRef: React.RefObject<any>;
   private podOptions: string[] = [];
   private promises: PromisesRegistry = new PromisesRegistry();
-
-  // filteredEntries is a memoized function which returns the set of entries that should be visible in the
-  // logs pane, given the values of show and hide filter, and given the "use regex" configuration.
-  // When the function is called for the first time with certain combination of parameters, the set of filtered
-  // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
-  // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
-  // set is discarded.
-  private filteredEntries = memoize(
-    (entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
-      let filteredEntries = entries;
-
-      if (!!showValue) {
-        if (useRegex) {
-          try {
-            const regexp = RegExp(showValue);
-            filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
-
-            if (!!this.state.showError) {
-              this.setState({ showError: undefined });
-            }
-          } catch (e) {
-            if (e instanceof Error) {
-              this.setState({ showError: `Show: ${e.message}` });
-            }
-          }
-        } else {
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
-        }
-      }
-
-      if (!!hideValue) {
-        if (useRegex) {
-          try {
-            const regexp = RegExp(hideValue);
-            filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
-
-            if (!!this.state.hideError) {
-              this.setState({ hideError: undefined });
-            }
-          } catch (e) {
-            if (e instanceof Error) {
-              this.setState({ hideError: `Hide: ${e.message}` });
-            }
-          }
-        } else {
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
-        }
-      }
-
-      return filteredEntries;
-    },
-    (entries, showValue, hideValue, useRegex) => [showValue, hideValue, useRegex, entries].join('\0')
-  );
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -830,13 +821,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
-  private renderLogLine = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
-    const e = this.filteredEntries(
-      this.state.entries,
-      this.state.showLogValue,
-      this.state.hideLogValue,
-      this.state.useRegex
-    )[index];
+  private renderLogLine = (
+    { index, style }: { index: number; style: React.CSSProperties },
+    logEntries: Entry[]
+  ): React.ReactNode => {
+    const e = logEntries[index];
 
     if (e.span) {
       return (
@@ -993,7 +982,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     ];
 
     const logEntries = this.state.entries
-      ? this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)
+      ? filterLogEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)
       : [];
 
     return (
@@ -1082,7 +1071,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 ref={this.logsRef}
                 rowHeight={22}
                 rowCount={logEntries.length}
-                rowRenderer={this.renderLogLine}
+                rowRenderer={({ index, style }) => this.renderLogLine({ index, style }, logEntries)}
                 height={height}
                 width={width}
                 scrollToIndex={logEntries.length - 1}
@@ -1260,7 +1249,16 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private handleToggleUseRegex = (): void => {
-    this.setState({ useRegex: !this.state.useRegex, kebabOpen: false });
+    this.setState(prevState => {
+      const useRegex = !prevState.useRegex;
+
+      return {
+        hideError: getLogFilterRegexError(prevState.hideLogValue, useRegex, 'Hide'),
+        kebabOpen: false,
+        showError: getLogFilterRegexError(prevState.showLogValue, useRegex, 'Show'),
+        useRegex
+      };
+    });
   };
 
   private setLogLevel = (level: LogLevel): void => {
@@ -1280,9 +1278,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (event.key === 'Enter') {
       event.preventDefault();
 
+      const value = (event.target as HTMLInputElement).value;
+
       this.setState({
-        showClearShowLogButton: !!(event.target as HTMLInputElement).value,
-        showLogValue: (event.target as HTMLInputElement).value
+        showClearShowLogButton: !!value,
+        showError: getLogFilterRegexError(value, this.state.useRegex, 'Show'),
+        showLogValue: value
       });
     }
   };
@@ -1312,9 +1313,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (event.key === 'Enter') {
       event.preventDefault();
 
+      const value = (event.target as HTMLInputElement).value;
+
       this.setState({
-        showClearHideLogButton: !!(event.target as HTMLInputElement).value,
-        hideLogValue: (event.target as HTMLInputElement).value
+        hideError: getLogFilterRegexError(value, this.state.useRegex, 'Hide'),
+        hideLogValue: value,
+        showClearHideLogButton: !!value
       });
     }
   };
