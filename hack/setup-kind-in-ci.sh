@@ -239,6 +239,8 @@ elif [[ "${ISTIO_VERSION}" == 1.27.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
 elif [[ "${ISTIO_VERSION}" == 1.28.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
+elif [[ "${ISTIO_VERSION}" == 1.29.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
