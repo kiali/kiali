@@ -31,7 +31,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import memoize from 'micro-memoize';
+import { memoize } from 'lodash-es';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -373,49 +373,52 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
   // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
   // set is discarded.
-  private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
-    let filteredEntries = entries;
+  private filteredEntries = memoize(
+    (entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
+      let filteredEntries = entries;
 
-    if (!!showValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(showValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
+      if (!!showValue) {
+        if (useRegex) {
+          try {
+            const regexp = RegExp(showValue);
+            filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
 
-          if (!!this.state.showError) {
-            this.setState({ showError: undefined });
+            if (!!this.state.showError) {
+              this.setState({ showError: undefined });
+            }
+          } catch (e) {
+            if (e instanceof Error) {
+              this.setState({ showError: `Show: ${e.message}` });
+            }
           }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ showError: `Show: ${e.message}` });
-          }
+        } else {
+          filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
         }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
       }
-    }
 
-    if (!!hideValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(hideValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
+      if (!!hideValue) {
+        if (useRegex) {
+          try {
+            const regexp = RegExp(hideValue);
+            filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
 
-          if (!!this.state.hideError) {
-            this.setState({ hideError: undefined });
+            if (!!this.state.hideError) {
+              this.setState({ hideError: undefined });
+            }
+          } catch (e) {
+            if (e instanceof Error) {
+              this.setState({ hideError: `Hide: ${e.message}` });
+            }
           }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ hideError: `Hide: ${e.message}` });
-          }
+        } else {
+          filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
         }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
       }
-    }
 
-    return filteredEntries;
-  });
+      return filteredEntries;
+    },
+    (entries, showValue, hideValue, useRegex) => [showValue, hideValue, useRegex, entries].join('\0')
+  );
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
