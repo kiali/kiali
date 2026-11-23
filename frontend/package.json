@@ -109,7 +109,6 @@
     "@patternfly/react-table": "~6.7.0",
     "@patternfly/react-topology": "~6.7.0",
     "axios": "^1.21.1",
-    "deep-freeze": "0.0.1",
     "dompurify": "^3.4.17",
     "eventemitter3": "5.0.4",
     "i18next": "^25.6.2",
@@ -135,8 +134,7 @@
     "reselect": "^5.1.1",
     "typesafe-actions": "^5.1.0",
     "typestyle": "^2.4.0",
-    "victory": "^37.3.6",
-    "visibilityjs": "2.0.2"
+    "victory": "^37.3.6"
   },
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
@@ -152,7 +150,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/deep-freeze": "^0.1.5",
     "@types/js-yaml": "^4.0.9",
     "@types/lodash-es": "4.17.x",
     "@types/node": "^24.0.0",

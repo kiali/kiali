@@ -1,4 +1,4 @@
-import deepFreeze from 'deep-freeze';
+import { deepFreeze } from '../utils/deepFreeze';
 
 const jaegerQueryConfig = {
   path: '/search',
@@ -8,6 +8,6 @@ const jaegerQueryConfig = {
   }
 };
 
-export const jaegerQuery = () => {
+export const jaegerQuery = (): typeof jaegerQueryConfig => {
   return deepFreeze(jaegerQueryConfig) as typeof jaegerQueryConfig;
 };
