@@ -75,9 +75,10 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async expectErrorMessage(message: string): Promise<void> {
-    // The wizard error renders as a PF alert; the page's "Labels"/"Annotations" card
-    // titles are also h4 elements, so scope to the alert's heading.
-    await expect(this.page.getByRole('alert').getByRole('heading')).toContainText(message);
+    // The wizard error is announced as a toast notification. PF6 alerts carry no
+    // role="alert" (isLiveRegion only adds aria-live), so locate the toast title
+    // heading by its text; the error message appears nowhere else on the page.
+    await expect(this.page.getByRole('heading', { name: message })).toBeVisible();
   }
 
   async expectInputEmpty(id: string): Promise<void> {
