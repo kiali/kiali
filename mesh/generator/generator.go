@@ -210,10 +210,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				// add edge to the managing control plane
+				wpVersion, _ := wpNode.Metadata[mesh.Version].(string)
 				for _, infraNode := range meshMap {
 					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == wp.Cluster {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-						if cp.EffectiveRevision(wp.Cluster) == wpNode.Metadata[mesh.Version] {
+						if cpMatchesRevision(cp, wp.Cluster, wpVersion) {
 							infraNode.AddEdge(wpNode)
 							break
 						}
@@ -256,9 +257,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 						continue
 					}
 					cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-					effectiveRev := cp.EffectiveRevision(cluster)
 					for _, gwNode := range gwNodes {
-						if effectiveRev == gwNode.Metadata[mesh.Version] {
+						gwVersion, _ := gwNode.Metadata[mesh.Version].(string)
+						if cpMatchesRevision(cp, cluster, gwVersion) {
 							infraNode.AddEdge(gwNode)
 						}
 					}
@@ -452,8 +453,24 @@ func resolveMeshWorkloadRevision(meshDef *models.Mesh, cluster, namespace string
 	return models.DefaultRevisionLabel
 }
 
+// cpMatchesRevision reports whether cp manages a workload or gateway with the given revision
+// on cluster, matching either the control plane's effective revision (tag when set) or its
+// underlying revision (e.g. when a workload carries an explicit istio.io/rev equal to cp.Revision
+// while cp.Tag is set to a tag name).
+// Assisted-by: Google Antigravity
+func cpMatchesRevision(cp models.ControlPlane, cluster, workloadRev string) bool {
+	if workloadRev == "" {
+		return false
+	}
+	if cp.EffectiveRevision(cluster) == workloadRev {
+		return true
+	}
+	return cp.Revision != "" && cp.Revision == workloadRev
+}
+
 // findManagingIstiod returns the istiod node that manages the given ztunnel workload.
-// Revision/tag is the primary match; app.kubernetes.io/version is used as a tie-breaker.
+// Control planes whose app.kubernetes.io/version conflicts with ztunnelVersion (when both are set)
+// are filtered out before matching by revision or tag.
 // When ztunnel carries no explicit revision (DefaultRevisionLabel) and no "default" istiod matches,
 // it falls back to Ambient-enabled istiod nodes on the cluster (e.g. Sail Operator custom-named Istio CRs).
 // When multiple control planes match, Ambient-enabled istiods are preferred, then (namespace, name).
@@ -468,8 +485,7 @@ func findManagingIstiod(meshMap mesh.MeshMap, ztunnelCluster, ztunnelRevision, z
 		if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
 			continue
 		}
-		effectiveRev := cp.EffectiveRevision(ztunnelCluster)
-		if effectiveRev == ztunnelRevision {
+		if cpMatchesRevision(cp, ztunnelCluster, ztunnelRevision) {
 			candidates = append(candidates, infraNode)
 			continue
 		}

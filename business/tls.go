@@ -262,7 +262,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 
 		status := in.namespaceMTLSOverallStatus(ctx, cluster, namespace.Name, pas, mtlsStatus)
 		if status == MTLSUnset {
-			revision := resolveNamespaceRevision(&namespace, cp)
+			revision := resolveNamespaceRevision(cluster, &namespace, cp)
 			status = in.resolveUnsetStatusWithMeshStatus(meshStatusByRevision[revision], cluster, namespace.Name, rootNamespace)
 		}
 
@@ -278,10 +278,11 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 }
 
 // resolveNamespaceRevision determines the control plane revision for a namespace, preferring explicit
-// namespace revision/labels, then the owning ControlPlane from mesh discovery (e.g. custom-named Sail
-// Operator Ambient Istio CRs where namespaces have no istio.io/rev label), and finally DefaultRevisionLabel.
+// namespace revision/labels, then the owning ControlPlane's effective revision from mesh discovery
+// (e.g. custom-named Sail Operator Ambient Istio CRs or tagged control planes where namespaces have no
+// istio.io/rev label), and finally DefaultRevisionLabel.
 // Assisted-by: Google Antigravity
-func resolveNamespaceRevision(ns *models.Namespace, cp *models.ControlPlane) string {
+func resolveNamespaceRevision(cluster string, ns *models.Namespace, cp *models.ControlPlane) string {
 	if ns != nil {
 		if ns.Revision != "" {
 			return ns.Revision
@@ -292,8 +293,10 @@ func resolveNamespaceRevision(ns *models.Namespace, cp *models.ControlPlane) str
 			}
 		}
 	}
-	if cp != nil && cp.Revision != "" {
-		return cp.Revision
+	if cp != nil {
+		if effRev := cp.EffectiveRevision(cluster); effRev != "" {
+			return effRev
+		}
 	}
 	return models.DefaultRevisionLabel
 }
@@ -302,7 +305,7 @@ func resolveNamespaceRevision(ns *models.Namespace, cp *models.ControlPlane) str
 // - Control plane (root) namespace: mesh-wide status for its revision.
 // - Data plane namespace with mesh in STRICT: MTLS_ENABLED_EXTENDED so the UI shows a closed lock.
 func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, namespace, rootNamespace string, ns *models.Namespace, cp *models.ControlPlane) string {
-	revision := resolveNamespaceRevision(ns, cp)
+	revision := resolveNamespaceRevision(cluster, ns, cp)
 	meshStatus, err := in.MeshWidemTLSStatus(ctx, cluster, revision)
 	if err != nil {
 		return MTLSUnset
@@ -314,7 +317,7 @@ func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, 
 func (in *TLSService) meshStatusByRevisionForNamespaces(ctx context.Context, cluster string, namespaces []models.Namespace, cpForNamespace map[string]*models.ControlPlane) map[string]string {
 	revisions := make(map[string]struct{})
 	for i := range namespaces {
-		rev := resolveNamespaceRevision(&namespaces[i], cpForNamespace[namespaces[i].Name])
+		rev := resolveNamespaceRevision(cluster, &namespaces[i], cpForNamespace[namespaces[i].Name])
 		revisions[rev] = struct{}{}
 	}
 	out := make(map[string]string, len(revisions))

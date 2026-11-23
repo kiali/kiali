@@ -23,7 +23,7 @@ type GlobalInfo struct {
 	Business          *business.Layer
 	ClientFactory     kubernetes.ClientFactory
 	Conf              *config.Config
-	Discovery         *istio.Discovery
+	Discovery         istio.MeshDiscovery
 	Grafana           *grafana.Service
 	IstioStatusGetter IstioStatusGetter
 	KialiCache        cache.KialiCache

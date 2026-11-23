@@ -609,4 +609,29 @@ func TestAmbientNamespaceMTLSWithCustomIstioCRRevision(t *testing.T) {
 	}
 	assert.Equal(MTLSEnabled, statusByNS["istio-custom"])
 	assert.Equal(MTLSUnsetInheritedStrict, statusByNS["orders-ambient"])
+
+	t.Run("falls back to ControlPlane EffectiveRevision when Tag is set and namespace Revision is empty", func(t *testing.T) {
+		taggedCP := &models.ControlPlane{
+			Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+			IsAmbient:       true,
+			IstiodName:      "istiod-1-28-0",
+			IstiodNamespace: "istio-custom",
+			Revision:        "1-28-0",
+			RootNamespace:   "istio-custom",
+			Tag: &models.Tag{
+				Cluster:  conf.KubernetesConfig.ClusterName,
+				Name:     "prod",
+				Revision: "1-28-0",
+			},
+		}
+		// Unlabeled namespace (no ns.Revision and no istio.io/rev label) resolves to tag "prod" via EffectiveRevision.
+		unlabeledNS := &models.Namespace{
+			Cluster:   conf.KubernetesConfig.ClusterName,
+			IsAmbient: true,
+			Labels:    ambientLabels,
+			Name:      "orders-ambient",
+		}
+		assert.Equal("prod", resolveNamespaceRevision(conf.KubernetesConfig.ClusterName, unlabeledNS, taggedCP))
+		assert.Equal("prod", resolveNamespaceRevision(conf.KubernetesConfig.ClusterName, nil, taggedCP))
+	})
 }

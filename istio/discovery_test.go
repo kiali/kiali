@@ -3471,6 +3471,13 @@ func TestDiscoverAmbientCustomIstioCRAndMultiMesh(t *testing.T) {
 				Name:   "orders-ambient",
 				Labels: map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue},
 			}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name: "payments-ambient-empty-rev",
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					config.IstioRevisionLabel:         "",
+				},
+			}},
 			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "outside-mesh"}},
 		}
 
@@ -3486,14 +3493,28 @@ func TestDiscoverAmbientCustomIstioCRAndMultiMesh(t *testing.T) {
 		cp := mesh.ControlPlanes[0]
 		require.True(cp.IsAmbient)
 		require.Equal("custom-mesh", cp.Revision)
-		require.Len(cp.ManagedNamespaces, 1)
-		require.Equal("orders-ambient", cp.ManagedNamespaces[0].Name)
-		require.Equal("custom-mesh", cp.ManagedNamespaces[0].Revision)
+		require.Len(cp.ManagedNamespaces, 2)
+
+		ordersNS := slicetest.FindOrFail(t, cp.ManagedNamespaces, func(ns models.Namespace) bool {
+			return ns.Name == "orders-ambient"
+		})
+		require.Equal("custom-mesh", ordersNS.Revision)
+
+		paymentsNS := slicetest.FindOrFail(t, cp.ManagedNamespaces, func(ns models.Namespace) bool {
+			return ns.Name == "payments-ambient-empty-rev"
+		})
+		require.Equal("custom-mesh", paymentsNS.Revision)
 
 		owningCP, err := mesh.ControlPlaneForNamespace(conf.KubernetesConfig.ClusterName, "orders-ambient")
 		require.NoError(err)
 		require.Equal("istiod-custom-mesh", owningCP.IstiodName)
+
+		owningCPPayments, err := mesh.ControlPlaneForNamespace(conf.KubernetesConfig.ClusterName, "payments-ambient-empty-rev")
+		require.NoError(err)
+		require.Equal("istiod-custom-mesh", owningCPPayments.IstiodName)
+
 		require.Equal("istio-custom", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "orders-ambient"))
+		require.Equal("istio-custom", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "payments-ambient-empty-rev"))
 		require.Empty(discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "outside-mesh"))
 	})
 
