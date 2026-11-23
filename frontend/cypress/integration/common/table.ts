@@ -39,14 +39,24 @@ Then(
 );
 
 When('user expands labels on the {string} row', (rowText: string) => {
-  getColWithRowText(rowText, 'Labels').find('[data-test="toggle-labels"][aria-expanded="false"]').click();
-  getColWithRowText(rowText, 'Labels').find('[data-test="toggle-labels"]').should('have.attr', 'aria-expanded', 'true');
+  expandCollapsedLabelsForNamedRow(rowText);
 });
 
 Then(
   'the {string} column on the {string} row has the text {string}',
   (column: string, rowText: string, text: string) => {
-    getColWithRowText(rowText, column).contains(text);
+    if (column === 'Labels') {
+      getColWithRowText(rowText, column).as('labelsCell');
+      cy.get('@labelsCell').then($cell => {
+        if ($cell.find('[data-test="toggle-labels"][aria-expanded="false"]').length) {
+          cy.get('@labelsCell').find('[data-test="toggle-labels"][aria-expanded="false"]').click();
+          cy.get('@labelsCell').find('[data-test="toggle-labels"]').should('have.attr', 'aria-expanded', 'true');
+        }
+      });
+      cy.get('@labelsCell').contains(text);
+    } else {
+      getColWithRowText(rowText, column).contains(text);
+    }
   }
 );
 
@@ -158,6 +168,47 @@ export const colExists = (colName: string, exists: boolean): Cypress.Chainable =
 // Be aware of these assumptions when using this func.
 export const getColWithRowText = (rowSearchText: string, colName: string): Cypress.Chainable => {
   return cy.get('tbody').contains('tr', rowSearchText).find(`td[data-label="${colName}"]`);
+};
+
+export const expandCollapsedLabelsForNamedRow = (rowSearchText: string): void => {
+  getColWithRowText(rowSearchText, 'Labels').as('labelsCell');
+  cy.get('@labelsCell').then($cell => {
+    if ($cell.find('[data-test="toggle-labels"][aria-expanded="false"]').length) {
+      cy.get('@labelsCell').find('[data-test="toggle-labels"][aria-expanded="false"]').click();
+      cy.get('@labelsCell').find('[data-test="toggle-labels"]').should('have.attr', 'aria-expanded', 'true');
+    }
+  });
+};
+
+const expandCollapsedLabelsInRowByIndex = (rowIndex: number): void => {
+  cy.get('tbody tr')
+    .eq(rowIndex)
+    .find('td[data-label="Labels"]')
+    .then($cell => {
+      if ($cell.find('[data-test="toggle-labels"][aria-expanded="false"]').length) {
+        cy.get('tbody tr').eq(rowIndex).find('[data-test="toggle-labels"][aria-expanded="false"]').click();
+        cy.get('tbody tr')
+          .eq(rowIndex)
+          .find('[data-test="toggle-labels"]')
+          .should('have.attr', 'aria-expanded', 'true');
+      }
+    });
+};
+
+export const assertEachRowInTableLabelsMatch = (pattern: RegExp): void => {
+  cy.get('tbody tr').each((_, index) => {
+    expandCollapsedLabelsInRowByIndex(index);
+    cy.get('tbody tr')
+      .eq(index)
+      .find('td[data-label="Labels"] .pf-v6-c-label__text')
+      .then($labels => {
+        const texts = [...$labels].map(el => el.textContent ?? '');
+        expect(
+          texts.some(text => pattern.test(text)),
+          `row ${index}: [${texts.join(', ')}]`
+        ).to.be.true;
+      });
+  });
 };
 
 // getCellsForCol returns every cell matching the table header name or
