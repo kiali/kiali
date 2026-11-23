@@ -1783,6 +1783,7 @@ __metadata:
     typescript-eslint: "npm:^8.65.0"
     typestyle: "npm:^2.4.0"
     victory: "npm:^37.3.6"
+    visibilityjs: "npm:2.0.2"
   languageName: unknown
   linkType: soft
 
@@ -14960,6 +14961,13 @@ __metadata:
     replace-ext: "npm:^2.0.0"
     teex: "npm:^1.0.1"
   checksum: 10c0/566ab41a84c1a167023a07cb94110d40a07835a5239297e3266a11b0e9c522969a1e623ec2a4f9b05ac7fef596cf47685b410359e5b2ca00bd77400657808816
+  languageName: node
+  linkType: hard
+
+"visibilityjs@npm:2.0.2":
+  version: 2.0.2
+  resolution: "visibilityjs@npm:2.0.2"
+  checksum: 10c0/a02ac6a5173d5c6ef29160ae48b97a3e19f729abfc778d52d06ed8d63169ad50315bc9fa095959bbe933e0578a0c9b27c8e2b39323d4ab22e8e474f5f76d57f0
   languageName: node
   linkType: hard
 
