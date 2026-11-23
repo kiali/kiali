@@ -1,5 +1,10 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists } from './table';
+import {
+  assertEachRowInTableLabelsMatch,
+  checkHealthIndicatorInTable,
+  checkHealthStatusInTable,
+  colExists
+} from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
 // Helper function to wait for a workload to reach a specific health status
@@ -127,50 +132,19 @@ Then('user should only see healthy workloads in workloads table', () => {
 
 Then('user should only see workloads with the {string} label', (label: string) => {
   cy.wait('@refresh');
-  cy.get('tbody').within(() => {
-    const regex = new RegExp(`\\b${label}=`);
-
-    cy.get('tr').each($item => {
-      cy.wrap($item)
-        .find('td')
-        .eq(4)
-        .within(() => {
-          cy.get('span').children().contains(regex);
-        });
-    });
-  });
+  assertEachRowInTableLabelsMatch(new RegExp(`\\b${label}=`));
 });
 
 Then('user should only see workloads with an app label', () => {
   cy.wait('@refresh');
-  cy.get('tbody').within(() => {
-    const regex = new RegExp(`app=|service.istio.io/canonical-name=|app.kubernetes.io/name=`);
-
-    cy.get('tr').each($item => {
-      cy.wrap($item)
-        .find('td')
-        .eq(4)
-        .within(() => {
-          cy.get('span').children().contains(regex);
-        });
-    });
-  });
+  assertEachRowInTableLabelsMatch(new RegExp(`app=|service.istio.io/canonical-name=|app.kubernetes.io/name=`));
 });
 
 Then('user should only see workloads with a version label', () => {
   cy.wait('@refresh');
-  cy.get('tbody').within(() => {
-    const regex = new RegExp(`version=|service.istio.io/canonical-revision=|app.kubernetes.io/version=`);
-
-    cy.get('tr').each($item => {
-      cy.wrap($item)
-        .find('td')
-        .eq(4)
-        .within(() => {
-          cy.get('span').children().contains(regex);
-        });
-    });
-  });
+  assertEachRowInTableLabelsMatch(
+    new RegExp(`version=|service.istio.io/canonical-revision=|app.kubernetes.io/version=`)
+  );
 });
 
 When('user filters for version {string}', (state: string) => {

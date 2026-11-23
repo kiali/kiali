@@ -1691,6 +1691,9 @@ func TestChatUsage_Weekly_MissingParamsDefaults(t *testing.T) {
 	promClient := new(prometheustest.PromClientMock)
 	promClient.On("API").Return(promAPI)
 
+	// Default missing from/since uses the last 12 weeks ending at time.Now(); anchor mock labels on the current week.
+	year, week := time.Now().UTC().ISOWeek()
+
 	ret := model.Vector{
 		&model.Sample{
 			Metric: model.Metric{
@@ -1698,8 +1701,8 @@ func TestChatUsage_Weekly_MissingParamsDefaults(t *testing.T) {
 				"ai_provider": "openai",
 				"ai_model":    "gpt-4",
 				"request":     "chat",
-				"year":        "2026",
-				"week":        "36",
+				"year":        model.LabelValue(strconv.Itoa(year)),
+				"week":        model.LabelValue(strconv.Itoa(week)),
 			},
 			Value: 1500,
 		},
