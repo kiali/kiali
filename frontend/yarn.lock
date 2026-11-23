@@ -1755,6 +1755,7 @@ __metadata:
     jsdom: "npm:^29.1.1"
     junit-report-merger: "npm:^9.0.4"
     lodash-es: "npm:^4.18.0"
+    marked: "npm:14.0.0"
     micro-memoize: "npm:4.0.9"
     mocha-junit-reporter: "npm:^2.2.1"
     moment: "npm:^2.31.0"
