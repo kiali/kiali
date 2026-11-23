@@ -232,36 +232,37 @@ infomsg "Kiali deployment image: ${KIALI_IMAGE_NAME}:${KIALI_IMAGE_TAG} (pull po
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
 
+# Default Istio patch per Kiali release branch.
+declare -A KIALI_BRANCH_DEFAULT_ISTIO_VERSION=(
+  [v2.4]=1.23.6
+  [v2.11]=1.26.8
+  [v2.17]=1.27.9
+  [v2.22]=1.28.10
+  [v2.27]=1.30.8
+  [v2.33]=1.31.4
+)
+
+kiali_default_istio_version_for_branch() {
+  local branch="${1}"
+  local version="${KIALI_BRANCH_DEFAULT_ISTIO_VERSION[${branch}]:-}"
+  if [ -z "${version}" ]; then
+    return 1
+  fi
+  echo "${version}"
+}
+
 # If a specific version of Istio hasn't been provided, set it from the Kiali branch (see compatibility matrices).
 # When using Sail, install-istio-via-sail.sh will pin the Sail chart and map unsupported patch versions
 # (e.g. 1.26.8) to a CRD-supported value (e.g. v1.26-latest).
 if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v2.4" ]; then
-    ISTIO_VERSION="1.23.6"
-  elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
-    ISTIO_VERSION="1.26.8"
-  elif [ "${TARGET_BRANCH}" == "v2.17" ]; then
-    ISTIO_VERSION="1.27.5"
-  elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
-    ISTIO_VERSION="1.28.3"
-  elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
-    ISTIO_VERSION="1.29.1"
-  fi
+  ISTIO_VERSION="$(kiali_default_istio_version_for_branch "${TARGET_BRANCH}" 2>/dev/null || true)"
 fi
 
+# Release-image runs: TARGET_BRANCH may be master (or a PR branch) while Kiali under test is e.g. v2.33.
+# Align Istio with the image tag and use that tag for helm-charts lookup below.
 if [ -z "${ISTIO_VERSION}" ] && [ "${KIALI_VERSION}" != "dev" ]; then
   TARGET_BRANCH="${KIALI_IMAGE_TAG}"
-  if [ "${TARGET_BRANCH}" == "v2.4" ]; then
-    ISTIO_VERSION="1.23.6"
-  elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
-    ISTIO_VERSION="1.26.8"
-  elif [ "${TARGET_BRANCH}" == "v2.17" ]; then
-    ISTIO_VERSION="1.27.5"
-  elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
-    ISTIO_VERSION="1.28.3"
-  elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
-    ISTIO_VERSION="1.29.1"
-  fi
+  ISTIO_VERSION="$(kiali_default_istio_version_for_branch "${TARGET_BRANCH}" 2>/dev/null || true)"
 fi
 
 # Export so child processes (e.g. install-istio-via-sail.sh) see it for Sail chart pinning and Gateway API version.
@@ -272,17 +273,31 @@ if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
   echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
 fi
 
+# kindest/node pins: latest patch (amd64 digest) at the high end of each Istio minor's
+# supported Kubernetes versions — https://istio.io/latest/docs/releases/supported-releases/
 KIND_NODE_IMAGE=""
 if [[ "${ISTIO_VERSION}" == 1.18.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
 elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
 elif [[ "${ISTIO_VERSION}" == 1.26.* ]]; then
-  KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
+  # Supported K8s: 1.29–1.33
+  KIND_NODE_IMAGE="kindest/node:v1.33.12@sha256:c899edd3a9766ac69d5cccc9c8ee342e1920434a2d8eab0e02f461d36df96b41"
 elif [[ "${ISTIO_VERSION}" == 1.27.* ]]; then
-  KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
+  # Supported K8s: 1.29–1.33
+  KIND_NODE_IMAGE="kindest/node:v1.33.12@sha256:c899edd3a9766ac69d5cccc9c8ee342e1920434a2d8eab0e02f461d36df96b41"
 elif [[ "${ISTIO_VERSION}" == 1.28.* ]]; then
-  KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
+  # Supported K8s: 1.30–1.34
+  KIND_NODE_IMAGE="kindest/node:v1.34.11@sha256:c877abb73bf8c803233baa63e9629334aa153cf4b3e83c038f6bc76b82ea942e"
+elif [[ "${ISTIO_VERSION}" == 1.30.* ]]; then
+  # Supported K8s: 1.32–1.36
+  KIND_NODE_IMAGE="kindest/node:v1.36.4@sha256:597367624b4748b74b98e4fe2d661cd78063d02ecdaca702fd90572375b83e67"
+elif [[ "${ISTIO_VERSION}" == 1.31.* ]]; then
+  # Supported K8s: 1.32–1.37
+  KIND_NODE_IMAGE="kindest/node:v1.37.0@sha256:1aac8018c42eb5d48fae5be507caaee789fc6d9b9b3f560359dd4157ac00d4f6"
+elif [[ "${ISTIO_VERSION}" == 1.32.* ]]; then
+  # Supported K8s: 1.33–1.37
+  KIND_NODE_IMAGE="kindest/node:v1.37.0@sha256:1aac8018c42eb5d48fae5be507caaee789fc6d9b9b3f560359dd4157ac00d4f6"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
