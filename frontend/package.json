@@ -134,8 +134,7 @@
     "reselect": "^5.1.1",
     "typesafe-actions": "^5.1.0",
     "typestyle": "^2.4.0",
-    "victory": "^37.3.6",
-    "visibilityjs": "2.0.2"
+    "victory": "^37.3.6"
   },
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
