@@ -216,7 +216,7 @@ if [ -z "${ISTIO_VERSION}" ]; then
   elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
     ISTIO_VERSION="1.28.3"
   elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
-    ISTIO_VERSION="1.29.1"
+    ISTIO_VERSION="1.30.8"
   fi
 fi
 
@@ -239,8 +239,8 @@ elif [[ "${ISTIO_VERSION}" == 1.27.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
 elif [[ "${ISTIO_VERSION}" == 1.28.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
-elif [[ "${ISTIO_VERSION}" == 1.29.* ]]; then
-  KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
+elif [[ "${ISTIO_VERSION}" == 1.30.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.36.4@sha256:597367624b4748b74b98e4fe2d661cd78063d02ecdaca702fd90572375b83e67"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
