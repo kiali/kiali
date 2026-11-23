@@ -10,18 +10,7 @@ import { InitializingScreen } from './InitializingScreen';
 import { StartupInitializer } from './StartupInitializer';
 import { LoginPage } from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
-
-const syncPageVisibilityToStore = (): void => {
-  // visible | hidden | prerender — treat prerender like hidden.
-  if (document.visibilityState === 'visible') {
-    store.dispatch(GlobalActions.setPageVisibilityVisible());
-  } else {
-    store.dispatch(GlobalActions.setPageVisibilityHidden());
-  }
-};
-
-document.addEventListener('visibilitychange', syncPageVisibilityToStore);
-syncPageVisibilityToStore();
+import { registerPageVisibilitySync, syncPageVisibilityToStore } from './pageVisibility';
 
 const getIsLoadingState = (): boolean => {
   const state = store.getState();
@@ -89,10 +78,12 @@ axios.interceptors.response.use(
 export const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
 
+  React.useEffect(() => registerPageVisibilitySync(), []);
+
   return (
     <React.Suspense fallback={<InitializingScreen />}>
       <Provider store={store}>
-        <PersistGate loading={<InitializingScreen />} persistor={persistor}>
+        <PersistGate loading={<InitializingScreen />} onBeforeLift={syncPageVisibilityToStore} persistor={persistor}>
           {isInitialized ? (
             <AuthenticationController
               publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
