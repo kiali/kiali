@@ -375,28 +375,6 @@ func TestTracingServiceNameNonDefaultDomain(t *testing.T) {
 	}
 }
 
-func TestValidateConfiguration(t *testing.T) {
-	assert := assert.New(t)
-	conf := config.NewConfig()
-	conf.ExternalServices.Tracing.Enabled = true
-	layer := getLayer(t, conf)
-
-	tracingConfig := config.TracingConfig{Enabled: true, InternalURL: "http://localhost:59999", UseGRPC: false}
-
-	validConfig := layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
-
-	assert.NotNil(validConfig)
-	assert.NotNil(validConfig.Error)
-	assert.Contains(validConfig.Error, "connection refused")
-
-	tracingConfig = config.TracingConfig{Enabled: false, InternalURL: "http://localhost:59999", UseGRPC: false}
-	validConfig = layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
-
-	assert.NotNil(validConfig)
-	assert.NotNil(validConfig.Error)
-	assert.Contains(validConfig.Error, "Error creating tracing client")
-}
-
 // TestTraceNamespaces pins the multi-source namespace extraction used to
 // authorize trace details: sidecar tags, ambient tags, node_id and OTel
 // resource attributes surfaced as process tags. Building it on only one

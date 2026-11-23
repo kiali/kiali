@@ -24,10 +24,11 @@ const (
 )
 
 type oauth2RoundTripper struct {
-	auth     *config.Auth
-	conf     *config.Config
-	delegate http.RoundTripper
-	tokenRT  http.RoundTripper
+	auth          *config.Auth
+	checkRedirect func(*http.Request, []*http.Request) error
+	conf          *config.Config
+	delegate      http.RoundTripper
+	tokenRT       http.RoundTripper
 
 	mu          sync.RWMutex
 	cachedTok   *oauth2.Token
@@ -120,7 +121,7 @@ func (rt *oauth2RoundTripper) refreshToken(ctx context.Context) (*oauth2.Token, 
 	fetchCtx, cancel := context.WithTimeout(ctx, oauth2TokenFetchTimeout)
 	defer cancel()
 
-	tokenClient := &http.Client{Transport: rt.tokenRT}
+	tokenClient := &http.Client{Transport: rt.tokenRT, CheckRedirect: rt.checkRedirect}
 	fetchCtx = context.WithValue(fetchCtx, oauth2.HTTPClient, tokenClient)
 
 	tok, err := ccConfig.TokenSource(fetchCtx).Token()
@@ -199,7 +200,12 @@ func mapAuthStyle(style string) oauth2.AuthStyle {
 }
 
 func newOAuth2RoundTripper(conf *config.Config, auth *config.Auth, delegate http.RoundTripper) http.RoundTripper {
+	return newOAuth2RoundTripperWithRedirectPolicy(conf, auth, delegate, nil)
+}
+
+func newOAuth2RoundTripperWithRedirectPolicy(conf *config.Config, auth *config.Auth, delegate http.RoundTripper, checkRedirect func(*http.Request, []*http.Request) error) http.RoundTripper {
 	tokenTransport := &http.Transport{
+		DisableKeepAlives: checkRedirect != nil,
 		DialContext: (&net.Dialer{
 			Timeout: 30 * time.Second,
 		}).DialContext,
@@ -211,10 +217,11 @@ func newOAuth2RoundTripper(conf *config.Config, auth *config.Auth, delegate http
 	}
 
 	return &oauth2RoundTripper{
-		auth:     auth,
-		conf:     conf,
-		delegate: delegate,
-		tokenRT:  tokenTransport,
+		auth:          auth,
+		checkRedirect: checkRedirect,
+		conf:          conf,
+		delegate:      delegate,
+		tokenRT:       tokenTransport,
 	}
 }
 

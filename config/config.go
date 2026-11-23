@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -1407,13 +1408,55 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.ExternalServices.Grafana.Auth.Obfuscate()
 	obf.ExternalServices.Perses.Auth.Obfuscate()
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
-	obf.ExternalServices.Tracing.Auth.Obfuscate()
+	obf.ExternalServices.Prometheus.CustomHeaders = obfuscateHeaderValues(conf.ExternalServices.Prometheus.CustomHeaders)
+	tracing := &obf.ExternalServices.Tracing
+	tracing.Auth.Obfuscate()
+	tracing.Auth.OAuth2.TokenURL = obfuscateURLCredentials(tracing.Auth.OAuth2.TokenURL)
+	tracing.CustomHeaders = obfuscateHeaderValues(tracing.CustomHeaders)
+	tracing.ExternalURL = obfuscateURLCredentials(tracing.ExternalURL)
+	tracing.HealthCheckUrl = obfuscateURLCredentials(tracing.HealthCheckUrl)
+	tracing.InternalURL = obfuscateURLCredentials(tracing.InternalURL)
+	tracing.XInClusterURL = obfuscateURLCredentials(tracing.XInClusterURL)
+	tracing.XURL = obfuscateURLCredentials(tracing.XURL)
 	obf.ExternalServices.CustomDashboards.Prometheus.Auth.Obfuscate()
+	obf.ExternalServices.CustomDashboards.Prometheus.CustomHeaders = obfuscateHeaderValues(conf.ExternalServices.CustomDashboards.Prometheus.CustomHeaders)
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
 	obf.AI.Obfuscate()
 	return
+}
+
+// obfuscateHeaderValues preserves header names in a separate map so a redacted
+// config can be displayed without changing the credentials used by clients.
+func obfuscateHeaderValues(headers map[string]string) map[string]string {
+	if headers == nil {
+		return nil
+	}
+
+	obfuscated := make(map[string]string, len(headers))
+	for name := range headers {
+		obfuscated[name] = "xxx"
+	}
+	return obfuscated
+}
+
+// obfuscateURLCredentials keeps the address and path useful for diagnosis while
+// removing URL parts that can carry credentials.
+func obfuscateURLCredentials(rawURL string) string {
+	if rawURL == "" {
+		return ""
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return "xxx"
+	}
+	u.User = nil
+	u.RawQuery = ""
+	u.ForceQuery = false
+	u.Fragment = ""
+	u.RawFragment = ""
+	return u.String()
 }
 
 // String marshals the given Config into a YAML string

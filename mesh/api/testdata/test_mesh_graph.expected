@@ -145,6 +145,9 @@
           "cacheDuration" : 7,
           "cacheEnabled" : true,
           "cacheExpiration" : 300,
+          "customHeaders" : {
+            "X-Metrics-Token" : "xxx"
+          },
           "enabled" : true,
           "thanosProxy" : {
             "retentionPeriod" : "7d",
@@ -173,7 +176,7 @@
             "oauth2" : {
               "clientId" : "",
               "clientSecret" : "xxx",
-              "tokenUrl" : ""
+              "tokenUrl" : "https://issuer.example/token"
             },
             "password" : "xxx",
             "token" : "xxx",
@@ -181,9 +184,14 @@
             "useKialiToken" : false,
             "username" : "xxx"
           },
+          "customHeaders" : {
+            "Authorization" : "xxx",
+            "X-Trace-Tenant" : "xxx"
+          },
           "enabled" : true,
-          "externalURL" : "",
+          "externalURL" : "https://tracing.example/jaeger",
           "grpcPort" : 9095,
+          "healthCheckUrl" : "https://readiness.example/ready",
           "internalURL" : "http://tracing.istio-system:16685/jaeger",
           "provider" : "jaeger",
           "tempoConfig" : {
@@ -194,7 +202,9 @@
           "queryTimeout" : 5,
           "useGRPC" : true,
           "useWaypointName" : false,
-          "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
+          "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ],
+          "InClusterURL" : "http://tracing.istio-system:16685/jaeger",
+          "URL" : "xxx"
         },
         "isExternal" : true,
         "isInaccessible" : true

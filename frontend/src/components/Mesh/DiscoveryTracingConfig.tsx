@@ -1,12 +1,25 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { Button, ButtonVariant, Spinner, Title } from '@patternfly/react-core';
-import { validateExternalUrl } from './TraceConfigurationModal';
+import {
+  Button,
+  ButtonVariant,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Spinner,
+  Title
+} from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
-import type { TracingCheck, TracingInfo } from '../../types/TracingInfo';
+import { PFSpacer } from '../../styles/PfSpacer';
+import type { TracingCheck, TracingInfo, TracingProbeResult } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import * as API from '../../services/Api';
 import type { ExternalServiceInfo } from '../../types/StatusState';
+import { TempoUrlFormat } from '../../types/StatusState';
+import { isParentKiosk } from '../Kiosk/KioskActions';
+import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProviders/Tempo';
+import { isJaegerService, JaegerUrlProvider } from '../../utils/tracing/UrlProviders/Jaeger';
 import type { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
@@ -34,6 +47,8 @@ type CheckModalProps = ReduxDispatchProps &
     tracingDiagnose?: TracingCheck;
     tracingInfo?: TracingInfo;
   };
+
+const backendCheckStyle = kialiStyle({ marginBottom: PFSpacer.md });
 
 const configStyle = kialiStyle({
   fontFamily: 'Courier New, Courier, monospace',
@@ -72,11 +87,65 @@ const greyDisplay = kialiStyle({
   padding: '0 0.5em'
 });
 
+const validateExternalUrl = (
+  externalServices: ExternalServiceInfo[],
+  kiosk: string,
+  info?: TracingInfo
+): string | undefined => {
+  const svc = externalServices.find(s => s.name === info?.provider);
+  if (!svc) return `"View in Tracing" link is hidden because external_url is not defined (No service found)`;
+
+  if (isParentKiosk(kiosk)) {
+    return 'kiosk mode detected. kiosk will try to use the Distributed Tracing UI link. In case the configuration is not found, it will use the external_url.';
+  }
+
+  if (isTempoService(svc)) {
+    if (svc.tempoConfig?.urlFormat === TempoUrlFormat.JAEGER) {
+      const urlProvider = new JaegerUrlProvider(svc);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return '"View in Tracing" is hidden because external_url is empty';
+      }
+    } else if (svc.tempoConfig?.urlFormat === TempoUrlFormat.OPENSHIFT) {
+      const urlProvider = new TempoUrlProvider(svc, externalServices);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return '"View in Tracing" is hidden because external_url is empty or invalid for OpenShift console';
+      }
+    } else {
+      const urlProvider = new TempoUrlProvider(svc, externalServices);
+      if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+        return "\"View in Tracing\" link is hidden because Grafana is not enabled. To use external_url as 'View in tracing' link, tempo_config.url_format must be set to 'jaeger' or 'openshift'";
+      }
+    }
+  }
+  if (isJaegerService(svc)) {
+    const urlProvider = new JaegerUrlProvider(svc);
+    if (!urlProvider.HomeUrl() || !urlProvider.valid) {
+      return '"View in Tracing" is hidden because external_url is empty';
+    }
+  }
+
+  return undefined;
+};
+
 export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProps) => {
   const { t } = useKialiTranslation();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const externalUrl = validateExternalUrl(props.externalServices, props.kiosk, props.tracingInfo);
+  const readiness = props.tracingDiagnose?.readiness;
+  const queryAPI = props.tracingDiagnose?.queryAPI;
+
+  const formatReadiness = (result: TracingProbeResult): string => {
+    if (result.status === 'passed') {
+      return t('Ready');
+    }
+
+    if (result.status === 'unverified') {
+      return t('Unverified. The readiness endpoint requires authentication.');
+    }
+
+    return result.httpStatus ? t('Failed (HTTP {{status}})', { status: result.httpStatus }) : t('Failed');
+  };
 
   const labels = {
     namespaceSelector: 'NamespaceSelector',
@@ -114,13 +183,38 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
 
   return (
     <div
-      id="discovery-tab-content"
+      id="tracing-discovery-content"
       style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}
     >
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         {props.tracingDiagnose && (
           <>
             <span style={{ color: 'green' }}>{props.tracingDiagnose.message}</span>
+            {!loading && !error && (readiness || queryAPI) && (
+              <section className={backendCheckStyle} aria-live="polite">
+                <Title headingLevel="h4" size="lg">
+                  {t('Deployed tracing backend')}
+                </Title>
+                <DescriptionList isHorizontal isCompact>
+                  {readiness && (
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Readiness')}</DescriptionListTerm>
+                      <DescriptionListDescription data-test="tracing-readiness-result">
+                        {formatReadiness(readiness)}
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                  )}
+                  {queryAPI && (
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Tracing query API')}</DescriptionListTerm>
+                      <DescriptionListDescription data-test="tracing-query-result">
+                        {queryAPI.status === 'passed' ? t('Verified') : t('Failed')}
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                  )}
+                </DescriptionList>
+              </section>
+            )}
             <div style={{ marginTop: '1em' }}>
               <span>{t('Possible configuration(s) found for external_services.tracing')}:</span>
             </div>
