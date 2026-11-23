@@ -301,15 +301,15 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 	var fromTime, sinceTime time.Time
 	if fromStr == "" || sinceStr == "" {
 		// If they aren't provided, default to the requested window ending now
-		now := time.Now()
+		now := time.Now().UTC()
 		sinceTime = now
 
 		switch windowStr {
 		case "weekly":
-			fromTime = now.AddDate(0, 0, -7*12) // Default to 12 weeks back
-			// Bucket timestamps are at UTC midnight; strip wall-clock time so
-			// the boundary week is not excluded.
-			fromTime = time.Date(fromTime.Year(), fromTime.Month(), fromTime.Day(), 0, 0, 0, 0, time.UTC)
+			// Default to 12 weeks back, aligned to ISO week (Monday) bucket boundaries.
+			year, week := now.ISOWeek()
+			weekStart := isoWeekToTime(year, week)
+			fromTime = weekStart.AddDate(0, 0, -7*12)
 		case "monthly":
 			fromTime = now.AddDate(0, -12, 0) // Default to 12 months back
 			fromTime = time.Date(fromTime.Year(), fromTime.Month(), 1, 0, 0, 0, 0, time.UTC)
