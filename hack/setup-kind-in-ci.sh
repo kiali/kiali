@@ -295,9 +295,6 @@ elif [[ "${ISTIO_VERSION}" == 1.30.* ]]; then
 elif [[ "${ISTIO_VERSION}" == 1.31.* ]]; then
   # Supported K8s: 1.32–1.37
   KIND_NODE_IMAGE="kindest/node:v1.37.0@sha256:1aac8018c42eb5d48fae5be507caaee789fc6d9b9b3f560359dd4157ac00d4f6"
-elif [[ "${ISTIO_VERSION}" == 1.32.* ]]; then
-  # Supported K8s: 1.33–1.37
-  KIND_NODE_IMAGE="kindest/node:v1.37.0@sha256:1aac8018c42eb5d48fae5be507caaee789fc6d9b9b3f560359dd4157ac00d4f6"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
