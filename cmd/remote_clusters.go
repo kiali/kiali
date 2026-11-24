@@ -36,11 +36,6 @@ import (
 // background; its reads fail (bounded by the cache read timeout) until it does.
 const remoteCacheSyncTimeout = 45 * time.Second
 
-// remoteProbeTimeout bounds the startup credentials probe of one remote cluster. Nothing else
-// bounds it at this point in startup, and a remote that accepts connections but stalls would
-// otherwise block startup far past every downstream budget.
-const remoteProbeTimeout = 10 * time.Second
-
 // cacheTransforms returns the per-type cache transforms shared across all clusters.
 // These strip cached objects down to only the fields Kiali uses, significantly reducing
 // memory consumption in large meshes.
@@ -124,10 +119,7 @@ const (
 // succeeds with allowed=false is normal there and is NOT a credentials failure - only the
 // error is classified. The verdict is about the transport and the credentials, not the RBAC.
 func probeRemoteCredentials(ctx context.Context, client kubernetes.ClientInterface) error {
-	probeCtx, cancel := context.WithTimeout(ctx, remoteProbeTimeout)
-	defer cancel()
-	_, err := client.GetSelfSubjectAccessReview(probeCtx, "", "apps", "deployments", []string{"list"})
-	return err
+	return kubernetes.ProbeClusterCredentials(ctx, client)
 }
 
 // classifyRemoteProbeError decides what startup does with a failed credentials probe.

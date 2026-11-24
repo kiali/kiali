@@ -566,6 +566,12 @@ var ErrClusterDegraded = errors.New("cluster cache is degraded")
 // unavailable), not 403.
 var ErrClusterUnreachable = errors.New("cluster is unreachable")
 
+// NewClusterUnreachableError returns the error for a request that names a cluster
+// currently marked unreachable: temporarily unavailable (503), not an access denial.
+func NewClusterUnreachableError(cluster string) error {
+	return fmt.Errorf("cluster [%s]: %w", cluster, ErrClusterUnreachable)
+}
+
 // ErrNamespaceRevoked is returned by detail paths for a namespace whose access was partially
 // revoked while the rest of the cluster remains readable: its informers are frozen, so reads
 // from it would serve stale pre-revocation data. Like a degraded cluster it recovers on its
@@ -702,9 +708,7 @@ func (c *kialiCacheImpl) probeUnreachableOnce(ctx context.Context) {
 		if client == nil {
 			continue
 		}
-		probeCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
-		_, err := client.GetSelfSubjectAccessReview(probeCtx, "", "apps", "deployments", []string{"list"})
-		cancel()
+		err := kubernetes.ProbeClusterCredentials(ctx, client)
 		if err == nil || !kubernetes.IsConnectionError(err) {
 			c.ClearClusterUnreachable(cluster)
 		}

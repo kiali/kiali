@@ -50,11 +50,20 @@ func fakeNamespace(name string) *corev1.Namespace {
 // testing cache and discovery, for tests that exercise session validation.
 func setupOpenshiftAuthController(t *testing.T, conf *config.Config, clientFactory *kubetest.K8SClientFactoryMock) *authentication.OpenshiftAuthController {
 	t.Helper()
+	controller, _ := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+	return controller
+}
+
+// setupOpenshiftAuthControllerWithCache is setupOpenshiftAuthController for tests that
+// also need the cache handle, e.g. to model the shared unreachable-cluster signal's
+// mark and clear.
+func setupOpenshiftAuthControllerWithCache(t *testing.T, conf *config.Config, clientFactory *kubetest.K8SClientFactoryMock) (*authentication.OpenshiftAuthController, cache.KialiCache) {
+	t.Helper()
 	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
 	controller, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
 	require.NoError(t, err)
-	return controller
+	return controller, kialiCache
 }
 
 func fakeOAuthMetadataServer(t *testing.T) *httptest.Server {
@@ -381,37 +390,14 @@ func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
 
 	metadataServer := fakeOAuthMetadataServer(t)
 
-	newClient := func() *kubetest.FakeK8sClient {
-		client := kubetest.NewFakeK8sClient(
-			fakeNamespace("bookinfo"),
-			&osoauth_v1.OAuthClient{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "kiali-istio-system",
-				},
-				RedirectURIs: []string{"http://localhost:20001/kiali"},
-			},
-			&osuser_v1.User{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name: "~", // tilde means user for this token
-				},
-			},
-		)
-		client.OpenShift = true
-		client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
-		return client
-	}
-
-	eastClient := newClient()
-	westClient := newClient()
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": eastClient,
 		"west": westClient,
 	}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
-	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
-	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
-	require.NoError(err)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
 
 	sessionCookieEast := validSession(t, authController, "east")
 	sessionCookieWest := validSession(t, authController, "west")
@@ -1249,10 +1235,7 @@ func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *
 	// holds the cache: the failed namespace lookup marks the cluster unreachable
 	// through the shared signal, and the test must model the background prober
 	// clearing the mark on recovery.
-	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
-	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
-	require.NoError(err)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
 
 	util.Clock = util.RealClock{}
 

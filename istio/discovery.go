@@ -764,17 +764,23 @@ func (in *Discovery) configuredClusters() []models.KubeCluster {
 // mandatory cluster (see resolveMesh).
 func (in *Discovery) orderedSAClusterNames() []string {
 	names := maps.Keys(in.kialiSAClients)
-	slices.SortFunc(names, func(a, b string) int {
-		switch {
-		case a == in.conf.KubernetesConfig.ClusterName:
-			return -1
-		case b == in.conf.KubernetesConfig.ClusterName:
-			return 1
-		default:
-			return 0
-		}
-	})
+	home := in.conf.KubernetesConfig.ClusterName
+	slices.SortFunc(names, func(a, b string) int { return homeFirst(a, b, home) })
 	return names
+}
+
+// homeFirst is the comparator behind the home-first ordering: a serial per-cluster
+// pass whose budget a dead remote must not spend ahead of the mandatory cluster
+// (see resolveMesh and orderedSAClusterNames).
+func homeFirst(a, b, home string) int {
+	switch {
+	case a == home:
+		return -1
+	case b == home:
+		return 1
+	default:
+		return 0
+	}
 }
 
 // Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
@@ -975,16 +981,8 @@ func (in *Discovery) resolveMesh(ctx context.Context) (*models.Mesh, error) {
 	// consume the rebuild budget ahead of the mandatory cluster and make the home
 	// resolution fail with a spurious context-deadline error (map iteration order
 	// would otherwise decide whether home is starved by a dead remote).
-	slices.SortStableFunc(clusters, func(a, b models.KubeCluster) int {
-		switch {
-		case a.Name == in.conf.KubernetesConfig.ClusterName:
-			return -1
-		case b.Name == in.conf.KubernetesConfig.ClusterName:
-			return 1
-		default:
-			return 0
-		}
-	})
+	home := in.conf.KubernetesConfig.ClusterName
+	slices.SortStableFunc(clusters, func(a, b models.KubeCluster) int { return homeFirst(a.Name, b.Name, home) })
 
 	// One scoped read per cluster for the whole mesh resolution: several passes below need
 	// the same per-cluster namespace lists - and the same failures, so a remote whose scan

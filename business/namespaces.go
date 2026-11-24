@@ -56,6 +56,13 @@ func IsAccessibleError(err error) bool {
 	return errors.As(err, &accessibleErr)
 }
 
+// namespaceComputeUnreachableErr is the error returned when a cluster's
+// accessible-namespace-set computation is suppressed because the cluster is marked
+// unreachable (see cache.KialiCache.MarkClusterUnreachable).
+func namespaceComputeUnreachableErr(cluster string) error {
+	return fmt.Errorf("namespaces for cluster [%s] cannot be computed: %w", cluster, cache.ErrClusterUnreachable)
+}
+
 func NewNamespaceService(
 	cache cache.KialiCache,
 	conf *config.Config,
@@ -123,7 +130,7 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 	client, ok := in.userClients[cluster]
 	if !ok {
 		if in.kialiCache.IsClusterUnreachable(cluster) {
-			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterUnreachable)
+			return nil, cache.NewClusterUnreachableError(cluster)
 		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
@@ -163,14 +170,12 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 		// cluster is exempt: it is reachable by definition, its failures are
 		// exceptional and fail loud.
 		if cluster != in.conf.KubernetesConfig.ClusterName && in.kialiCache.IsClusterUnreachable(cluster) {
-			return nil, fmt.Errorf("namespaces for cluster [%s] cannot be computed: %w", cluster, cache.ErrClusterUnreachable)
+			return nil, namespaceComputeUnreachableErr(cluster)
 		}
 
 		namespaces, err := in.fetchNamespacesForCluster(computeCtx, cluster)
 		if err != nil {
-			if cluster != in.conf.KubernetesConfig.ClusterName {
-				in.kialiCache.MarkClusterUnreachable(cluster)
-			}
+			in.kialiCache.MarkClusterUnreachable(cluster)
 			return nil, err
 		}
 		if computeCtx.Err() != nil {
@@ -178,9 +183,7 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 			// round trips may have been cut short, and caching the result would serve a
 			// truncated set for the whole token TTL. Fail instead.
 			err := fmt.Errorf("namespaces for cluster [%s] took too long to compute: %w", cluster, computeCtx.Err())
-			if cluster != in.conf.KubernetesConfig.ClusterName {
-				in.kialiCache.MarkClusterUnreachable(cluster)
-			}
+			in.kialiCache.MarkClusterUnreachable(cluster)
 			return nil, err
 		}
 
@@ -433,7 +436,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	// unreachable is skipped, and the background prober re-checks it (see
 	// kialiCache.MarkClusterUnreachable). The home cluster is exempt.
 	if cluster != in.conf.KubernetesConfig.ClusterName && in.kialiCache.IsClusterUnreachable(cluster) {
-		return nil, fmt.Errorf("namespaces for cluster [%s] cannot be computed: %w", cluster, cache.ErrClusterUnreachable)
+		return nil, namespaceComputeUnreachableErr(cluster)
 	}
 
 	var namespaces []models.Namespace
@@ -441,9 +444,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	if in.conf.Deployment.ClusterWideAccess {
 		nss, err := saClient.GetNamespaces(ctx, "")
 		if err != nil {
-			if cluster != in.conf.KubernetesConfig.ClusterName {
-				in.kialiCache.MarkClusterUnreachable(cluster)
-			}
+			in.kialiCache.MarkClusterUnreachable(cluster)
 			return nil, err
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
@@ -458,9 +459,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
 					continue
 				}
-				if cluster != in.conf.KubernetesConfig.ClusterName {
-					in.kialiCache.MarkClusterUnreachable(cluster)
-				}
+				in.kialiCache.MarkClusterUnreachable(cluster)
 				return nil, err
 			}
 			k8sNamespaces = append(k8sNamespaces, *k8sNs)
@@ -604,7 +603,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		// skipped - Kiali's connectivity problem, not the user's access. The fitting
 		// answer is the 503 of ErrClusterUnreachable, not the 403 of a denial.
 		if in.kialiCache.IsClusterUnreachable(cluster) {
-			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterUnreachable)
+			return nil, cache.NewClusterUnreachableError(cluster)
 		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
