@@ -232,6 +232,24 @@ HELPMSG
   esac
 done
 
+# When CI selects a Sail release, pin the same chart/ref and Istio version.
+case "${SAIL_OPERATOR_SOURCE:-}" in
+  chart:*)
+    SAIL_OPERATOR_CHART_VERSION="${SAIL_OPERATOR_SOURCE#chart:}"
+    SAIL_OPERATOR_GIT_REF=""
+    ;;
+  git:*)
+    SAIL_OPERATOR_GIT_REF="${SAIL_OPERATOR_SOURCE#git:}"
+    ;;
+  "") ;;
+  *) echo "ERROR: Invalid Sail operator source: ${SAIL_OPERATOR_SOURCE}" >&2; exit 1 ;;
+esac
+
+if [[ -n "${SAIL_OPERATOR_SOURCE:-}" ]] && [[ ! "${ISTIO_VERSION:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+  echo "ERROR: A resolved Sail operator source requires a concrete ISTIO_VERSION." >&2
+  exit 1
+fi
+
 if is_in_array "tempo" "jaeger" "${ADDONS}"; then
     echo "Tempo and Jaeger cannot be enabled at the same time"
     exit 1
@@ -458,7 +476,14 @@ if [ -n "${CUSTOM_INSTALL_SETTINGS}" ]; then
 fi
 
 REQUESTED_VERSION=$(yq '.spec.version // ""' <<< "$ISTIO_YAML")
-if [ "${SAIL_OPERATOR_GIT_REF}" == "main" ]; then
+if [ -n "${SAIL_OPERATOR_SOURCE:-}" ]; then
+  version_expr=".spec.version = \"v${ISTIO_VERSION}\""
+  ISTIO_YAML="$(yq "${version_expr}" <<< "${ISTIO_YAML}")"
+  if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+    cniYAML="$(yq "${version_expr}" <<< "${cniYAML}")"
+    ztunnelYAML="$(yq "${version_expr}" <<< "${ztunnelYAML}")"
+  fi
+elif [ "${SAIL_OPERATOR_GIT_REF}" == "main" ]; then
   # When testing Sail main, let Sail choose its default supported version.
   ISTIO_YAML=$(echo "$ISTIO_YAML" | yq 'del(.spec.version)' -)
   echo "Sail operator git ref is 'main'; ignoring requested Istio version (${REQUESTED_VERSION:-<unset>}) and letting Sail select the default version."

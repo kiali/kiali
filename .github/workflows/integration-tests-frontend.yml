@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ""
+      sail_operator_source:
+        description: "Sail chart or git ref selected by the Istio version resolver."
+        required: false
+        type: string
+        default: ""
       sail:
         description: "If true, install Istio with Sail. If false, use istioctl (supports Istio RCs)."
         required: false
@@ -28,6 +33,7 @@ on:
         default: "true"
 
 env:
+  SAIL_OPERATOR_SOURCE: ${{ inputs.sail_operator_source }}
   TARGET_BRANCH: ${{ inputs.target_branch }}
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
