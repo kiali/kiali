@@ -831,6 +831,7 @@
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "ネームスペース {{namespace}} はクラスター {{clusterName}} に見つかりません",
   "Namespaces": "ネームスペース",
   "Nav": "ナビゲーション",
+  "Navigating to {{destination}}": "Navigating to {{destination}}",
   "negation": "否定",
   "Network": "ネットワーク",
   "Network connection between source and destination that is configured in envoy": "Envoy に設定されたソースと宛先の間のネットワーク接続",

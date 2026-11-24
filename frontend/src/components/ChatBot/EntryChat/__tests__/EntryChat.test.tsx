@@ -371,6 +371,41 @@ describe('EntryChat', () => {
       expect(screen.getByText('View workload Details')).toBeInTheDocument();
       expect(screen.queryByTestId('stub-chat-copy')).not.toBeInTheDocument();
       expect(screen.queryByText('No answer was returned.')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('chatbot-navigation-action-status')).not.toBeInTheDocument();
+    });
+
+    describe('when the chatbot navigates by itself', () => {
+      beforeEach(() => {
+        store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: true }));
+      });
+
+      afterEach(() => {
+        store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: false }));
+      });
+
+      it('says where a link-only answer went instead of showing an empty message', () => {
+        aiEntry({ actions: [workloadLink] });
+        renderEntryChat(0);
+        const status = screen.getByTestId('chatbot-navigation-action-status');
+        expect(status).toHaveTextContent('Navigating to');
+        expect(status).toHaveTextContent('workload Details');
+        expect(status).not.toHaveTextContent('View');
+        expect(screen.queryByTestId('chatbot-navigation-action')).not.toBeInTheDocument();
+        expect(screen.queryByText('No answer was returned.')).not.toBeInTheDocument();
+      });
+
+      it('names the first link, the one it opens', () => {
+        aiEntry({
+          text: 'Here it is.',
+          actions: [workloadLink, { title: 'View Mesh Graph', kind: 'navigation', payload: '/mesh' }]
+        });
+        renderEntryChat(0);
+        const status = screen.getByTestId('chatbot-navigation-action-status');
+        expect(status).toHaveTextContent('Navigating to');
+        expect(status).toHaveTextContent('workload Details');
+        expect(status).not.toHaveTextContent('View');
+        expect(status).not.toHaveTextContent('Mesh Graph');
+      });
     });
 
     it('does not add the line when the answer has text above the link', () => {

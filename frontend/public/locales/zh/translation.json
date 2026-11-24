@@ -834,6 +834,7 @@
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "在集群{{clusterName}}中找不到命名空间： {{namespace}}",
   "Namespaces": "命名空间",
   "Nav": "导航",
+  "Navigating to {{destination}}": "Navigating to {{destination}}",
   "negation": "否定",
   "Network": "网络",
   "Network connection between source and destination that is configured in envoy": "在Envoy中配置的源和目标之间的网络连接",

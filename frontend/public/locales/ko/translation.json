@@ -809,6 +809,7 @@
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "네임스페이스: {{namespace}}을(를) 클러스터 {{clusterName}}에서 찾을 수 없습니다",
   "Namespaces": "네임스페이스",
   "Nav": "탐색",
+  "Navigating to {{destination}}": "Navigating to {{destination}}",
   "negation": "부정",
   "Network": "네트워크",
   "Network connection between source and destination that is configured in envoy": "Envoy에 구성된 소스와 대상 간 네트워크 연결",

@@ -836,6 +836,7 @@
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "El namespace {{namespace}} no se encuentra en el clúster {{clusterName}}",
   "Namespaces": "Namespaces",
   "Nav": "Navegación",
+  "Navigating to {{destination}}": "Navigating to {{destination}}",
   "negation": "negación",
   "Network": "Red",
   "Network connection between source and destination that is configured in envoy": "Conexión de red entre origen y destino configurada en Envoy",

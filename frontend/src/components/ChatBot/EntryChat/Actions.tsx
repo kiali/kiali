@@ -42,6 +42,12 @@ export const Actions: React.FC<ActionsProps> = ({ entryIndex }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}>
+      {/* With "Allow Chatbot to navigate" on, Prompt opens the first navigation action itself, so say where it went. */}
+      {navigationAction.length > 0 && alwaysNavigate && (
+        <span data-test="chatbot-navigation-action-status">
+          {t('Navigating to {{destination}}', { destination: navigationAction[0].title.replace(/^View\s+/i, '') })}
+        </span>
+      )}
       {navigationAction.length > 0 && !alwaysNavigate && (
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}
