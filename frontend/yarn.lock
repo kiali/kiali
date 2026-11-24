@@ -1756,7 +1756,6 @@ __metadata:
     junit-report-merger: "npm:^9.0.4"
     lodash-es: "npm:^4.18.0"
     marked: "npm:14.0.0"
-    micro-memoize: "npm:4.0.9"
     mocha-junit-reporter: "npm:^2.2.1"
     moment: "npm:^2.31.0"
     monaco-editor: "npm:^0.58.0"
@@ -9933,13 +9932,6 @@ __metadata:
   version: 1.4.1
   resolution: "merge2@npm:1.4.1"
   checksum: 10c0/254a8a4605b58f450308fc474c82ac9a094848081bf4c06778200207820e5193726dc563a0d2c16468810516a5c97d9d3ea0ca6585d23c58ccfff2403e8dbbeb
-  languageName: node
-  linkType: hard
-
-"micro-memoize@npm:4.0.9":
-  version: 4.0.9
-  resolution: "micro-memoize@npm:4.0.9"
-  checksum: 10c0/86755d0e4cf016ef8bf4bf2e87ffec6585de86ff9723448fcc6bc68d50aaff50662f6ab66633c056b0fcbf44199a3106ed70a564b15686b9f7ae1aecd797bf11
   languageName: node
   linkType: hard
 
