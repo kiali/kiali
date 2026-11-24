@@ -1,0 +1,60 @@
+- name: "get_troubleshooting_snapshot"
+  description: "Preferred first tool for diagnosing one workload or service. Returns a time-scoped troubleshooting snapshot with logs, Istio metrics, traffic topology, distributed traces, and the current Envoy config dump. Provide since/to for an explicit window, or durationSeconds (default 900) for a current/recent window. Traces and metrics are included only when their backends are enabled."
+  toolset: [default]
+  input_schema:
+    type: "object"
+    required: ["namespace"]
+    properties:
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
+      direction:
+        type: "string"
+        description: "Metrics traffic direction. Defaults to outbound."
+        enum: ["inbound", "outbound"]
+      durationSeconds:
+        type: "integer"
+        description: "Length of a current troubleshooting window ending now, in seconds. Defaults to 900. Use this instead of since/to when the user asks for current or recent status without explicit timestamps."
+      graphType:
+        type: "string"
+        description: "Topology graph granularity. Defaults to versionedApp."
+        enum: ["versionedApp", "app", "service", "workload"]
+      includeEnvoyConfigDump:
+        type: "boolean"
+        description: "Whether to include the current Envoy config dump. Defaults to true."
+      includeGraph:
+        type: "boolean"
+        description: "Whether to include namespace traffic topology. Defaults to true."
+      includeLogs:
+        type: "boolean"
+        description: "Whether to include pod logs. Defaults to true."
+      includeMetrics:
+        type: "boolean"
+        description: "Whether to include Istio metrics. Defaults to true."
+      includeTraces:
+        type: "boolean"
+        description: "Whether to include distributed traces when tracing is enabled. Defaults to true."
+      maxEnvoyConfigDumps:
+        type: "integer"
+        description: "Maximum number of Envoy config dumps. Defaults to 1."
+      maxLogPods:
+        type: "integer"
+        description: "Maximum number of pods from which logs are collected. Defaults to 3."
+      namespace:
+        type: "string"
+        description: "Kubernetes namespace of the target."
+      reporter:
+        type: "string"
+        description: "Metrics reporter. Defaults to source."
+      serviceName:
+        type: "string"
+        description: "Target service name. Provide exactly one of workloadName or serviceName."
+      since:
+        type: "string"
+        description: "Start of an explicit troubleshooting window in RFC3339 format. Omit with `to` to use durationSeconds."
+      to:
+        type: "string"
+        description: "End of an explicit troubleshooting window in RFC3339 format. Omit with `since` to use durationSeconds."
+      workloadName:
+        type: "string"
+        description: "Target workload name. Provide exactly one of workloadName or serviceName."

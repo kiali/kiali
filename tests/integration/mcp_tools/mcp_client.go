@@ -78,9 +78,17 @@ func mcpRetryWait(attempt int) time.Duration {
 }
 
 func CallMCPTool(toolName string, args map[string]interface{}) (*MCPResponse, error) {
+	return callTool(toolName, args, false)
+}
+
+func CallKialiUITool(toolName string, args map[string]interface{}) (*MCPResponse, error) {
+	return callTool(toolName, args, true)
+}
+
+func callTool(toolName string, args map[string]interface{}, kialiUI bool) (*MCPResponse, error) {
 	var lastErr error
 	for attempt := 1; attempt <= MCPMaxAttempts; attempt++ {
-		resp, err := callMCPToolOnce(toolName, args)
+		resp, err := callMCPToolOnce(toolName, args, kialiUI)
 		if err == nil {
 			return resp, nil
 		}
@@ -99,7 +107,7 @@ func CallMCPTool(toolName string, args map[string]interface{}) (*MCPResponse, er
 	return nil, lastErr
 }
 
-func callMCPToolOnce(toolName string, args map[string]interface{}) (*MCPResponse, error) {
+func callMCPToolOnce(toolName string, args map[string]interface{}, kialiUI bool) (*MCPResponse, error) {
 	var body []byte
 	var err error
 	if args != nil {
@@ -117,6 +125,9 @@ func callMCPToolOnce(toolName string, args map[string]interface{}) (*MCPResponse
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if kialiUI {
+		req.Header.Set("Kiali-UI", "true")
+	}
 
 	httpResp, err := mcpClient.httpClient.Do(req)
 	if err != nil {

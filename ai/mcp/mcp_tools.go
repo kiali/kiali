@@ -23,6 +23,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcp/get_trace_details"
+	"github.com/kiali/kiali/ai/mcp/get_troubleshooting_snapshot"
 	"github.com/kiali/kiali/ai/mcp/list_clusters"
 	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/list_traces"
@@ -208,6 +209,8 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return get_referenced_docs.Execute(kialiInterface, args)
 	case "get_metrics":
 		return get_metrics.Execute(kialiInterface, args)
+	case "get_troubleshooting_snapshot":
+		return get_troubleshooting_snapshot.Execute(kialiInterface, args)
 	default:
 		return nil, http.StatusNotFound
 	}

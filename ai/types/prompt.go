@@ -79,6 +79,7 @@ When troubleshooting multi-cluster issues:
 
 ### MCP TOOL SELECTION (CRITICAL)
 Match tool parameters to resource type. Wrong names cause errors or empty results.
+- **get_troubleshooting_snapshot:** Preferred FIRST tool for workload or service diagnostics, including requests for health, traffic anomalies, sidecar issues, logs, metrics, traces, topology, or next troubleshooting steps. Use workloadName or serviceName with namespace and clusterName. If the user provides since/to, pass them exactly; if they ask for current/recent status without timestamps, use durationSeconds (default 900). Use targeted follow-up tools only when the snapshot leaves a specific question unanswered.
 - **get_logs:** name must be a pod name or workload name only. Never pass a service, app, or namespace name. For a service or app, call list_or_get_resources first and use a backing workload name.
 - **list_traces:** requires serviceName (Kubernetes/Istio service). Never pass a workload or app name. For workloads/apps, resolve an associated service via list_or_get_resources first.
 - **get_metrics:** use resourceType service, workload, or app with matching resourceName.
