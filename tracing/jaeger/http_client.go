@@ -3,6 +3,7 @@ package jaeger
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -76,14 +77,32 @@ func (jc JaegerHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http
 
 func (jc JaegerHTTPClient) GetServices(ctx context.Context, client http.Client, baseURL *url.URL) ([]string, error) {
 	url := *baseURL
-	serviceList := model.TracingServices{}
 	url.Path = path.Join(url.Path, "/api/services")
-	r, _, reqError := otel.MakeRequest(ctx, client, url.String(), nil)
-	if errMarshal := json.Unmarshal(r, &serviceList); errMarshal != nil {
-		getLoggerFromContextHTTPJaeger(ctx).Error().Msgf("Error unmarshalling Jaeger response: %s", errMarshal)
-		return nil, errMarshal
+	r, status, err := otel.MakeRequest(ctx, client, url.String(), nil)
+	if err != nil {
+		return nil, err
 	}
-	return serviceList.Data, reqError
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("services request to Jaeger returned HTTP %d", status)
+	}
+	services, err := DecodeServicesResponse(r)
+	if err != nil {
+		getLoggerFromContextHTTPJaeger(ctx).Error().Msgf("Invalid Jaeger services response: %s", err)
+		return nil, err
+	}
+	return services, nil
+}
+
+// DecodeServicesResponse requires a data array, which may be empty.
+func DecodeServicesResponse(body []byte) ([]string, error) {
+	var response model.TracingServices
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, err
+	}
+	if response.Data == nil {
+		return nil, errors.New("services response from Jaeger is missing a data array")
+	}
+	return response.Data, nil
 }
 
 func queryTracesHTTP(ctx context.Context, client http.Client, u *url.URL) (*model.TracingResponse, error) {

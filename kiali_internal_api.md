@@ -302,7 +302,6 @@ v2.35.0-SNAPSHOT
 
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
-| POST | /api/tracing/check | [tracing check](#tracing-check) |  |
 | GET | /api/tracing/diagnose | [tracing diagnose](#tracing-diagnose) |  |
   
 
@@ -8348,66 +8347,6 @@ Status: Internal Server Error
 
 
 
-### <span id="tracing-check"></span> tracing check (*tracingCheck*)
-
-```
-POST /api/tracing/check
-```
-
-Endpoint to test a specific configuration for tracing
-
-#### URI Schemes
-  * http
-  * https
-
-#### Produces
-  * application/json
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#tracing-check-200) | OK | Response of the configuration validation query |  | [schema](#tracing-check-200-schema) |
-| [500](#tracing-check-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#tracing-check-500-schema) |
-
-#### Responses
-
-
-##### <span id="tracing-check-200"></span> 200 - Response of the configuration validation query
-Status: OK
-
-###### <span id="tracing-check-200-schema"></span> Schema
-   
-  
-
-[ConfigurationValidation](#configuration-validation)
-
-##### <span id="tracing-check-500"></span> 500 - A Internal is the error message that means something has gone wrong
-Status: Internal Server Error
-
-###### <span id="tracing-check-500-schema"></span> Schema
-   
-  
-
-[TracingCheckInternalServerErrorBody](#tracing-check-internal-server-error-body)
-
-###### Inlined models
-
-**<span id="tracing-check-internal-server-error-body"></span> TracingCheckInternalServerErrorBody**
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
-| Message | string| `string` |  | |  |  |
-
-
-
 ### <span id="tracing-diagnose"></span> tracing diagnose (*tracingDiagnose*)
 
 ```
@@ -10824,22 +10763,6 @@ sources.
 | Address | string| `string` |  | | Address of the server implementing the Istio Mesh Configuration</br>protocol (MCP). Can be IP address or a fully qualified DNS name.</br>Use xds:// to specify a grpc-based xds backend, k8s:// to specify a k8s controller or</br>fs:/// to specify a file-based backend with absolute path to the directory. |  |
 | SubscribedResources | [][Resource](#resource)| `[]Resource` |  | | Describes the source of configuration, if nothing is specified default is MCP |  |
 | tls_settings | [ClientTLSSettings](#client-tls-settings)| `ClientTLSSettings` |  | |  |  |
-
-
-
-### <span id="configuration-validation"></span> ConfigurationValidation
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Error | string| `string` |  | |  |  |
-| Message | string| `string` |  | |  |  |
 
 
 
@@ -17809,6 +17732,8 @@ the gateway proxy and propagated to the upstream services in the cluster.
 | LogLine | [][LogLine](#log-line)| `[]*LogLine` |  | |  |  |
 | Message | string| `string` |  | |  |  |
 | ValidConfig | [][ValidConfig](#valid-config)| `[]*ValidConfig` |  | |  |  |
+| queryAPI | [TracingProbeResult](#tracing-probe-result)| `TracingProbeResult` |  | |  |  |
+| readiness | [TracingProbeResult](#tracing-probe-result)| `TracingProbeResult` |  | |  |  |
 
 
 
@@ -17832,6 +17757,33 @@ the gateway proxy and propagated to the upstream services in the cluster.
 | UseWaypointName | boolean| `bool` |  | |  |  |
 | WhiteListIstioSystem | []string| `[]string` |  | |  |  |
 | tempoConfig | [TempoConfig](#tempo-config)| `TempoConfig` |  | |  |  |
+
+
+
+### <span id="tracing-probe-result"></span> TracingProbeResult
+
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| HTTPStatus | int64 (formatted integer)| `int64` |  | |  |  |
+| status | [TracingProbeStatus](#tracing-probe-status)| `TracingProbeStatus` |  | |  |  |
+
+
+
+### <span id="tracing-probe-status"></span> TracingProbeStatus
+
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| TracingProbeStatus | string| string | |  |  |
 
 
 
