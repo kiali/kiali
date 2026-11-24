@@ -226,6 +226,10 @@ const toolbarTail = kialiStyle({
   marginTop: '0.125rem'
 });
 
+const errorStyle = kialiStyle({
+  color: PFColors.Danger
+});
+
 const logsDiv = kialiStyle({
   display: 'flex',
   flex: 1,
@@ -522,7 +526,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               id="log_show"
                               name="log_show"
                               style={{ width: '10em' }}
-                              validated={isValid(this.state.showLogValue ? !this.state.showError : undefined)}
+                              validated={isValid(
+                                this.state.showError ? false : this.state.showLogValue ? true : undefined
+                              )}
                               autoComplete="on"
                               type="text"
                               onKeyDown={this.checkSubmitShow}
@@ -545,7 +551,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               id="log_hide"
                               name="log_hide"
                               style={{ width: '10em' }}
-                              validated={isValid(this.state.hideLogValue ? !this.state.hideError : undefined)}
+                              validated={isValid(
+                                this.state.hideError ? false : this.state.hideLogValue ? true : undefined
+                              )}
                               autoComplete="on"
                               type="text"
                               onKeyDown={this.checkSubmitHide}
@@ -562,21 +570,18 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 </Button>
                               </Tooltip>
                             )}
+                          </ToolbarItem>
 
-                            {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
-                            {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-
-                            <ToolbarItem style={{ alignSelf: 'center' }}>
-                              <Tooltip
-                                key="show_hide_log_help"
-                                position="top"
-                                content={t(
-                                  'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
-                                )}
-                              >
-                                <KialiIcon.Info className={infoStyle} />
-                              </Tooltip>
-                            </ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
+                            <Tooltip
+                              key="show_hide_log_help"
+                              position="top"
+                              content={t(
+                                'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
+                              )}
+                            >
+                              <KialiIcon.Info className={infoStyle} />
+                            </Tooltip>
                           </ToolbarItem>
 
                           {this.props.tracingIntegration && (
@@ -610,6 +615,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>
+
+                        {this.state.showError && <div className={errorStyle}>{this.state.showError}</div>}
+                        {this.state.hideError && <div className={errorStyle}>{this.state.hideError}</div>}
                       </Toolbar>
                     )}
                     {this.getLogsDiv()}
@@ -1234,16 +1242,28 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState({ showToolbar: !this.state.showToolbar, kebabOpen: false });
   };
 
-  private handleToggleUseRegex = (): void => {
-    this.setState(prevState => {
-      const useRegex = !prevState.useRegex;
+  private syncLogFilterInputValue = (elementId: string, value: string): void => {
+    const htmlInputElement = document.getElementById(elementId) as HTMLInputElement | null;
 
-      return {
-        hideError: getLogFilterRegexError(prevState.hideLogValue, useRegex, 'Hide'),
-        kebabOpen: false,
-        showError: getLogFilterRegexError(prevState.showLogValue, useRegex, 'Show'),
-        useRegex
-      };
+    if (htmlInputElement !== null) {
+      htmlInputElement.value = value;
+    }
+  };
+
+  private handleToggleUseRegex = (): void => {
+    const { hideLogValue, showLogValue, useRegex } = this.state;
+    const nextUseRegex = !useRegex;
+
+    this.syncLogFilterInputValue('log_show', showLogValue);
+    this.syncLogFilterInputValue('log_hide', hideLogValue);
+
+    this.setState({
+      hideError: getLogFilterRegexError(hideLogValue, nextUseRegex, 'Hide'),
+      kebabOpen: false,
+      showClearHideLogButton: !!hideLogValue,
+      showClearShowLogButton: !!showLogValue,
+      showError: getLogFilterRegexError(showLogValue, nextUseRegex, 'Show'),
+      useRegex: nextUseRegex
     });
   };
 
