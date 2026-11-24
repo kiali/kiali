@@ -58,7 +58,7 @@ Key technology choices (from `frontend/package.json`):
 **`frontend/src/app/App.tsx`** is the root React component. It:
 
 - Wraps everything in `<Provider store={store}>` and `<PersistGate>` (from redux-persist).
-- Registers global `visibilityjs` handlers that dispatch `GlobalActions.setPageVisibility*` so background polling can pause when the tab is hidden.
+- Syncs the Page Visibility API (`document.visibilityState` / `visibilitychange` via `pageVisibility.ts`) into Redux so Graph and Mesh side panels skip work when the tab is hidden; re-syncs after redux-persist rehydration in `PersistGate.onBeforeLift`.
 - Sets up global Axios interceptors: every request increments a loading counter (spinner) and sets the OpenShift Bearer token header if one was extracted from the URL `oauth_token` param; every response decrements the counter and dispatches `LoginActions.sessionExpired()` on HTTP 401.
 - Shows `<StartupInitializer>` until startup checks complete, then renders `<AuthenticationController>` which gates the app between `<LoginPage>` (unauthenticated) and `<Navigation>` (authenticated).
 

@@ -1,4 +1,4 @@
-import deepFreeze from 'deep-freeze';
+import { deepFreeze } from '../utils/deepFreeze';
 import { UNIT_TIME, MILLISECONDS } from '../types/Common';
 import { t } from 'utils/I18nUtils';
 

@@ -22,9 +22,9 @@ import './i18n';
 // The rsbuild.config.ts aliases 'monaco-editor' to the worker-free editor.api entry
 // to avoid web worker chunk-loading (workers use importScripts with the relative
 // assetPrefix './' which resolves incorrectly from their nested async directory).
-// editor.api excludes basic-languages, so we register the ones Kiali needs explicitly.
+// editor.api excludes language definitions, so we register the ones Kiali needs explicitly.
 import * as monaco from 'monaco-editor';
-import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
+import 'monaco-editor/esm/vs/languages/definitions/yaml/register.js';
 import { loader } from '@monaco-editor/react';
 
 loader.config({ monaco });
