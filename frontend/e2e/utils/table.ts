@@ -52,9 +52,10 @@ export const expectLabelsInRow = async (page: Page, rowSearchText: string, ...la
 };
 
 export const ensureObjectsInTable = async (page: Page, ...names: string[]): Promise<void> => {
+  // Rows stream in after the loading spinner clears, so the count must poll —
+  // a one-shot count() races table population.
   const rows = page.locator('tbody tr');
-  const rowCount = await rows.count();
-  expect(rowCount).toBeGreaterThanOrEqual(names.length);
+  await expect.poll(async () => rows.count(), { timeout: 40_000 }).toBeGreaterThanOrEqual(names.length);
 
   for (const name of names) {
     await expect(page.locator('tbody').getByRole('row').filter({ hasText: name })).toBeVisible();
