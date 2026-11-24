@@ -1759,7 +1759,7 @@ __metadata:
     micro-memoize: "npm:4.0.9"
     mocha-junit-reporter: "npm:^2.2.1"
     moment: "npm:^2.31.0"
-    monaco-editor: "npm:^0.55.1"
+    monaco-editor: "npm:^0.58.0"
     msw: "npm:^2.12.7"
     prettier: "npm:^3.6.2"
     pretty-quick: "npm:^4.2.2"
@@ -4098,6 +4098,13 @@ __metadata:
   version: 1.12.2
   resolution: "@unrs/resolver-binding-win32-x64-msvc@npm:1.12.2"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@vscode/diff@npm:0.0.2-145":
+  version: 0.0.2-145
+  resolution: "@vscode/diff@npm:0.0.2-145"
+  checksum: 10c0/1874a07de4a6e831f28f5c1edcb2b2004445a9511a810d095ff26851d773f210140a77649b5447728cc73cb877b8cddcafe58bad25df2f76a0f92df0c06658fb
   languageName: node
   linkType: hard
 
@@ -10572,13 +10579,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:^0.55.1":
-  version: 0.55.1
-  resolution: "monaco-editor@npm:0.55.1"
+"monaco-editor@npm:^0.58.0":
+  version: 0.58.0
+  resolution: "monaco-editor@npm:0.58.0"
   dependencies:
-    dompurify: "npm:3.2.7"
+    "@vscode/diff": "npm:0.0.2-145"
+    dompurify: "npm:3.4.17"
     marked: "npm:14.0.0"
-  checksum: 10c0/c1a0cf887657b42c8996518bc5ee96bbd39c977f862d2a2b2018427c45f14b0dd25d1452278202056f6b1ead97981282ccacd7d7ad918d8f0ef084159f974a25
+  checksum: 10c0/c8ce103ffa4279e996165e21c49d0f0d10f25fa32ddfcd9bd19da8c8eaa8720e65c2048ddbb54df012c0c42ccda84c0609320b7e26de4e4405109684154e91ee
   languageName: node
   linkType: hard
 

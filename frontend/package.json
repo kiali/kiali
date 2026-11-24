@@ -118,7 +118,7 @@
     "marked": "14.0.0",
     "micro-memoize": "4.0.9",
     "moment": "^2.31.0",
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.58.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "~16.5.8",
