@@ -73,10 +73,14 @@ resolve_must_gather_namespaces_dir() {
 # not — the offline client cannot load generic v1 Lists from "kubectl get -o yaml".
 must_gather_namespace_usable_for_offline() {
   local ns_dir="${1}"
-  local yaml_file has_workload=false has_service=false
+  local yaml_file has_workload=false has_service=false has_envoy_dump=false
 
   if [ ! -d "${ns_dir}" ]; then
     return 1
+  fi
+
+  if [ -n "$(find "${ns_dir}/pods" -type f -name 'config_dump_proxy.json' -print -quit 2>/dev/null)" ]; then
+    has_envoy_dump=true
   fi
 
   while IFS= read -r -d '' yaml_file; do
@@ -86,7 +90,7 @@ must_gather_namespace_usable_for_offline() {
     if grep -qE '^kind: Service$' "${yaml_file}" 2>/dev/null; then
       has_service=true
     fi
-    if [ "${has_workload}" = true ] && [ "${has_service}" = true ]; then
+    if [ "${has_workload}" = true ] && [ "${has_service}" = true ] && [ "${has_envoy_dump}" = true ]; then
       return 0
     fi
   done < <(find "${ns_dir}" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 2>/dev/null)

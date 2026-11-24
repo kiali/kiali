@@ -105,6 +105,7 @@ install_istio() {
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
+SAIL="${SAIL:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -243,7 +244,7 @@ setup_minikube_multicluster() {
   local cluster2_name
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg} --sail "${SAIL}"
     cluster1_context="controlplane"
     cluster2_context="dataplane"
     cluster1_name="controlplane"

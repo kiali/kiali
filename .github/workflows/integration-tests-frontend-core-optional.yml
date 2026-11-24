@@ -17,6 +17,11 @@ on:
         required: false
         type: boolean
         default: false
+      sail_operator_git_ref:
+        description: "Optional Sail operator git ref."
+        required: false
+        type: string
+        default: ""
       sail_operator_source:
         description: "Sail chart or git ref selected by the Istio version resolver."
         required: false
@@ -93,7 +98,7 @@ jobs:
       run: yarn install --immutable
 
     - name: Run frontend core optional integration tests
-      run: hack/run-integration-tests.sh --test-suite frontend-core-optional --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail }}" ]; then echo "--sail ${{ inputs.sail }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite frontend-core-optional --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail_operator_git_ref }}" ]; then echo "--sail-operator-git-ref ${{ inputs.sail_operator_git_ref }}"; fi) $(if [ -n "${{ inputs.sail }}" ]; then echo "--sail ${{ inputs.sail }}"; fi)
 
     - name: Stop resource sampler
       if: always()
