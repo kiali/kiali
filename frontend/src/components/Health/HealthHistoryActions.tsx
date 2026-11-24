@@ -128,7 +128,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
     dispatch(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
     dispatch(ChatAIActions.setChatContext(chatContext));
     dispatch(ChatAIActions.setQuery(query));
-    dispatch(ChatAIActions.setChatbotVisible({ visible: true }));
+    dispatch(ChatAIActions.setChatVisible(true));
     setSelection(undefined);
   };
 

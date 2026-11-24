@@ -2,7 +2,7 @@ import { location, router } from '../app/History';
 import { store } from '../store/ConfigStore';
 import { isParentKiosk, kioskNavigateAction } from '../components/Kiosk/KioskActions';
 
-const OSSM_CONSOLE = 'ossmconsole';
+export const OSSM_CONSOLE = 'ossmconsole';
 
 interface NavigateOptions {
   relative?: 'route' | 'path';
@@ -28,6 +28,19 @@ export const kialiNavigate = (url: string, options?: NavigateOptions): void => {
   } else {
     router.navigate(url, options);
   }
+};
+
+const pathSegments = (pathname: string): string[] => pathname.split('/').filter(Boolean);
+
+/**
+ * True when this frontend is running inside OpenShift Service Mesh Console.
+ * Matches both plugin routes (`/ossmconsole/troubleshooting`) and Console
+ * resource tabs (`/k8s/ns/.../ossmconsole`).
+ */
+export const isOSSMC = (): boolean => {
+  const routerPath = location.getPathname() ?? '';
+  const windowPath = typeof window !== 'undefined' ? (window.location?.pathname ?? '') : '';
+  return [routerPath, windowPath].some(path => pathSegments(path).includes(OSSM_CONSOLE));
 };
 
 /**

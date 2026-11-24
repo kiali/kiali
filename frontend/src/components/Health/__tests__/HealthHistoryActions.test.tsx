@@ -253,7 +253,7 @@ describe('health history click actions', () => {
     expect(contextPayload).toContain('get_metrics');
     expect(payload).toMatch(/\d/);
     expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
-    expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setChatbotVisible({ visible: true }));
+    expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setChatVisible(true));
     await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
   });
 

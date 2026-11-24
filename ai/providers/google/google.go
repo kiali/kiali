@@ -130,6 +130,9 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 					providers.Log(p, providers.LogLevelDebug, "Content", "Google stream completed with internal SDK context cleanup — not an error")
 					break
 				}
+				if sawTurnUsage {
+					usage.Add(turnUsage)
+				}
 				return text, nil, err
 			}
 			lastChunk = chunk
@@ -245,7 +248,9 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 
 	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn, p.conf.AI.ChatAI.MaxToolIterations)
 	if aborted {
-		return types.TokenUsage{}
+		// Tool-limit and stream failures still consumed tokens. Return them so the
+		// handler can store session usage the same way a completed chat does.
+		return usage
 	}
 
 	if responseTruncated {

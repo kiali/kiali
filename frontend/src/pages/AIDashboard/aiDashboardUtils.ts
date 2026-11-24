@@ -1,6 +1,27 @@
+import * as React from 'react';
+
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
-export const getISOWeek = (date: Date): { week: number; year: number } => {
+/** Returns the pixel width of a container div, updated via ResizeObserver. */
+export const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
+  const [width, setWidth] = React.useState(0);
+  React.useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+    const observer = new ResizeObserver(entries => {
+      const w = Math.floor(entries[0].contentRect.width);
+      if (w > 0) {
+        setWidth(w);
+      }
+    });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+};
+
+const getISOWeek = (date: Date): { week: number; year: number } => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -70,14 +91,14 @@ export const formatBudgetIntervalTitle = (translate: TranslateFn, interval: stri
   return translate('Budget ({{interval}})', { interval });
 };
 
-export const formatWeekRangeOptionLabel = (translate: TranslateFn, date: Date, week: number): string =>
+const formatWeekRangeOptionLabel = (translate: TranslateFn, date: Date, week: number): string =>
   translate('W{{week}} {{month}} {{year}}', {
     week,
     month: monthShort(date),
     year: yearShort(date)
   });
 
-export const formatMonthRangeOptionLabel = (date: Date): string => `${monthShort(date)} ${yearShort(date)}`;
+const formatMonthRangeOptionLabel = (date: Date): string => `${monthShort(date)} ${yearShort(date)}`;
 
 export const buildWeekRangeOptions = (translate: TranslateFn): { label: string; value: number }[] => {
   const options: { label: string; value: number }[] = [];

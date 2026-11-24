@@ -110,6 +110,13 @@ describe('GlobalStateReducer reducer', () => {
     });
   });
 
+  it('should toggle preferences open', () => {
+    expect(GlobalStateReducer(INITIAL_GLOBAL_STATE, GlobalActions.setPreferencesOpen(true))).toEqual({
+      ...INITIAL_GLOBAL_STATE,
+      preferencesOpen: true
+    });
+  });
+
   it('should set kiosk data', () => {
     expect(
       GlobalStateReducer(

@@ -15,7 +15,7 @@ import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
-import type { UsageValueKind } from 'types/Chatbot';
+import type { AIRequestKind, UsageValueKind } from 'types/Chatbot';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { buildMonthRangeOptions, buildWeekRangeOptions } from '../aiDashboardUtils';
 
@@ -44,14 +44,32 @@ const rangeLabelStyle = kialiStyle({
 export const AIConsumptionHeader: React.FC<{
   fromVal: number;
   onRangeChange: (fromVal: number, toVal: number) => void;
+  onRequestKindChange: (kind: AIRequestKind) => void;
   onValueKindChange: (kind: UsageValueKind) => void;
   onWindowChange: (window: string) => void;
+  requestKind: AIRequestKind;
   title: string;
   toVal: number;
   valueKind: UsageValueKind;
   window: string;
-}> = ({ fromVal, onRangeChange, onValueKindChange, onWindowChange, title, toVal, valueKind, window }) => {
+}> = ({
+  fromVal,
+  onRangeChange,
+  onRequestKindChange,
+  onValueKindChange,
+  onWindowChange,
+  requestKind,
+  title,
+  toVal,
+  valueKind,
+  window
+}) => {
   const { t } = useKialiTranslation();
+  const requestOptions: { [key: string]: string } = {
+    all: t('All'),
+    chat: t('Chat'),
+    troubleshooting: t('Troubleshooting')
+  };
 
   const windowOptions = React.useMemo(
     () => ({
@@ -109,6 +127,19 @@ export const AIConsumptionHeader: React.FC<{
                       text={t('Cost')}
                     />
                   </ToggleGroup>
+                </div>
+              </ToolbarItem>
+              <ToolbarItem variant="separator" />
+              <ToolbarItem>
+                <div data-test="ai-consumption-request-dd">
+                  <ToolbarDropdown
+                    id="ai-consumption-request-kind"
+                    handleSelect={value => onRequestKindChange(value as AIRequestKind)}
+                    label={requestOptions[requestKind] ?? requestKind}
+                    options={requestOptions}
+                    tooltip={t('Request type')}
+                    value={requestKind}
+                  />
                 </div>
               </ToolbarItem>
               <ToolbarItem variant="separator" />

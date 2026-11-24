@@ -227,7 +227,7 @@ func TestLoadAIStoreConfig_DisabledWhenChatAIDisabled(t *testing.T) {
 	conf.AI.ChatAI.StoreConfig.Enabled = true
 
 	storeCfg := LoadAIStoreConfig(conf)
-	assert.False(t, storeCfg.Enabled, "store should be disabled when ChatAI is disabled")
+	assert.False(t, storeCfg.Enabled, "store should be disabled when chat is disabled")
 }
 
 func TestLoadAIStoreConfig_InvalidMemoryUsesDefault(t *testing.T) {

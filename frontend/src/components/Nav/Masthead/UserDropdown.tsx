@@ -17,15 +17,19 @@ import { isParentOwnedAppearance } from 'utils/AppearanceUtils';
 import { Divider, Dropdown, DropdownGroup, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
+import { GlobalActions } from 'actions/GlobalActions';
 
 type ReduxStateProps = {
   clusters?: string[];
+  isPreferencesOpen: boolean;
   session?: LoginSession;
 };
 
 type ReduxDispatchProps = {
+  closePreferences: () => void;
   extendSession: (session: LoginSession) => void;
   logout: () => void;
+  openPreferences: () => void;
 };
 
 type UserProps = ReduxStateProps & ReduxDispatchProps;
@@ -33,7 +37,6 @@ type UserProps = ReduxStateProps & ReduxDispatchProps;
 type UserState = {
   checkSessionTimerId?: ReturnType<typeof setInterval>;
   isDropdownOpen: boolean;
-  isPreferencesOpen: boolean;
   isSessionTimeoutDismissed: boolean;
   showSessionTimeOut: boolean;
   timeCountDownSeconds: number;
@@ -52,8 +55,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
-      isDropdownOpen: false,
-      isPreferencesOpen: false
+      isDropdownOpen: false
     };
   }
 
@@ -132,20 +134,13 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   openPreferences = (): void => {
-    this.setState({
-      isDropdownOpen: false,
-      isPreferencesOpen: true
-    });
-  };
-
-  closePreferences = (): void => {
-    this.setState({
-      isPreferencesOpen: false
-    });
+    this.setState({ isDropdownOpen: false });
+    this.props.openPreferences();
   };
 
   render(): React.ReactNode {
-    const { isDropdownOpen, isPreferencesOpen } = this.state;
+    const { isDropdownOpen } = this.state;
+    const { isPreferencesOpen } = this.props;
     const showPreferences = !isParentOwnedAppearance();
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
@@ -251,7 +246,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </Dropdown>
         )}
 
-        <PreferencesModal isOpen={isPreferencesOpen} onClose={this.closePreferences} />
+        <PreferencesModal isOpen={isPreferencesOpen} onClose={this.props.closePreferences} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">
@@ -269,12 +264,15 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   clusters: Array.from(namespacesPerClusterSelector(state).keys()),
+  isPreferencesOpen: state.globalState.preferencesOpen,
   session: state.authentication.session
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
+  closePreferences: () => dispatch(GlobalActions.setPreferencesOpen(false)),
   logout: () => dispatch(LoginThunkActions.logout()),
-  extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session))
+  extendSession: (session: LoginSession) => dispatch(LoginThunkActions.extendSession(session)),
+  openPreferences: () => dispatch(GlobalActions.setPreferencesOpen(true))
 });
 
 export const UserDropdown = connect(mapStateToProps, mapDispatchToProps)(UserDropdownComponent);

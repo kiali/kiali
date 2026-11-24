@@ -5,6 +5,8 @@ import { PreferencesModalComponent } from '../Masthead/PreferencesModal';
 import {
   ColorScheme,
   ContrastMode,
+  KIALI_CHAT_ALWAYS_NAVIGATE,
+  KIALI_CHAT_REVIEW_PROMPT_BEFORE_SEND,
   KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
@@ -19,6 +21,7 @@ import { serverConfig, setServerConfig } from 'config/ServerConfig';
 import { i18n } from 'i18n';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
+import { ChatAIActions } from 'actions/ChatAIActions';
 
 const preferencesServerConfig = Object.assign({}, serverConfig);
 
@@ -52,11 +55,14 @@ const renderPreferences = (
 ): ReturnType<typeof render> => {
   return render(
     <PreferencesModalComponent
+      alwaysNavigate={false}
+      chatEnabled={true}
       colorScheme={ColorScheme.LIGHT}
       contrastMode={ContrastMode.DEFAULT}
       isOpen={true}
       language={Language.ENGLISH}
       onClose={() => {}}
+      reviewPromptBeforeSend={false}
       theme={Theme.DEFAULT}
       {...props}
     />
@@ -81,6 +87,15 @@ describe('PreferencesModal renders', () => {
 
     expect(screen.getByRole('heading', { name: 'Preferences' })).toBeInTheDocument();
     expect(screen.getByTestId('preferences-modal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'AI settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('preferences-always-navigate')).toBeInTheDocument();
+  });
+
+  it('hides AI settings when chat is disabled', () => {
+    renderPreferences({ chatEnabled: false });
+
+    expect(screen.queryByRole('heading', { name: 'AI settings' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('preferences-always-navigate')).not.toBeInTheDocument();
   });
 
   it('does not render when closed', () => {
@@ -285,6 +300,35 @@ describe('PreferencesModal language', () => {
     await waitFor(() => {
       expect(store.getState().globalState.language).toBe(Language.SYSTEM);
       expect(changeLanguageSpy).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('PreferencesModal AI settings', () => {
+  beforeEach(() => {
+    resetAppearanceState();
+    store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: false }));
+  });
+
+  it('toggles Allow Chatbot to navigate and persists it', async () => {
+    renderPreferences({ alwaysNavigate: false });
+
+    await userEvent.click(screen.getByTestId('preferences-always-navigate'));
+
+    await waitFor(() => {
+      expect(store.getState().ai.chat.alwaysNavigate).toBe(true);
+      expect(localStorage.getItem(KIALI_CHAT_ALWAYS_NAVIGATE)).toBe('true');
+    });
+  });
+
+  it('toggles Review prompts before sending and persists it', async () => {
+    renderPreferences({ reviewPromptBeforeSend: false });
+
+    await userEvent.click(screen.getByTestId('preferences-review-prompt-before-send'));
+
+    await waitFor(() => {
+      expect(store.getState().ai.chat.reviewPromptBeforeSend).toBe(true);
+      expect(localStorage.getItem(KIALI_CHAT_REVIEW_PROMPT_BEFORE_SEND)).toBe('true');
     });
   });
 });

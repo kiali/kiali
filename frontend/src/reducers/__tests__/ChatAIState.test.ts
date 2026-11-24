@@ -1,6 +1,11 @@
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { ChatAiStateReducer, INITIAL_CHAT_AI_STATE } from '../ChatAIState';
 import { ChatAIActions } from '../../actions/ChatAIActions';
+import {
+  AiTroubleshootingStateReducer,
+  ChatAiStateReducer,
+  INITIAL_CHAT_AI_STATE,
+  INITIAL_TROUBLESHOOTING_STATE
+} from '../ChatAIState';
 
 const makeAiEntry = (id: string, overrides: Record<string, unknown> = {}): ImmutableMap<string, unknown> =>
   ImmutableMap({
@@ -78,5 +83,98 @@ describe('ChatAiStateReducer', () => {
       // The chatHistory reference must be identical — no mutation
       expect(stateAfter.chatHistory).toBe(stateWithEntry.chatHistory);
     });
+  });
+
+  describe('pendingPrompt', () => {
+    it('stores a prompt to send and clears it after the chatbot consumes it', () => {
+      const requested = ChatAiStateReducer(
+        INITIAL_CHAT_AI_STATE,
+        ChatAIActions.setPendingPrompt('Why is this failing?')
+      );
+      expect(requested.pendingPrompt).toEqual({ nonce: 1, text: 'Why is this failing?' });
+
+      const again = ChatAiStateReducer(requested, ChatAIActions.setPendingPrompt('Why is this failing?'));
+      expect(again.pendingPrompt?.nonce).toBe(2);
+
+      const cleared = ChatAiStateReducer(again, ChatAIActions.clearPendingPrompt());
+      expect(cleared.pendingPrompt).toBeUndefined();
+    });
+  });
+});
+
+describe('AiTroubleshootingStateReducer', () => {
+  const aiConfig = {
+    chat: {
+      allowed: true,
+      defaultProvider: '',
+      enabled: true,
+      providers: [],
+      store: { enabled: false }
+    },
+    consumption: { allowed: false, enabled: false },
+    enabled: true
+  };
+
+  it('stores hidden subproblem ids and keeps them when AI config is refreshed', () => {
+    const hidden = AiTroubleshootingStateReducer(
+      { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] },
+      ChatAIActions.hideTroubleshootingSubProblem('sub-1')
+    );
+    expect(hidden.hiddenSubProblemIds).toEqual(['sub-1']);
+
+    const again = AiTroubleshootingStateReducer(hidden, ChatAIActions.hideTroubleshootingSubProblem('sub-1'));
+    expect(again).toBe(hidden);
+
+    const refreshed = AiTroubleshootingStateReducer(hidden, ChatAIActions.setAI(aiConfig));
+    expect(refreshed.hiddenSubProblemIds).toEqual(['sub-1']);
+
+    const shown = AiTroubleshootingStateReducer(refreshed, ChatAIActions.showTroubleshootingSubProblem('sub-1'));
+    expect(shown.hiddenSubProblemIds).toEqual([]);
+  });
+
+  it('hides and shows a parent problem together with its subproblems', () => {
+    const hidden = AiTroubleshootingStateReducer(
+      { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: ['already'] },
+      ChatAIActions.hideTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1', 'sub-2'] })
+    );
+    expect(hidden.hiddenSubProblemIds).toEqual(['already', 'parent', 'sub-1', 'sub-2']);
+
+    const again = AiTroubleshootingStateReducer(
+      hidden,
+      ChatAIActions.hideTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1'] })
+    );
+    expect(again).toBe(hidden);
+
+    const shown = AiTroubleshootingStateReducer(
+      hidden,
+      ChatAIActions.showTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1', 'sub-2'] })
+    );
+    expect(shown.hiddenSubProblemIds).toEqual(['already']);
+  });
+
+  it('stores the troubleshooting scan and keeps it when AI config is refreshed', () => {
+    const issues = [
+      {
+        category: 'data_plane',
+        id: 'dp-1',
+        problem: 'Reviews is unhealthy',
+        subProblems: []
+      }
+    ];
+    const stored = AiTroubleshootingStateReducer(
+      INITIAL_TROUBLESHOOTING_STATE,
+      ChatAIActions.setTroubleshootingIssues(issues)
+    );
+    expect(stored.loaded).toBe(true);
+    expect(stored.error).toBe('');
+    expect(stored.issues).toEqual(issues);
+
+    const failed = AiTroubleshootingStateReducer(stored, ChatAIActions.setTroubleshootingError('unavailable'));
+    expect(failed.loaded).toBe(true);
+    expect(failed.error).toBe('unavailable');
+    expect(failed.issues).toEqual(issues);
+
+    const refreshed = AiTroubleshootingStateReducer(failed, ChatAIActions.setAI(aiConfig));
+    expect(refreshed.issues).toEqual(issues);
   });
 });

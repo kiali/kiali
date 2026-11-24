@@ -11,9 +11,13 @@ rstest.mock('services/Api', () => ({
   getErrorString: rstest.fn(() => 'Unable to load')
 }));
 
-const renderAIUsage = (consumption = { allowed: true, enabled: true }): ReturnType<typeof render> => {
+const renderAIUsage = (
+  consumption = { allowed: true, enabled: true },
+  chat = { allowed: true, enabled: true }
+): ReturnType<typeof render> => {
   const store = createStore(() => ({
     ai: {
+      chat,
       consumption,
       enabled: true
     }
@@ -129,11 +133,86 @@ describe('AIUsage', () => {
     expect(screen.getAllByText('Usage over time').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Usage versus budget').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Usage by provider').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('ai-usage-chart-toolbar')).toBeInTheDocument();
     expect(screen.getByTestId('ai-usage-tokens-cost-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-usage-request-dd')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('current-week-threshold-chart')).queryByRole('button', { name: 'Cost' })
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('ai-user-metrics-charts')).queryByRole('button', { name: 'Cost' })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(within(screen.getByTestId('ai-usage-tokens-cost-toggle')).getByRole('button', { name: 'Cost' }));
     expect(screen.getByTestId('ai-weekly-budget-chart')).toBeInTheDocument();
     expect(screen.getByTestId('ai-usage-line-chart')).toBeInTheDocument();
+  });
+
+  it('shows chat disabled only in current session when chat is not allowed', async () => {
+    (API.getAISessionUsage as Mock).mockResolvedValue({
+      data: {
+        session: [
+          {
+            completion_tokens: 5,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'gpt-4o',
+            prompt_tokens: 10,
+            provider: 'openai',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 15,
+            user_id: 'anonymous'
+          }
+        ],
+        budget: { has_budget: false },
+        metrics: {
+          summary: {
+            byModel: [],
+            byProvider: [
+              {
+                provider: 'openai',
+                promptTokens: 0.2,
+                completionTokens: 0.1,
+                totalTokens: 0.3,
+                cost: { input: 2, output: 1, total: 3 }
+              }
+            ]
+          },
+          timeSeries: {
+            window: 'weekly',
+            step: 'weekly',
+            series: []
+          },
+          tokenUnit: 'millions'
+        }
+      }
+    });
+
+    await act(async () => {
+      renderAIUsage({ allowed: true, enabled: true }, { allowed: false, enabled: true });
+    });
+
+    expect(API.getAISessionUsage).toHaveBeenCalled();
+    expect(await screen.findByTestId('ai-usage-chat-disabled')).toHaveTextContent('Chat disabled (current session)');
+    expect(screen.getByText('Current session')).toBeInTheDocument();
+    expect(screen.getByText('Current week usage')).toBeInTheDocument();
+    expect(screen.getByText('Your weekly usage')).toBeInTheDocument();
+    expect(screen.queryByText('Usage by Provider and Model')).not.toBeInTheDocument();
+  });
+
+  it('shows chat disabled current session without historic metrics when metrics are off', async () => {
+    (API.getAISessionUsage as Mock).mockResolvedValue({
+      data: { session: [], budget: { has_budget: false } }
+    });
+
+    await act(async () => {
+      renderAIUsage({ allowed: false, enabled: false }, { allowed: false, enabled: true });
+    });
+
+    expect(await screen.findByTestId('ai-usage-chat-disabled')).toHaveTextContent('Chat disabled (current session)');
+    expect(screen.getByText('Current session')).toBeInTheDocument();
+    expect(screen.queryByTestId('current-week-threshold-chart')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your weekly usage')).not.toBeInTheDocument();
   });
 
   it('shows only current session stats when metrics are disabled', async () => {
@@ -165,5 +244,61 @@ describe('AIUsage', () => {
     expect(screen.queryByTestId('ai-usage-budget')).not.toBeInTheDocument();
     expect(screen.queryByText('Your weekly usage')).not.toBeInTheDocument();
     expect(screen.getByTestId('ai-usage-session-grid')).toBeInTheDocument();
+  });
+
+  it('spans the request type cell across rows of the same type', async () => {
+    (API.getAISessionUsage as Mock).mockResolvedValue({
+      data: {
+        budget: { has_budget: false },
+        session: [
+          {
+            completion_tokens: 5,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'gpt-4o',
+            prompt_tokens: 10,
+            provider: 'openai',
+            request: 'chat',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 15,
+            user_id: 'anonymous'
+          },
+          {
+            completion_tokens: 2,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'claude-sonnet-4-6',
+            prompt_tokens: 8,
+            provider: 'anthropic',
+            request: 'chat',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 10,
+            user_id: 'anonymous'
+          },
+          {
+            completion_tokens: 4,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'gpt-4o',
+            prompt_tokens: 6,
+            provider: 'openai',
+            request: 'troubleshooting',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 10,
+            user_id: 'anonymous'
+          }
+        ]
+      }
+    });
+
+    await act(async () => {
+      renderAIUsage({ allowed: false, enabled: false });
+    });
+
+    expect(await screen.findByText('Usage by Provider and Model')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Request type' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'Chat' })).toHaveAttribute('rowspan', '2');
+    expect(screen.getByRole('cell', { name: 'Troubleshooting' })).toHaveAttribute('rowspan', '1');
+    expect(screen.getAllByRole('cell', { name: 'Chat' })).toHaveLength(1);
   });
 });

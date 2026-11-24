@@ -1,19 +1,24 @@
-import { NotificationBadge, NotificationBadgeVariant } from '@patternfly/react-core';
+import { Button, ButtonState, ButtonVariant } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { MessageType, NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiAppState } from 'store/Store';
+import { MessageType, type NotificationGroup, type NotificationMessage } from 'types/NotificationCenter';
+import type { KialiDispatch } from 'types/Redux';
 import { NotificationAlerts } from './NotificationAlerts';
+import { ChatAIActions } from 'actions/ChatAIActions';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
+import { RhUiAttentionBellFillIcon, RhUiNotificationFillIcon } from '@patternfly/react-icons';
 
 type ReduxStateProps = {
   alerts: NotificationMessage[];
+  chatbotVisible?: boolean;
+  isExpanded?: boolean;
   needsAttention: boolean;
   newMessageCount: number;
 };
 
 type ReduxDispatchProps = {
+  hideChat?: () => void;
   onDismissNotification: (NotificationMessage, boolean) => void;
   toggleNotificationCenter: () => void;
 };
@@ -24,27 +29,48 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
   props: NotificationCenterBadgeProps
 ) => {
   const { t } = useKialiTranslation();
+  const count = props.newMessageCount;
+  const needsAttention = props.needsAttention;
 
-  let variant = NotificationBadgeVariant.read;
-  if (props.newMessageCount > 0) {
-    if (props.needsAttention) {
-      variant = NotificationBadgeVariant.attention;
+  let buttonState = ButtonState.read;
+  if (count > 0) {
+    if (needsAttention) {
+      buttonState = ButtonState.attention;
     } else {
-      variant = NotificationBadgeVariant.unread;
+      buttonState = ButtonState.unread;
     }
   }
 
   return (
     <>
-      <NotificationBadge
+      <Button
+        aria-expanded={props.isExpanded}
         aria-label={t('Notifications')}
-        count={props.newMessageCount}
-        isExpanded={this}
+        data-test="notifications-badge"
+        isClicked={props.isExpanded}
+        state={buttonState}
+        variant={ButtonVariant.stateful}
         onClick={() => {
+          if (props.chatbotVisible) {
+            props.hideChat?.();
+            if (!props.isExpanded) {
+              props.toggleNotificationCenter();
+            }
+            return;
+          }
           props.toggleNotificationCenter();
         }}
-        variant={variant}
-      />
+      >
+        {count > 0 && needsAttention ? (
+          <>
+            <RhUiAttentionBellFillIcon /> {count}{' '}
+          </>
+        ) : (
+          <>
+            <RhUiNotificationFillIcon /> {count > 0 ? count : ''}{' '}
+          </>
+        )}
+      </Button>
       <NotificationAlerts alerts={props.alerts} onDismiss={props.onDismissNotification} />
     </>
   );
@@ -59,7 +85,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 
   const attentionTypes = [MessageType.DANGER, MessageType.WARNING];
 
-  return state.notificationCenter.groups
+  const notifications = state.notificationCenter.groups
     .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
       return unreadMessages.concat(
         group.messages.reduce((unreadMessagesInGroup: NotificationMessage[], message: NotificationMessage) => {
@@ -81,6 +107,12 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
       },
       { alerts: [], needsAttention: false, newMessageCount: 0 }
     );
+
+  return {
+    ...notifications,
+    chatbotVisible: !!state.ai?.chat?.visible,
+    isExpanded: state.notificationCenter.expanded
+  };
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
@@ -92,6 +124,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
         dispatch(NotificationCenterActions.hideNotification(message.id));
       }
     },
+    hideChat: () => dispatch(ChatAIActions.setChatVisible(false)),
     toggleNotificationCenter: () => dispatch(NotificationCenterActions.toggleNotificationCenter())
   };
 };

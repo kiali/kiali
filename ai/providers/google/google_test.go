@@ -49,7 +49,7 @@ func (s *googleTestStore) SetConversation(sessionID, conversationID string, c *t
 	return nil
 }
 
-func (s *googleTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+func (s *googleTestStore) RecordUsage(_ string, _ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 func (s *googleTestStore) GetUsageMetrics(_ string) []types.UsageMetric { return nil }

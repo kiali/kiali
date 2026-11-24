@@ -12,6 +12,7 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
   kioskData: undefined,
   language: '',
   loadingCounter: 0,
+  preferencesOpen: false,
   systemAppearanceRevision: 0,
   theme: ''
 };
@@ -51,6 +52,8 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
       const theme = action.payload;
       return updateState(state, { theme: theme });
     }
+    case getType(GlobalActions.setPreferencesOpen):
+      return updateState(state, { preferencesOpen: action.payload });
     case getType(GlobalActions.systemAppearanceChanged):
       return updateState(state, { systemAppearanceRevision: state.systemAppearanceRevision + 1 });
     default:
