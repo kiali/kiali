@@ -1,8 +1,8 @@
 import type { JaegerTrace } from '../../../types/TracingInfo';
-import { format12HourClockTime, formatFromNow } from 'utils/DateTimeUtils';
+import { format12HourClockTime, formatFromNow, formatRelativeDate } from 'utils/DateTimeUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { formatDuration, formatRelativeDate, isErrorTag } from 'utils/tracing/TracingHelper';
+import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
 
 export const shortIDStyle = kialiStyle({
   color: PFColors.Color200,

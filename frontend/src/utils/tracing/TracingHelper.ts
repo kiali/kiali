@@ -391,5 +391,3 @@ export function formatDuration(micros: number): string {
   }
   return round(d, 2) + unit;
 }
-
-export { formatRelativeDate } from 'utils/DateTimeUtils';
