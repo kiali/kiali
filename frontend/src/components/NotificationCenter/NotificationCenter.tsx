@@ -295,7 +295,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                             <span>{formatTimestamp(message.created)}</span>
                             {message.count > 1 && (
                               <span>
-                                {message.count} {formatFromNow(message.firstTriggered)}
+                                {message.count} {formatFromNow(message.firstTriggered ?? message.created)}
                               </span>
                             )}
                           </div>
