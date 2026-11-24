@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
+
+	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
@@ -235,18 +238,58 @@ func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*m
 	}, nil
 }
 
+// kubeVersionResult is the memoized outcome of one cluster's GetServerVersion.
+type kubeVersionResult struct {
+	version *version.Info
+	// failedAt is set when the fetch failed; an indeterminate failure (an unreachable
+	// or stalled cluster) is retried after kubeVersionFailureBackoff rather than on
+	// every call.
+	failedAt time.Time
+}
+
+// kubeVersionCache memoizes GetServerVersion per cluster. A cluster's server version
+// is effectively static for Kiali's lifetime, and getKubernetesVersions runs on the
+// mesh graph's request path (the graph labels cluster nodes with versions), where an
+// unreachable remote would otherwise cost its full request timeout on every render.
+var kubeVersionCache sync.Map // cluster name -> kubeVersionResult
+
+// kubeVersionFailureBackoff is how long an indeterminate version-fetch failure is
+// trusted before the cluster is probed again. It matches the indeterminate-validation
+// window of the openshift auth controller for the same reason: the failure is
+// transport-level, and re-probing a dead cluster on every request only re-learns it.
+const kubeVersionFailureBackoff = 30 * time.Second
+
 func getKubernetesVersions(clientFactory kubernetes.ClientFactory) []models.ExternalServiceInfo {
 	// Use the Kiali Service Account client to get the Kubernetes version
 	// since the status endpoint does not have a user token.
 	// Loop through all SA clients to get Kubernetes versions of all clusters
 	var k8sVersions []models.ExternalServiceInfo
 	for clusterName, saClient := range clientFactory.GetSAClients() {
+		var cached kubeVersionResult
+		if entry, ok := kubeVersionCache.Load(clusterName); ok {
+			cached = entry.(kubeVersionResult)
+			if cached.version != nil {
+				k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
+					Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
+					Version: cached.version.GitVersion,
+				})
+				continue
+			}
+			if time.Since(cached.failedAt) < kubeVersionFailureBackoff {
+				// The cluster answered indeterminately recently: skip it for this
+				// request rather than pay its request timeout again.
+				continue
+			}
+		}
+
 		serverVersion, err := saClient.GetServerVersion()
 		if err != nil {
 			log.Debugf("Unable to get Kubernetes version for cluster [%s]: %v", clusterName, err)
+			kubeVersionCache.Store(clusterName, kubeVersionResult{failedAt: time.Now()})
 			continue
 		}
 
+		kubeVersionCache.Store(clusterName, kubeVersionResult{version: serverVersion})
 		k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
 			Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
 			Version: serverVersion.GitVersion,

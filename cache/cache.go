@@ -280,6 +280,12 @@ func NewNamespaceComputeKey(cluster, cacheKey string) NamespaceComputeKey {
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
 
+	// ambientCheckFailuresMu guards ambientCheckFailures.
+	ambientCheckFailuresMu sync.Mutex
+	// ambientCheckFailures records when a cluster's ambient check last failed
+	// indeterminately, for the ambientCheckFailureBackoff window.
+	ambientCheckFailures map[string]time.Time
+
 	// Cache SelfSubjectAccessReview verdicts ("can the requester list
 	// resource type X in namespace Y") per cacheKey + cluster, mirroring the
 	// accessible-namespace cache's TTL. Guarded by canListLock because the
@@ -421,6 +427,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
+		ambientCheckFailures:    map[string]time.Time{},
 		canListStore:            store.NewExpirationStore(ctx, store.New[canListKey, bool](), &namespaceKeyTTL, nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		webhookCheckFailures:    make(map[string]time.Time),
@@ -788,18 +795,44 @@ func (in *kialiCacheImpl) IsAmbientEnabled(ctx context.Context, cluster string) 
 	return in.isAmbientEnabled(ctx, cluster)
 }
 
+// ambientCheckFailureBackoff is how long an indeterminate ambient-check failure is
+// trusted before the cluster is probed again. The check runs on request paths
+// (/api/config, the mesh graph), and an unreachable remote would otherwise be
+// re-probed - paying its connection-establishment timeout - on every request. It is
+// a var so tests can shorten it.
+var ambientCheckFailureBackoff = 30 * time.Second
+
 func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
 	if found {
 		return check
 	}
 
+	// An indeterminate failure from a recent check is still trusted: re-probing an
+	// unreachable remote on every request would charge each one its
+	// connection-establishment timeout to re-learn the same verdict. The failure may
+	// be transient, so it is retried after the backoff window rather than cached
+	// indefinitely.
+	in.ambientCheckFailuresMu.Lock()
+	failedAt, failed := in.ambientCheckFailures[cluster]
+	in.ambientCheckFailuresMu.Unlock()
+	if failed && time.Since(failedAt) < ambientCheckFailureBackoff {
+		return false
+	}
+
 	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
+		in.ambientCheckFailuresMu.Lock()
+		in.ambientCheckFailures[cluster] = time.Now()
+		in.ambientCheckFailuresMu.Unlock()
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return false
 	}
+
+	in.ambientCheckFailuresMu.Lock()
+	delete(in.ambientCheckFailures, cluster)
+	in.ambientCheckFailuresMu.Unlock()
 
 	enabled := len(daemonsets) > 0
 	in.ambientChecksPerCluster.Set(cluster, enabled)

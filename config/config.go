@@ -580,7 +580,11 @@ type KubernetesClientConfig struct {
 	// NamespaceComputeBackoff is how long a remote cluster whose accessible-namespace-set
 	// computation failed is skipped before it is retried: the per-token cache only populates
 	// on success, so without this a dead remote is re-queried back to back. The failure is
-	// never cached as an access denial. Set to 0 to always retry.
+	// never cached as an access denial. The window must meaningfully exceed the failure
+	// cost (up to NamespaceSetComputeTimeout of bounded round trips against a dead remote):
+	// a window at or below the cost means any request cadence slower than the window
+	// re-probes on every request, so the default is set at a multiple of it. Set to 0 to
+	// always retry.
 	NamespaceComputeBackoff time.Duration `yaml:"namespace_compute_backoff,omitempty"`
 	// NamespaceSetComputeTimeout bounds one cluster's accessible-namespace-set computation
 	// end to end: it is a sequence of per-namespace round trips, each bounded by
@@ -1254,7 +1258,7 @@ func NewConfig() (c *Config) {
 			},
 			KubernetesClient: KubernetesClientConfig{
 				DialTimeout:                2 * time.Second,  // set to 0 to disable
-				NamespaceComputeBackoff:    10 * time.Second, // set to 0 to always retry
+				NamespaceComputeBackoff:    30 * time.Second, // set to 0 to always retry; must exceed NamespaceSetComputeTimeout (the failure cost)
 				NamespaceSetComputeTimeout: 15 * time.Second, // set to 0 to disable
 				RequestTimeout:             10 * time.Second, // set to 0 to disable
 			},
