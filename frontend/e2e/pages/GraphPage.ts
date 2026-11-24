@@ -245,6 +245,9 @@ export class GraphPage extends BasePage {
   }
 
   async setDisplayOption(optionName: string, enabled: boolean): Promise<void> {
+    // expectGraphTopology retries click the page Refresh control while the graph settles,
+    // and that outside click closes the Display dropdown — re-open it before use.
+    await this.openDisplayMenu();
     const optionId = DISPLAY_OPTION_IDS[optionName.toLowerCase()] ?? optionName;
     const clientOnly = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
     const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
@@ -280,6 +283,9 @@ export class GraphPage extends BasePage {
   }
 
   private async expectDisplayOptionChecked(optionId: string, checked: boolean): Promise<void> {
+    // Same refresh-closes-the-dropdown hazard as setDisplayOption: re-open the menu so the
+    // assertion does not depend on what ran between the caller opening it and now.
+    await this.openDisplayMenu();
     const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
     await expect(input).toBeAttached();
     if (checked) {
