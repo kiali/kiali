@@ -473,7 +473,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             if (this.props.showTrendline === true && serie.datapoints[0]) {
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
 
-              const datapoints = serie.datapoints.map(d => {
+              const datapoints = serie.datapoints.map((d): [number, number] => {
                 const t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
                 let trendPoint = parseFloat(d.y.toString());
 
