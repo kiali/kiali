@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -364,6 +365,106 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	})
 
 	require.True(sessionCookieWest.MaxAge < 0, "west session should be dropped")
+}
+
+// TestUnreachableRemoteSessionValidationIsCached verifies that an indeterminate remote
+// validation (an unreachable or stalled cluster) is not re-probed on every request: the
+// first request pays the probe and its failure, subsequent requests within the TTL skip
+// it, and the probe resumes once the window expires. Without the cache, every request of
+// every session that includes the remote pays the full request timeout to re-learn the
+// same verdict.
+func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	westClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// west's user-info endpoint goes dead after the sessions exist. The error is a
+	// deadline, not an authentication failure: the token is fine, the cluster just
+	// cannot answer - the indeterminate case the cache exists for.
+	var westUserProbes atomic.Int32
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		westUserProbes.Add(1)
+		return true, nil, context.DeadlineExceeded
+	})
+
+	// A controllable clock so the test can age the verdict past its TTL.
+	clock := &util.ClockMock{Time: time.Now()}
+	util.Clock = clock
+
+	validate := func() {
+		r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+		w := httptest.NewRecorder()
+		r.AddCookie(sessionCookieEast)
+		r.AddCookie(sessionCookieWest)
+		_, err := authController.ValidateSession(r, w)
+		require.NoError(err, "an indeterminate remote must not fail the request")
+		// The west session is skipped, not terminated: its cookie is preserved.
+		for _, c := range w.Result().Cookies() {
+			if c.Name == authentication.SessionCookieName+"-west" {
+				require.False(c.MaxAge < 0, "the indeterminate remote's session must not be dropped")
+			}
+		}
+	}
+
+	validate()
+	require.Equal(int32(1), westUserProbes.Load(), "first validation probes the unreachable remote once")
+
+	validate()
+	require.Equal(int32(1), westUserProbes.Load(), "a cached indeterminate verdict must not re-probe the remote")
+
+	// The verdict expires: the next request probes the remote again.
+	// (The TTL constant is unexported; keep this in sync with indeterminateValidationTTL.)
+	clock.Time = clock.Time.Add(31 * time.Second)
+	validate()
+	require.Equal(int32(2), westUserProbes.Load(), "an expired verdict must be probed again")
 }
 
 func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {

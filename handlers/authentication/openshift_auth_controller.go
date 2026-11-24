@@ -87,12 +87,18 @@ type openshiftSessionPayload struct {
 // replace an existing Kiali session. So, it is assumed that the 3rd-party
 // has its own persistence system (similarly to how 'header' auth works).
 type OpenshiftAuthController struct {
-	clientFactory  kubernetes.ClientFactory
-	clusters       []string
-	conf           *config.Config
-	discovery      istio.MeshDiscovery
-	kialiCache     cache.KialiCache
-	openshiftOAuth *business.OpenshiftOAuthService
+	clientFactory kubernetes.ClientFactory
+	clusters      []string
+	conf          *config.Config
+	discovery     istio.MeshDiscovery
+	// indeterminateMu guards indeterminateValidation: ValidateSession validates
+	// the per-cluster sessions concurrently.
+	indeterminateMu sync.Mutex
+	// indeterminateValidation records, per remote cluster, when its session validation
+	// last came back indeterminate (unreachable, stalled). See markIndeterminateValidation.
+	indeterminateValidation map[string]time.Time
+	kialiCache              cache.KialiCache
+	openshiftOAuth          *business.OpenshiftOAuthService
 	// SessionStore persists the session between HTTP requests.
 	sessionStore SessionPersistor[openshiftSessionPayload]
 }
@@ -122,13 +128,14 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 	}
 
 	return &OpenshiftAuthController{
-		clientFactory:  clientFactory,
-		clusters:       maps.Keys(clientFactory.GetSAClients()),
-		conf:           conf,
-		discovery:      discovery,
-		kialiCache:     kialiCache,
-		openshiftOAuth: openshiftOAuthService,
-		sessionStore:   store,
+		clientFactory:           clientFactory,
+		clusters:                maps.Keys(clientFactory.GetSAClients()),
+		conf:                    conf,
+		discovery:               discovery,
+		indeterminateValidation: make(map[string]time.Time),
+		kialiCache:              kialiCache,
+		openshiftOAuth:          openshiftOAuthService,
+		sessionStore:            store,
 	}, nil
 }
 
@@ -334,8 +341,49 @@ func (o *OpenshiftAuthController) OpenshiftAuthRedirect(w http.ResponseWriter, r
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+// indeterminateValidationTTL is how long an indeterminate remote validation verdict is
+// trusted before the remote is probed again. The graceful-skip branches in ValidateSession
+// already proceed without the remote's validation when the cluster answers indeterminately;
+// without this window, every request of every session that includes the remote would re-pay
+// the full request timeout (10s by default) to re-learn the same verdict - a per-request
+// latency floor on every page for exactly the outage blast radius #10545 exists to bound.
+// The window only delays re-validation of a session that is being skipped anyway, and a
+// successful validation clears the verdict, so a recovered cluster is picked up on the
+// first probe after the window.
+const indeterminateValidationTTL = 30 * time.Second
+
+// recentlyIndeterminate reports whether the cluster's session validation came back
+// indeterminate within the TTL window and has not been cleared by a success since.
+func (o *OpenshiftAuthController) recentlyIndeterminate(cluster string) bool {
+	o.indeterminateMu.Lock()
+	defer o.indeterminateMu.Unlock()
+	at, ok := o.indeterminateValidation[cluster]
+	return ok && util.Clock.Now().Sub(at) < indeterminateValidationTTL
+}
+
+// markIndeterminateValidation records an indeterminate validation verdict for a remote
+// cluster. The verdict is transport-level, not token-level - no token can reach an
+// unreachable cluster - so a cluster key cannot mis-skip another user's valid session.
+// Only remote clusters are ever marked; the home cluster's validation is mandatory and
+// fails loud, so it never produces a verdict to trust.
+func (o *OpenshiftAuthController) markIndeterminateValidation(cluster string) {
+	o.indeterminateMu.Lock()
+	defer o.indeterminateMu.Unlock()
+	o.indeterminateValidation[cluster] = util.Clock.Now()
+}
+
+// clearIndeterminateValidation drops a recorded verdict after a successful validation so
+// the cluster is validated normally again immediately.
+func (o *OpenshiftAuthController) clearIndeterminateValidation(cluster string) {
+	o.indeterminateMu.Lock()
+	defer o.indeterminateMu.Unlock()
+	delete(o.indeterminateValidation, cluster)
+}
+
 // ValidateSession restores a session previously created by the Authenticate function. The user token (access_token)
 // is revalidated by re-fetching user info from the cluster, to ensure that the token hasn't been revoked.
+// A remote cluster that answered indeterminately on a recent request is not re-probed until
+// indeterminateValidationTTL elapses or it answers again (see markIndeterminateValidation).
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
 func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	userSessions := make(UserSessions)
@@ -416,6 +464,15 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				log.Debugf("Skipping session for cluster [%s]: the cluster is skipped by Kiali because its registration is broken", session.Cluster)
 				return nil
 			}
+			// An indeterminate verdict from a recent request is still trusted: probing the
+			// dead remote again would charge this request the full request timeout to
+			// re-learn it. Skipping here is exactly what the branches further down already
+			// do with the probe's failure in hand - the session is preserved and retried
+			// once the window expires or the cluster answers again.
+			if session.Cluster != o.conf.KubernetesConfig.ClusterName && o.recentlyIndeterminate(session.Cluster) {
+				log.Debugf("Skipping session validation for cluster [%s]: the cluster was recently unreachable or stalled", session.Cluster)
+				return nil
+			}
 			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
 				if k8serrors.IsUnauthorized(err) {
@@ -433,11 +490,14 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					// that includes the remote, which is exactly the outage blast radius
 					// #10545 exists to bound. Skip the session for this request and preserve
 					// its cookie; it is retried on the next request once the cluster recovers.
+					o.markIndeterminateValidation(session.Cluster)
 					log.Warningf("Skipping session for cluster [%s]: user info could not be determined: %s", session.Cluster, err)
 					return nil
 				}
 				return err
 			}
+			// The cluster answered: any recorded indeterminate verdict is stale.
+			o.clearIndeterminateValidation(session.Cluster)
 			// Re-check namespace visibility on every request: this also terminates
 			// pre-existing sessions of users whose access has dropped to zero,
 			// instead of letting them ride until expiry. Zero access is only
@@ -470,6 +530,11 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 					return err
 				}
+				// No auth-level caching here, unlike the user-info branch above: the
+				// cluster just answered GetUserInfo, so it is reachable and its recovery
+				// should be picked up immediately. The repeated cost of a failing
+				// namespace-set computation is bounded by the business layer's own
+				// negative backoff (kiali_internal.kubernetes_client.namespace_compute_backoff).
 				log.Warningf("Skipping session for cluster [%s]: namespace visibility could not be determined: %s", session.Cluster, err)
 				return nil
 			}
