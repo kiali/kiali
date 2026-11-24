@@ -124,7 +124,7 @@ func (c *syncedCache) WaitForCacheSync(_ context.Context) bool {
 // with an injected timeout; running the real 45s const here would slow the suite.
 func TestWaitForCachesToSyncHomeOnly(t *testing.T) {
 	kubeCaches := map[string]ctrlcache.Cache{"home": &syncedCache{}}
-	waitForCachesToSync(context.Background(), kubeCaches, "home")
+	waitForCachesToSync(context.Background(), config.NewConfig(), kubeCaches, "home")
 }
 
 // TestWaitForCachesToSyncRemotesDoNotBlock pins the startup barrier's shape: with the home
@@ -141,7 +141,7 @@ func TestWaitForCachesToSyncRemotesDoNotBlock(t *testing.T) {
 	t.Cleanup(cancel)
 
 	start := time.Now()
-	waitForCachesToSync(ctx, kubeCaches, "home")
+	waitForCachesToSync(ctx, config.NewConfig(), kubeCaches, "home")
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Errorf("waitForCachesToSync took %s with a never-syncing remote, want a prompt return (the remote wait is backgrounded)", elapsed)
 	}
@@ -337,7 +337,7 @@ func TestClassifyRemoteProbeErrorTLSFirst(t *testing.T) {
 	}, conf)
 	require.NoError(t, err)
 
-	probeErr := probeRemoteCredentials(context.Background(), client)
+	probeErr := probeRemoteCredentials(context.Background(), config.NewConfig(), client)
 	require.Error(t, probeErr, "the untrusted-CA server must fail the probe")
 
 	// The wrapper implements net.Error; the classifier must still see the certificate.
@@ -362,7 +362,7 @@ func TestMonitorStartupDoesNotWaitForMesh(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
 	m := blockedStartupMonitor{entered: make(chan struct{})}
-	waitForCachesToSync(ctx, map[string]ctrlcache.Cache{
+	waitForCachesToSync(ctx, config.NewConfig(), map[string]ctrlcache.Cache{
 		"home": &syncedCache{}, "west": &neverSyncingCache{}, "east": &neverSyncingCache{},
 	}, "home")
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))

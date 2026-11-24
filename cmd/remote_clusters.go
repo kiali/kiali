@@ -9,11 +9,13 @@ import (
 	"context"
 	"maps"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
@@ -27,14 +29,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
-
-// remoteCacheSyncTimeout bounds how long startup waits for the remote clusters' caches to sync
-// before continuing without them. It is sized against the pod's startup probe budget: helm and
-// the operator default to initial_delay 30s / period 10s / failure_threshold 6 (~90s), so a
-// longer wait would have the kubelet restart Kiali before /healthz is served - recreating the
-// crash loop through the back door. A remote that has not synced by then keeps syncing in the
-// background; its reads fail (bounded by the cache read timeout) until it does.
-const remoteCacheSyncTimeout = 45 * time.Second
 
 // cacheTransforms returns the per-type cache transforms shared across all clusters.
 // These strip cached objects down to only the fields Kiali uses, significantly reducing
@@ -74,7 +68,10 @@ func newRemoteCluster(conf *config.Config, saClient kubernetes.ClientInterface, 
 		o.Scheme = scheme
 		// The static-fallback mapper keeps construction offline and bounds the lazy
 		// discovery that happens later, on first use.
-		o.MapperProvider = kubernetes.NewStaticFallbackMapper
+		discoveryTimeout := conf.KialiInternal.KubernetesClient.DiscoveryTimeout
+		o.MapperProvider = func(cfg *rest.Config, httpClient *http.Client) (meta.RESTMapper, error) {
+			return kubernetes.NewStaticFallbackMapper(cfg, httpClient, discoveryTimeout)
+		}
 		// Scope the remote cache the same way as the home cache (see cacheNamespaces).
 		o.Cache.DefaultNamespaces = cacheNamespaces(conf, clusterName)
 		o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
@@ -118,8 +115,8 @@ const (
 // access-check machinery rely on, so it is safe in non-cluster-wide-access mode; an SSAR that
 // succeeds with allowed=false is normal there and is NOT a credentials failure - only the
 // error is classified. The verdict is about the transport and the credentials, not the RBAC.
-func probeRemoteCredentials(ctx context.Context, client kubernetes.ClientInterface) error {
-	return kubernetes.ProbeClusterCredentials(ctx, client)
+func probeRemoteCredentials(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface) error {
+	return kubernetes.ProbeClusterCredentials(ctx, client, conf.KialiInternal.KubernetesClient.ClusterProbeTimeout)
 }
 
 // classifyRemoteProbeError decides what startup does with a failed credentials probe.
@@ -203,7 +200,7 @@ func setupRemoteClusters(ctx context.Context, conf *config.Config, clientFactory
 		wg.Add(1)
 		go func(clusterName string, remoteCluster remote) {
 			defer wg.Done()
-			probeErr := probeRemoteCredentials(ctx, remoteCluster.client)
+			probeErr := probeRemoteCredentials(ctx, conf, remoteCluster.client)
 			switch verdict := classifyRemoteProbeError(probeErr); verdict {
 			case remoteSkipAuth:
 				log.Errorf("Remote cluster [%s] rejected Kiali's credentials; skipping the cluster. Fix the kiali-multi-cluster-secret for this cluster and restart Kiali to recover. err=%v", clusterName, probeErr)
@@ -246,7 +243,7 @@ func setupRemoteClusters(ctx context.Context, conf *config.Config, clientFactory
 // The informers sync on their own whether or not anyone waits for them; the background
 // wait only surfaces when the remote caches become ready (or give up) in the logs. Reads
 // from an unsynced remote fail (bounded by the cache read timeout) until it syncs.
-func waitForCachesToSync(ctx context.Context, kubeCaches map[string]ctrlcache.Cache, homeCluster string) {
+func waitForCachesToSync(ctx context.Context, conf *config.Config, kubeCaches map[string]ctrlcache.Cache, homeCluster string) {
 	log.Infof("Waiting for cluster: %s cache to sync", homeCluster)
 	homeCache, found := kubeCaches[homeCluster]
 	if !found {
@@ -261,10 +258,11 @@ func waitForCachesToSync(ctx context.Context, kubeCaches map[string]ctrlcache.Ca
 		return cluster == homeCluster
 	})
 	if len(remoteCaches) > 0 {
+		syncTimeout := conf.KialiInternal.KubernetesClient.RemoteCacheSyncTimeout
 		go func() {
-			log.Infof("Waiting for %d remote cluster caches to sync (bounded by %s)", len(remoteCaches), remoteCacheSyncTimeout)
-			if unsynced := waitForCachesSync(ctx, remoteCaches, remoteCacheSyncTimeout); len(unsynced) > 0 {
-				log.Warningf("Remote cluster caches did not sync within %s; reads from %v will fail until they sync.", remoteCacheSyncTimeout, unsynced)
+			log.Infof("Waiting for %d remote cluster caches to sync (bounded by %s)", len(remoteCaches), syncTimeout)
+			if unsynced := waitForCachesSync(ctx, remoteCaches, syncTimeout); len(unsynced) > 0 {
+				log.Warningf("Remote cluster caches did not sync within %s; reads from %v will fail until they sync.", syncTimeout, unsynced)
 			} else {
 				log.Info("Remote cluster caches synced; all clusters are being served")
 			}

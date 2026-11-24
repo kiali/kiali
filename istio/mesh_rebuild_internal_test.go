@@ -193,10 +193,9 @@ func TestMeshResolvesHomeClusterFirstWhenRemoteIsSlow(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
 	// Shorten the resolve budget: the remote's hang below exceeds it, standing in for
-	// a dead remote's request timeouts in production.
-	old := meshResolveTimeout
-	meshResolveTimeout = 200 * time.Millisecond
-	t.Cleanup(func() { meshResolveTimeout = old })
+	// a dead remote's request timeouts in production. The budget is configurable
+	// (kiali_internal.kubernetes_client.mesh_resolve_timeout); set it on the conf.
+	conf.KialiInternal.KubernetesClient.MeshResolveTimeout = 200 * time.Millisecond
 
 	homeK8s := meshClusterClient("east")
 	remoteK8s := meshClusterClient("west")

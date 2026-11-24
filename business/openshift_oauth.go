@@ -223,13 +223,13 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 	}, nil
 }
 
-// oauthConfigBuildTimeout bounds a single cluster's OAuth configuration fetch on a lazy
-// rebuild, where a user is actively waiting for a login.
-const oauthConfigBuildTimeout = time.Minute
-
 // oauthConfigConstructionTimeout bounds a single cluster's OAuth configuration fetch at
-// construction: it runs on the synchronous startup path, inside the pod's startup-probe
-// budget, so it is tighter than the lazy budget.
+// construction. It stays hardcoded rather than configurable because it is not derived from
+// the environment but from the pod's startup-probe budget (helm and the operator default
+// to ~90s): a deployer raising it would only have the kubelet restart Kiali before
+// /healthz is served. The lazy rebuild's budget, where a user is waiting at the login
+// page and no probe is involved, is configurable instead
+// (kiali_internal.kubernetes_client.oauth_config_timeout).
 const oauthConfigConstructionTimeout = 30 * time.Second
 
 // buildOAuthConfig discovers a cluster's OAuth server metadata and Kiali OAuthClient and
@@ -248,6 +248,9 @@ func buildOAuthConfig(ctx context.Context, conf *config.Config, client kubernete
 		return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
 	}
 
+	// The 10s poll interval is Kiali's own retry cadence while the overall fetch is
+	// bounded by the caller's deadline (the construction or configurable build budget);
+	// it stays hardcoded because only the overall budget is environment-dependent.
 	var response []byte
 	err = wait.PollUntilContextCancel(ctx, time.Second*10, true, func(ctx context.Context) (bool, error) {
 		// TODO: Catch specific errors and retry only on those?
@@ -357,8 +360,12 @@ func (in *OpenshiftOAuthService) getOAuthConfig(ctx context.Context, cluster str
 		return nil, building.err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), oauthConfigBuildTimeout)
-	defer cancel()
+	buildTimeout := in.conf.KialiInternal.KubernetesClient.OAuthConfigTimeout
+	var cancel context.CancelFunc
+	if buildTimeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), buildTimeout)
+		defer cancel()
+	}
 	oAuthConfig, err := buildOAuthConfig(ctx, in.conf, client)
 	if err != nil {
 		building.err = err

@@ -34,18 +34,26 @@ const (
 	kialiCacheWaypointsKey   = "waypoints"
 
 	// webhookPermissionCheckTimeout bounds the per-cluster SSAR NewKialiCache makes on the
+	// startup path. It stays hardcoded rather than configurable because it is a one-shot
+	// startup call already covered for the steady state by the configurable
+	// cluster_probe_timeout; only its sizing against the startup budget matters.
 	// synchronous startup path to learn whether Kiali can list mutating webhooks. Without it,
 	// a remote that accepts connections but stalls blocks startup indefinitely.
 	webhookPermissionCheckTimeout = 10 * time.Second
 	// webhookCheckBackoff is how long CanListWebhooks waits before re-checking a cluster
-	// whose webhook permission check failed transiently.
+	// whose webhook permission check failed transiently. It stays hardcoded rather than
+	// configurable because no healthy environment needs a different value: it only
+	// shapes Kiali's own retry cadence, and lowering it turns a dead remote into a
+	// back-to-back probe loop.
 	webhookCheckBackoff = 30 * time.Second
 )
 
 // unreachableProbeInterval is how often the background prober re-checks clusters marked
-// unreachable (see MarkClusterUnreachable). It matches the access-probe cadence, which is
-// also the documented recovery cadence. A var so tests can disable or shorten it.
-var unreachableProbeInterval = DefaultAccessProbeInterval
+// unreachable (see MarkClusterUnreachable). It stays hardcoded rather than configurable
+// because it is deliberately pinned to the access-probe cadence (DefaultAccessProbeInterval)
+// so unreachable-recovery and revocation-recovery behave identically; a separate knob
+// would let the two recovery paths diverge.
+const unreachableProbeInterval = DefaultAccessProbeInterval
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -301,6 +309,10 @@ type kialiCacheImpl struct {
 	// for the lazy retry backoff. Guarded by canReadWebhookMutex.
 	webhookCheckFailures map[string]time.Time
 
+	// unreachableProberDisabled suppresses the background prober goroutine; see
+	// WithUnreachableProberDisabled.
+	unreachableProberDisabled bool
+
 	// unreachableMu guards unreachable. The mark carries no expiry: the background
 	// prober clears it once the cluster answers, which is also what bounds how long a
 	// recovered cluster's data takes to return (one probe interval).
@@ -484,10 +496,23 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	}
 
 	// The unreachable-cluster prober owns recovery detection: request paths never probe
-	// a marked cluster (see MarkClusterUnreachable), so something must.
-	go kialiCacheImpl.probeUnreachableClusters(ctx)
+	// a marked cluster (see MarkClusterUnreachable), so something must. Testing caches
+	// disable it (see WithUnreachableProberDisabled): they drive the signal
+	// deterministically, and a prober succeeding against a fake client would clear
+	// marks mid-test.
+	if !kialiCacheImpl.unreachableProberDisabled {
+		go kialiCacheImpl.probeUnreachableClusters(ctx)
+	}
 
 	return &kialiCacheImpl, nil
+}
+
+// WithUnreachableProberDisabled stops the cache from starting its background
+// unreachable-cluster prober. The signal's mark and clear can then be driven
+// deterministically; probeUnreachableOnce remains available for direct testing of the
+// prober's classification.
+func WithUnreachableProberDisabled() Option {
+	return func(c *kialiCacheImpl) { c.unreachableProberDisabled = true }
 }
 
 // checkWebhookPermission asks the cluster whether Kiali may list mutating webhooks, bounded
@@ -708,7 +733,7 @@ func (c *kialiCacheImpl) probeUnreachableOnce(ctx context.Context) {
 		if client == nil {
 			continue
 		}
-		err := kubernetes.ProbeClusterCredentials(ctx, client)
+		err := kubernetes.ProbeClusterCredentials(ctx, client, c.conf.KialiInternal.KubernetesClient.ClusterProbeTimeout)
 		if err == nil || !kubernetes.IsConnectionError(err) {
 			c.ClearClusterUnreachable(cluster)
 		}

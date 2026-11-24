@@ -28,14 +28,6 @@ const (
 	defaultPrometheusGlobalStorageTSDBRetention = 15 * 24 * 60 * 60 // Prometheus default is 15d
 )
 
-// capabilityDiscoveryTimeout bounds all Kubernetes capability discovery in one
-// /api/config request: cluster probing, ambient detection and Gateway API class
-// collection. It is sized to fit well inside a default 30s proxy timeout so that a
-// stalled remote delays the console by seconds, not minutes; the discovery answers
-// partial results at the deadline and retries on the next request. A variable so
-// tests can shorten it.
-var capabilityDiscoveryTimeout = 5 * time.Second
-
 type IstioAnnotations struct {
 	AmbientAnnotation        string `json:"ambientAnnotation,omitempty"`
 	AmbientAnnotationEnabled string `json:"ambientAnnotationEnabled,omitempty"`
@@ -196,7 +188,12 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// are probed concurrently and a cluster that cannot answer within the deadline
 		// simply reports false for this page load - the probes back off and retry, so a
 		// later load discovers the feature once the remote recovers.
-		discoveryCtx, cancelDiscovery := context.WithTimeout(r.Context(), capabilityDiscoveryTimeout)
+		// 0 disables the budget (an unguarded WithTimeout with 0 would expire instantly).
+		discoveryCtx := r.Context()
+		var cancelDiscovery context.CancelFunc = func() {}
+		if timeout := conf.KialiInternal.KubernetesClient.CapabilityDiscoveryTimeout; timeout > 0 {
+			discoveryCtx, cancelDiscovery = context.WithTimeout(discoveryCtx, timeout)
+		}
 		defer cancelDiscovery()
 
 		slices.Sort(accessibleClusters)

@@ -5,7 +5,6 @@ package cache
 */
 
 import (
-	"math"
 	"testing"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,13 +15,7 @@ import (
 
 func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
 	t.Helper()
-	// Disable the background unreachable-cluster prober for test caches: tests mark
-	// and clear the signal deterministically, and a prober succeeding against a fake
-	// client would clear marks mid-test. Tests that exercise the prober call
-	// probeUnreachableClusters (or its helpers) directly.
-	oldInterval := unreachableProbeInterval
-	unreachableProbeInterval = math.MaxInt64
-	t.Cleanup(func() { unreachableProbeInterval = oldInterval })
+
 	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
@@ -31,7 +24,7 @@ func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface
 		readers[cluster] = client
 	}
 
-	cache, err := NewKialiCache(t.Context(), clients, readers, conf)
+	cache, err := NewKialiCache(t.Context(), clients, readers, conf, WithUnreachableProberDisabled())
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}

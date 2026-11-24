@@ -32,6 +32,8 @@ type forwarder struct {
 	ReadyCh   chan struct{}
 	StopCh    chan struct{}
 	localPort int
+	// establishTimeout bounds the ready-wait; see NewPortForwarder.
+	establishTimeout time.Duration
 }
 
 // Use net/http for the HTTP/1 upgrade so cancellation interrupts the underlying
@@ -90,6 +92,9 @@ func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, st
 		return nil, "", context.DeadlineExceeded
 	}
 	upgraded := &upgradedConn{Conn: socket, body: stream, cancel: cancel}
+	// The 5s ping interval is an SPDY protocol keepalive, not a latency budget: it only
+	// keeps an established forwarded connection from being idled out by intermediaries,
+	// so it stays hardcoded - no environment needs a different value.
 	conn, err := spdy.NewClientConnectionWithPings(upgraded, 5*time.Second)
 	if err != nil {
 		upgraded.Close()
@@ -97,8 +102,6 @@ func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, st
 	}
 	return conn, resp.Header.Get(httpstream.HeaderProtocolVersion), nil
 }
-
-const portForwardEstablishTimeout = 10 * time.Second
 
 func (f forwarder) Start() error {
 	// It starts the port-forward
@@ -110,9 +113,13 @@ func (f forwarder) Start() error {
 	}()
 
 	// Waiting until the ReadyChan has a value, bounded: an unresponsive peer must not hang
-	// the caller (envoy/ztunnel dumps) forever.
-	timeout := time.NewTimer(portForwardEstablishTimeout)
-	defer timeout.Stop()
+	// the caller (envoy/ztunnel dumps) forever. A zero or negative bound waits forever.
+	var timeoutCh <-chan time.Time
+	if f.establishTimeout > 0 {
+		timer := time.NewTimer(f.establishTimeout)
+		defer timer.Stop()
+		timeoutCh = timer.C
+	}
 	select {
 	case err := <-errCh:
 		log.Error("Failing starting the port forwarding")
@@ -120,10 +127,10 @@ func (f forwarder) Start() error {
 	case <-f.ReadyCh:
 		// Ready to forward requests
 		return nil
-	case <-timeout.C:
+	case <-timeoutCh:
 		// Stop the background ForwardPorts attempt; its error (if any) is dropped.
 		close(f.StopCh)
-		return fmt.Errorf("timed out after %s waiting for the port-forward to become ready", portForwardEstablishTimeout)
+		return fmt.Errorf("timed out after %s waiting for the port-forward to become ready", f.establishTimeout)
 	}
 }
 
@@ -133,7 +140,9 @@ func (f forwarder) Stop() {
 	Pool.FreePort(f.localPort)
 }
 
-func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer) (PortForwarder, error) {
+// establishTimeout bounds the SPDY upgrade and handshake (kiali_internal.
+// kubernetes_client.port_forward_establish_timeout; <= 0 disables the bound).
+func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespace, pod, address, portMap string, writer io.Writer, establishTimeout time.Duration) (PortForwarder, error) {
 	stopCh := make(chan struct{})
 	readyCh := make(chan struct{})
 
@@ -149,7 +158,7 @@ func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespac
 	if err != nil {
 		return nil, err
 	}
-	dialer := &portForwardDialer{client: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, timeout: portForwardEstablishTimeout, url: forwarderUrl}
+	dialer := &portForwardDialer{client: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, timeout: establishTimeout, url: forwarderUrl}
 	fwer, err := portforward.NewOnAddresses(dialer, []string{address}, []string{portMap},
 		stopCh, readyCh, writer, os.Stderr)
 	if err != nil {
@@ -164,10 +173,11 @@ func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespac
 	}
 
 	f := forwarder{
-		forwarder: fwer,
-		ReadyCh:   readyCh,
-		StopCh:    stopCh,
-		localPort: localPort,
+		forwarder:        fwer,
+		ReadyCh:          readyCh,
+		StopCh:           stopCh,
+		establishTimeout: establishTimeout,
+		localPort:        localPort,
 	}
 
 	return &f, nil

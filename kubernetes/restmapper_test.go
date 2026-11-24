@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -73,7 +74,7 @@ func TestStaticFallbackMapperAnswersCoreTypesWithoutServer(t *testing.T) {
 	defer server.Close()
 
 	config := &rest.Config{Host: server.URL}
-	mapper, err := NewStaticFallbackMapper(config, nil)
+	mapper, err := NewStaticFallbackMapper(config, nil, 10*time.Second)
 	if err != nil {
 		t.Fatalf("NewStaticFallbackMapper should succeed without contacting the server: %v", err)
 	}

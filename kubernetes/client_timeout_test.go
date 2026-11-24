@@ -133,14 +133,13 @@ func TestStreamPodLogsOutlivesRequestTimeout(t *testing.T) {
 	}
 }
 
-// shortHeaderDeadline shortens the pod-log establishment deadline for the duration of a
-// test so the deadline cases run fast, returning the shortened duration.
-func shortHeaderDeadline(t *testing.T) time.Duration {
+// shortHeaderDeadlineConf builds a config whose pod-log establishment deadline is short
+// enough to test against; pass it to NewClient so the client under test carries it.
+func shortHeaderDeadlineConf(t *testing.T) (*config.Config, time.Duration) {
 	t.Helper()
-	original := podLogHeaderTimeout
-	podLogHeaderTimeout = 250 * time.Millisecond
-	t.Cleanup(func() { podLogHeaderTimeout = original })
-	return podLogHeaderTimeout
+	conf := config.NewConfig()
+	conf.KialiInternal.KubernetesClient.PodLogHeaderTimeout = 250 * time.Millisecond
+	return conf, conf.KialiInternal.KubernetesClient.PodLogHeaderTimeout
 }
 
 // TestStreamPodLogsWithExecProvider pins the #10545 regression: a remote whose kubeconfig
@@ -149,7 +148,7 @@ func shortHeaderDeadline(t *testing.T) time.Duration {
 // reject the exec provider's certificate callback), and the establishment deadline must
 // not cut a stream whose headers already arrived.
 func TestStreamPodLogsWithExecProvider(t *testing.T) {
-	deadline := shortHeaderDeadline(t)
+	conf, deadline := shortHeaderDeadlineConf(t)
 
 	// The exec plugin emits a static ExecCredential bearing the token.
 	const execToken = "exec-provider-token"
@@ -183,7 +182,7 @@ func TestStreamPodLogsWithExecProvider(t *testing.T) {
 			CAData: pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.Certificate().Raw}),
 		},
 	}
-	client, err := NewClient(ClusterInfo{ClientConfig: cfg, Name: "remote"}, config.NewConfig())
+	client, err := NewClient(ClusterInfo{ClientConfig: cfg, Name: "remote"}, conf)
 	if err != nil {
 		t.Fatalf("NewClient failed: %v", err)
 	}
@@ -205,7 +204,7 @@ func TestStreamPodLogsWithExecProvider(t *testing.T) {
 // peer that accepts the request but never answers must fail StreamPodLogs within the
 // deadline, and the peer must observe the request's cancellation.
 func TestStreamPodLogsHeaderTimeout(t *testing.T) {
-	deadline := shortHeaderDeadline(t)
+	conf, deadline := shortHeaderDeadlineConf(t)
 
 	cancelled := make(chan struct{})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +214,7 @@ func TestStreamPodLogsHeaderTimeout(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	client, err := NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "remote"}, config.NewConfig())
+	client, err := NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "remote"}, conf)
 	if err != nil {
 		t.Fatalf("NewClient failed: %v", err)
 	}
@@ -243,7 +242,7 @@ func TestStreamPodLogsHeaderTimeout(t *testing.T) {
 // established, the caller's context still governs it - cancelling after the headers arrive
 // must cut the body and unblock the server.
 func TestStreamPodLogsCallerCancelCutsStream(t *testing.T) {
-	shortHeaderDeadline(t)
+	conf, _ := shortHeaderDeadlineConf(t)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
@@ -253,7 +252,7 @@ func TestStreamPodLogsCallerCancelCutsStream(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	client, err := NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "remote"}, config.NewConfig())
+	client, err := NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "remote"}, conf)
 	if err != nil {
 		t.Fatalf("NewClient failed: %v", err)
 	}

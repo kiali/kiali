@@ -209,7 +209,10 @@ func (in *K8SClient) GetRoute(ctx context.Context, namespace string, name string
 // capabilityProbeBackoff is how long a capability probe (IsOpenShift, IsGatewayAPI, ...)
 // waits before retrying after a transient failure. Without it, a remote that stalls would be
 // re-probed on every call - /api/config alone runs several of these sequentially, and with
-// each failed attempt can cost the full request timeout.
+// each failed attempt can cost the full request timeout. It stays hardcoded rather than
+// configurable because no healthy environment needs a different value: it only shapes
+// Kiali's own retry cadence, and lowering it reintroduces the per-request re-probing it
+// exists to prevent.
 const capabilityProbeBackoff = 30 * time.Second
 
 // Coalesce probes for the same capability while allowing other capabilities and
@@ -506,7 +509,8 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 	// io.Discard avoids a data race: client-go's portforward library writes to the
 	// output writer from multiple goroutines without synchronization.
 	return httputil.NewPortForwarder(restInterface, in.restConfig,
-		namespace, name, "localhost", portMap, io.Discard)
+		namespace, name, "localhost", portMap, io.Discard,
+		in.conf.KialiInternal.KubernetesClient.PortForwardEstablishTimeout)
 }
 
 // GetPod returns the pod definitions for a given pod name.
@@ -519,17 +523,11 @@ func (in *K8SClient) GetPod(namespace, name string) (*core_v1.Pod, error) {
 	}
 }
 
-// podLogHeaderTimeout bounds the time to the first response header of a pod log stream:
-// without it a peer that accepts the request but never answers hangs the stream open (the
-// body itself is deliberately unbounded - logs stream for as long as the caller reads).
-// A variable so tests can shorten the deadline cases.
-var podLogHeaderTimeout = 10 * time.Second
-
 // StreamPodLogs opens a connection to progressively fetch the logs of a pod. Callers must make sure to properly close the returned io.ReadCloser.
 // It returns an error on any problem. The stream is served by the timeout-free client (a
 // request timeout would cap the body read and cut logs short); its establishment is
-// bounded by podLogHeaderTimeout, and the caller's context still cancels an established
-// stream when the client disconnects.
+// bounded by podLogHeaderTimeout (kiali_internal.kubernetes_client.pod_log_header_timeout),
+// and the caller's context still cancels an established stream when the client disconnects.
 func (in *K8SClient) StreamPodLogs(ctx context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	client, err := in.podLogsClient()
 	if err != nil {
@@ -542,11 +540,18 @@ func (in *K8SClient) StreamPodLogs(ctx context.Context, namespace, name string, 
 	// cut logs short, so the timer is stopped as soon as the headers arrive. The child
 	// context must then stay alive for the body - client-go ties the response body to the
 	// request context - and is released when the caller closes the stream. The parent
-	// context still cancels an established stream when the caller goes away.
+	// context still cancels an established stream when the caller goes away. A zero or
+	// negative timeout disables the bound (the stream waits for the kernel).
+	podLogHeaderTimeout := in.conf.KialiInternal.KubernetesClient.PodLogHeaderTimeout
 	childCtx, cancel := context.WithCancel(ctx)
-	timer := time.AfterFunc(podLogHeaderTimeout, cancel)
+	var timer *time.Timer
+	if podLogHeaderTimeout > 0 {
+		timer = time.AfterFunc(podLogHeaderTimeout, cancel)
+	}
 	body, err := req.Stream(childCtx)
-	timer.Stop()
+	if timer != nil {
+		timer.Stop()
+	}
 	if err != nil {
 		cancel()
 		if ctx.Err() == nil && childCtx.Err() != nil {

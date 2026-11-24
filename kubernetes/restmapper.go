@@ -11,12 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-// discoveryTimeout bounds each discovery round trip made by the lazy RESTMapper built by
-// NewStaticFallbackMapper. Discovery calls take no caller context and would otherwise hang for
-// the kernel TCP timeout against a connected-but-stalled cluster. A request timeout is safe
-// here because discovery involves no watches.
-const discoveryTimeout = 10 * time.Second
-
 // staticNamespacedMappings are the core v1 types Kiali passes in the controller-runtime cache's
 // ByObject option (see cmd.cacheTransforms). cache.New resolves whether every ByObject type is
 // namespaced at construction time, which forces the lazy RESTMapper's first discovery round trip
@@ -44,8 +38,12 @@ func IsStaticallyMapped(gk schema.GroupKind) bool {
 //
 // The httpClient argument is ignored: the mapper needs its own client, built from a copy of the
 // config with a request timeout, which the caller-provided client (shared with the informers)
-// must not carry because it would kill long watches.
-func NewStaticFallbackMapper(config *rest.Config, _ *http.Client) (meta.RESTMapper, error) {
+// must not carry because it would kill long watches. The discoveryTimeout argument bounds each
+// discovery round trip (kiali_internal.kubernetes_client.discovery_timeout): discovery calls
+// take no caller context and would otherwise hang for the kernel TCP timeout against a
+// connected-but-stalled cluster. A request timeout is safe here because discovery involves no
+// watches; <= 0 disables the bound.
+func NewStaticFallbackMapper(config *rest.Config, _ *http.Client, discoveryTimeout time.Duration) (meta.RESTMapper, error) {
 	discoveryConfig := rest.CopyConfig(config)
 	discoveryConfig.Timeout = discoveryTimeout
 	httpClient, err := rest.HTTPClientFor(discoveryConfig)

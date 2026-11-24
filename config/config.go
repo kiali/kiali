@@ -571,18 +571,61 @@ type KialiInternalConfig struct {
 // connection establishment is slower than the default budget); they are undocumented like the
 // rest of kiali_internal and subject to change.
 type KubernetesClientConfig struct {
+	// CapabilityDiscoveryTimeout bounds all Kubernetes capability discovery in one
+	// /api/config request: the console blocks on that endpoint before it can render
+	// anything, so one stalled remote must not consume the request (or the proxy
+	// timeout in front of it). Clusters that cannot answer within the budget report
+	// false for that page load and are retried on the next one. Set to 0 to disable.
+	CapabilityDiscoveryTimeout time.Duration `yaml:"capability_discovery_timeout,omitempty"`
+	// ClusterProbeTimeout bounds one credentials/reachability probe of a cluster (the
+	// startup probe of remotes and the background probe of unreachable-marked
+	// clusters). Nothing else bounds the call at those points, and a remote that
+	// accepts connections but stalls would otherwise block startup or the probe cycle
+	// far past every downstream budget. Set to 0 to disable.
+	ClusterProbeTimeout time.Duration `yaml:"cluster_probe_timeout,omitempty"`
 	// DialTimeout bounds connection establishment (DNS + TCP connect) on the configs that feed
 	// controller-runtime's informer caches, where a request timeout cannot be used because it
 	// would kill long watches. It must sit well below the access check timeout so that checks
 	// against a blackholed cluster fail at the dial instead of consuming the whole check budget.
 	// Set to 0 to disable.
 	DialTimeout time.Duration `yaml:"dial_timeout,omitempty"`
+	// DiscoveryTimeout bounds each discovery round trip made by the lazy RESTMapper.
+	// Discovery calls take no caller context and would otherwise hang for the kernel
+	// TCP timeout against a connected-but-stalled cluster. A request timeout is safe
+	// here because discovery involves no watches. Set to 0 to disable.
+	DiscoveryTimeout time.Duration `yaml:"discovery_timeout,omitempty"`
+	// MeshResolveTimeout bounds one full mesh rebuild. The rebuild runs detached from
+	// any caller with the home cluster resolved first, so this budget is spent almost
+	// entirely on remote clusters that are not answering; hitting it means several
+	// remotes are failing concurrently, and the rebuild still completes with the
+	// clusters that did answer. Set to 0 to disable.
+	MeshResolveTimeout time.Duration `yaml:"mesh_resolve_timeout,omitempty"`
 	// NamespaceSetComputeTimeout bounds one cluster's accessible-namespace-set computation
 	// end to end: it is a sequence of per-namespace round trips, each bounded by
 	// RequestTimeout, and several individually-bounded slow successes could otherwise sum
 	// past the request latency budget (a proxy in front of Kiali commonly 504s at ~30s).
 	// Raise it alongside RequestTimeout for slow remotes. Set to 0 to disable.
 	NamespaceSetComputeTimeout time.Duration `yaml:"namespace_set_compute_timeout,omitempty"`
+	// OAuthConfigTimeout bounds a single cluster's OAuth configuration fetch on a lazy
+	// rebuild, where a user is actively waiting for a login. (The fetch at construction
+	// is bounded separately - see business/openshift_oauth.go - because it runs inside
+	// the pod's startup-probe budget.) Set to 0 to disable.
+	OAuthConfigTimeout time.Duration `yaml:"oauth_config_timeout,omitempty"`
+	// PodLogHeaderTimeout bounds the time to the first response header of a pod log
+	// stream: without it a peer that accepts the request but never answers hangs the
+	// stream open. The body itself is deliberately unbounded - logs stream for as long
+	// as the caller reads. Set to 0 to disable.
+	PodLogHeaderTimeout time.Duration `yaml:"pod_log_header_timeout,omitempty"`
+	// PortForwardEstablishTimeout bounds the port-forward SPDY upgrade and handshake:
+	// without it a stalled peer hangs the caller for the kernel TCP timeout. Set to 0
+	// to disable.
+	PortForwardEstablishTimeout time.Duration `yaml:"port_forward_establish_timeout,omitempty"`
+	// RemoteCacheSyncTimeout bounds how long startup waits for the remote clusters'
+	// informer caches to sync before continuing without them. It is sized against the
+	// pod's startup-probe budget (the operator and helm default to ~90s), so raising it
+	// means raising the probe budget too. A remote that has not synced by then keeps
+	// syncing in the background. Set to 0 to not wait at all.
+	RemoteCacheSyncTimeout time.Duration `yaml:"remote_cache_sync_timeout,omitempty"`
 	// RequestTimeout bounds each live (non-informer) API request made through Kiali's
 	// Kubernetes clients: without it, a remote that accepts connections but stalls hangs every
 	// request that awaits it for the kernel TCP timeout. It is deliberately NOT applied to the
@@ -1248,9 +1291,17 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 			},
 			KubernetesClient: KubernetesClientConfig{
-				DialTimeout:                2 * time.Second,  // set to 0 to disable
-				NamespaceSetComputeTimeout: 15 * time.Second, // set to 0 to disable
-				RequestTimeout:             10 * time.Second, // set to 0 to disable
+				CapabilityDiscoveryTimeout:  5 * time.Second,  // set to 0 to disable
+				ClusterProbeTimeout:         10 * time.Second, // set to 0 to disable
+				DialTimeout:                 2 * time.Second,  // set to 0 to disable
+				DiscoveryTimeout:            10 * time.Second, // set to 0 to disable
+				MeshResolveTimeout:          60 * time.Second, // set to 0 to disable
+				NamespaceSetComputeTimeout:  15 * time.Second, // set to 0 to disable
+				OAuthConfigTimeout:          60 * time.Second, // set to 0 to disable
+				PodLogHeaderTimeout:         10 * time.Second, // set to 0 to disable
+				PortForwardEstablishTimeout: 10 * time.Second, // set to 0 to disable
+				RemoteCacheSyncTimeout:      45 * time.Second, // set to 0 to not wait
+				RequestTimeout:              10 * time.Second, // set to 0 to disable
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},

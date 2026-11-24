@@ -1,8 +1,8 @@
 package handlers
 
 // Internal (same-package) tests for the /api/config capability-discovery deadline: they
-// shorten the unexported capabilityDiscoveryTimeout, which the external test package
-// cannot reach.
+// shorten the deadline on the handler's conf, exercising the configurable
+// capability_discovery_timeout end to end.
 
 import (
 	"context"
@@ -46,14 +46,14 @@ func (fpc *internalFakePromClient) GetRuntimeinfo(ctx context.Context) (prom_v1.
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 
-// shortDiscoveryDeadline shortens the config handler's capability-discovery deadline for
-// the duration of a test so the stalled-remote cases run fast.
-func shortDiscoveryDeadline(t *testing.T) time.Duration {
+// shortDiscoveryDeadline shortens the config handler's capability-discovery deadline on
+// the given conf (the handler reads kiali_internal.kubernetes_client.
+// capability_discovery_timeout from it) so the stalled-remote cases run fast.
+func shortDiscoveryDeadline(t *testing.T, conf *config.Config) time.Duration {
 	t.Helper()
-	original := capabilityDiscoveryTimeout
-	capabilityDiscoveryTimeout = 400 * time.Millisecond
-	t.Cleanup(func() { capabilityDiscoveryTimeout = original })
-	return capabilityDiscoveryTimeout
+	deadline := 400 * time.Millisecond
+	conf.KialiInternal.KubernetesClient.CapabilityDiscoveryTimeout = deadline
+	return deadline
 }
 
 // newStalledClusterClient builds a real Kubernetes client whose API server accepts
@@ -160,9 +160,9 @@ func runConfigRequest(t *testing.T, conf *config.Config, kialiCache cache.KialiC
 // capability flags) and a service-account client (the Gateway API class probe), so a fix
 // limited to the user-client loop fails this test.
 func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
-	deadline := shortDiscoveryDeadline(t)
-
 	conf := config.NewConfig()
+	deadline := shortDiscoveryDeadline(t, conf)
+
 	conf.KialiInternal.CacheExpiration.Mesh = 0
 	conf.KialiInternal.KubernetesClient.RequestTimeout = 2 * deadline
 	conf.KubernetesConfig.ClusterName = "home"
@@ -228,9 +228,9 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 // TestConfigHandlerTwoStalledRemotesShareBudget shows the deadline is one shared budget:
 // two stalled remotes cost the same one-deadline delay, not two.
 func TestConfigHandlerTwoStalledRemotesShareBudget(t *testing.T) {
-	deadline := shortDiscoveryDeadline(t)
-
 	conf := config.NewConfig()
+	deadline := shortDiscoveryDeadline(t, conf)
+
 	conf.KubernetesConfig.ClusterName = "home"
 	conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{{Name: "istio", ClassName: "istio"}}
 

@@ -208,7 +208,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// The home cache is mandatory (fatal if it never syncs); the remote caches' bounded
 	// wait runs in the background so an unreachable remote cannot keep the server from
 	// starting to serve. See waitForCachesToSync.
-	waitForCachesToSync(ctx, kubeCaches, conf.KubernetesConfig.ClusterName)
+	waitForCachesToSync(ctx, conf, kubeCaches, conf.KubernetesConfig.ClusterName)
 
 	// Start listening to requests
 	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, grafanaSvc, prom, tracingLoader, discovery, staticAssetFS)

@@ -35,21 +35,16 @@ import (
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
 var getVersionTimeout = time.Second * 3
 
-// meshResolveTimeout bounds one full mesh rebuild. The rebuild runs detached from any
-// caller (a request disconnecting or the control-plane monitor's polling deadline must
-// not kill a result that other callers and the next monitor tick depend on), and the home
-// cluster is resolved first, so this budget is spent almost entirely on remote clusters
-// that are not answering: each of their calls is already bounded by the request timeout,
-// and hitting this overall budget means several remotes are failing concurrently - the
-// rebuild still completes with the clusters that did answer. It is a var so tests can
-// shorten it.
-var meshResolveTimeout = 60 * time.Second
-
 // meshResolveFailureBackoff is how long a failed rebuild suppresses new attempts.
 // Without it, every cache-missing caller after a failure would lead another full,
 // equally doomed rebuild (the mesh cache only stores successes), holding the leadership
 // and burning the resolve budget back to back. Within the window callers are served the
-// retained mesh, or the recorded error when no mesh has ever been built.
+// retained mesh, or the recorded error when no mesh has ever been built. It stays
+// hardcoded rather than configurable because no healthy environment needs a different
+// value: the backoff only shapes how Kiali retries its own failed work, and lowering it
+// reintroduces the back-to-back doomed rebuilds it exists to prevent. The rebuild's
+// overall budget, which a slow-but-healthy mesh can legitimately need raised, is
+// configurable (kiali_internal.kubernetes_client.mesh_resolve_timeout).
 const meshResolveFailureBackoff = 10 * time.Second
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
@@ -929,7 +924,13 @@ func (in *Discovery) leadMeshResolve() (*models.Mesh, error) {
 		in.meshStateMu.Unlock()
 	}()
 
-	resolveCtx, cancel := context.WithTimeout(context.Background(), meshResolveTimeout)
+	// The budget is kiali_internal.kubernetes_client.mesh_resolve_timeout; 0 disables
+	// it (an unguarded WithTimeout with 0 would expire instantly instead).
+	resolveCtx := context.Background()
+	var cancel context.CancelFunc = func() {}
+	if timeout := in.conf.KialiInternal.KubernetesClient.MeshResolveTimeout; timeout > 0 {
+		resolveCtx, cancel = context.WithTimeout(resolveCtx, timeout)
+	}
 	defer cancel()
 
 	mesh, err := in.resolveMesh(resolveCtx)
