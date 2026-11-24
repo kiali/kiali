@@ -39,7 +39,7 @@ import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
-import { diffMs, formatFromNow } from 'utils/DateTimeUtils';
+import { diffMs, formatFromNow, formatLocaleDateTime } from 'utils/DateTimeUtils';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -57,7 +57,7 @@ type ReduxDispatchProps = {
 type NotificationCenterProps = ReduxStateProps & ReduxDispatchProps;
 
 const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: NotificationCenterProps) => {
-  const { t } = useKialiTranslation();
+  const { i18n, t } = useKialiTranslation();
   const drawerRef = useRef<HTMLElement | null>(null);
 
   const getUnseenGroups = (groups: NotificationGroup[]): Set<string> => {
@@ -170,7 +170,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     if (diffMinutes < 60) {
       return formatFromNow(date);
     }
-    return date.toLocaleString();
+    return formatLocaleDateTime(date);
   };
 
   const formatDetail = (message: NotificationMessage): React.ReactNode => {
@@ -211,7 +211,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   return (
-    <NotificationDrawer ref={drawerRef}>
+    <NotificationDrawer key={i18n.language} ref={drawerRef}>
       <NotificationDrawerHeader
         closeButtonAriaLabel={t('Close')}
         count={getNumberUnread()}

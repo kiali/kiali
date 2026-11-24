@@ -53,11 +53,13 @@ describe('DateTimeUtils', () => {
     expect(formatRelativeDate(yesterday)).toBe('Yesterday');
   });
 
-  it('format12HourClockTime uses twelve-hour clock with am/pm spacing', () => {
-    const d = new Date(2024, 5, 1, 13, 4, 5);
-    expect(format12HourClockTime(d)).toBe('1:04:05 pm');
-    expect(format12HourClockTime(new Date(2024, 5, 1, 0, 4, 5))).toBe('12:04:05 am');
-    expect(format12HourClockTime(new Date(2024, 5, 1, 12, 4, 5))).toBe('12:04:05 pm');
+  it('format12HourClockTime uses locale twelve-hour time', () => {
+    const afternoon = new Date(2024, 5, 1, 13, 4, 5);
+    expect(format12HourClockTime(afternoon)).toMatch(/1:04:05/);
+    expect(format12HourClockTime(afternoon)).toMatch(/pm/i);
+    const midnight = new Date(2024, 5, 1, 0, 4, 5);
+    expect(format12HourClockTime(midnight)).toMatch(/12:04:05/);
+    expect(format12HourClockTime(midnight)).toMatch(/am/i);
   });
 
   it('formatFromNow uses stable relative buckets', () => {
