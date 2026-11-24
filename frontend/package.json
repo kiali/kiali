@@ -132,7 +132,6 @@
     "redux-persist": "^6.0.0",
     "redux-persist-transform-filter": "^0.0.22",
     "redux-thunk": "~3.1.0",
-    "regression": "^2.0.1",
     "reselect": "^5.1.1",
     "typesafe-actions": "^5.1.0",
     "typestyle": "^2.4.0",
