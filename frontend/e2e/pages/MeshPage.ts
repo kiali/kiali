@@ -323,6 +323,20 @@ export class MeshPage extends BasePage {
     }).toPass({ intervals: [3_000], timeout: 60_000 });
   }
 
+  /**
+   * Select a mesh node and assert its side-panel health icon, retrying the whole sequence.
+   * A selection made right after refreshPage() can bind the pre-refresh node (cytoscape has
+   * not re-rendered yet) and the side panel never re-reads node data — only re-selecting
+   * picks up the fresh health.
+   */
+  async selectNodeAndExpectSidePanelIcon(label: string, icon: string): Promise<void> {
+    await expect(async () => {
+      await this.selectMeshNodeByLabel(label);
+      await this.expectNodeSidePanel(label);
+      await expect(this.page.locator('#target-panel-node').getByTestId(`icon-${icon}-validation`)).toBeVisible();
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
   async expectNoSidePanelIcon(type: string): Promise<void> {
     await expect(this.page.locator('#target-panel-node').getByTestId(`icon-${type}-validation`)).toHaveCount(0);
   }
