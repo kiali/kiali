@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	otelJson "github.com/kiali/kiali/tracing/otel/model/json"
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 const (
@@ -33,14 +34,15 @@ const (
 )
 
 type OtelHTTPClient struct {
-	TempoCache store.Store[string, *model.TracingSingleTrace]
+	HealthCheckURL string
+	TempoCache     store.Store[string, *model.TracingSingleTrace]
 }
 
 // New client
 func NewOtelClient(ctx context.Context) (otelClient *OtelHTTPClient, err error) {
 
-	otelHTTPClient := &OtelHTTPClient{}
 	conf := config.Get()
+	otelHTTPClient := &OtelHTTPClient{HealthCheckURL: conf.ExternalServices.Tracing.HealthCheckUrl}
 	if conf.ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		s := store.New[string, *model.TracingSingleTrace]()
 		fifoStore := store.NewFIFOStore(s, conf.ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
@@ -117,29 +119,104 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(ctx context.Context, client http.Cl
 	}, nil
 }
 
-// GetServiceStatusHTTP get service status
-func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error) {
-	var u url.URL
-	healthCheckUrl := config.Get().ExternalServices.Tracing.HealthCheckUrl
-	if healthCheckUrl != "" {
-		url, err := u.Parse(healthCheckUrl)
-		if err != nil {
-			return false, fmt.Errorf("[HTTP Tempo] Error %s incorrect healthCheckUrl", err)
-		}
-		u = *url
-	} else {
-		u = *baseURL
-		u.Path = path.Join(u.Path, "/api/echo")
-	}
-
-	_, status, reqError := otel.MakeRequest(ctx, client, u.String(), nil)
-	if status != 200 {
-		return false, fmt.Errorf("[HTTP Tempo] Error %d getting status", status)
-	}
-	return reqError == nil, reqError
+// ReadinessResult records the status and whether the request was credential-free.
+type ReadinessResult struct {
+	Anonymous  bool
+	StatusCode int
 }
 
-// GetServiceStatusHTTP get service status
+func (r ReadinessResult) RequiresAuthentication() bool {
+	return r.Anonymous && (r.StatusCode == http.StatusUnauthorized || r.StatusCode == http.StatusForbidden)
+}
+
+// ProbeReadinessHTTP keeps tracing credentials scoped to the query API's origin.
+func (oc *OtelHTTPClient) ProbeReadinessHTTP(ctx context.Context, conf *config.Config, client http.Client, baseURL *url.URL) (ReadinessResult, error) {
+	target := *baseURL
+	if oc.HealthCheckURL == "" {
+		target.Path = path.Join(target.Path, "/api/echo")
+	} else {
+		u, err := url.Parse(oc.HealthCheckURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.User != nil {
+			return ReadinessResult{}, errors.New("invalid Tempo readiness URL")
+		}
+		target = *u
+	}
+
+	if client.Timeout <= 0 {
+		client.Timeout = httputil.DefaultTimeout
+	}
+	client.CheckRedirect = httputil.SameOriginRedirect
+	result := ReadinessResult{Anonymous: !httputil.SameOrigin(baseURL, &target)}
+	if result.Anonymous {
+		// A separate transport also excludes client certificates and custom headers.
+		anonymous, err := httputil.NewProbeHTTPClient(conf, nil, client.Timeout, nil, httputil.AnonymousDiscoveryRedirect)
+		if err != nil {
+			return result, err
+		}
+		client = anonymous
+	}
+
+	// Readiness depends on the status, so discard the response without reading its body.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), nil)
+	if err != nil {
+		return result, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+	result.StatusCode = resp.StatusCode
+	return result, nil
+}
+
+func (oc *OtelHTTPClient) GetServiceStatusHTTP(ctx context.Context, client http.Client, baseURL *url.URL) (bool, error) {
+	result, err := oc.ProbeReadinessHTTP(ctx, config.Get(), client, baseURL)
+	if err != nil {
+		return false, err
+	}
+	if result.RequiresAuthentication() {
+		// Preserve the status check for deployments whose readiness endpoint
+		// was authenticated. Query only the configured tracing API.
+		err := oc.VerifySearchHTTP(ctx, client, baseURL)
+		return err == nil, err
+	}
+	if result.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("[HTTP Tempo] Error %d getting readiness status", result.StatusCode)
+	}
+	return true, nil
+}
+
+// VerifySearchHTTP checks the configured query API with a bounded search.
+func (oc *OtelHTTPClient) VerifySearchHTTP(ctx context.Context, client http.Client, baseURL *url.URL) error {
+	target := *baseURL
+	target.Path = path.Join(target.Path, "/api/search")
+	end := time.Now()
+	query := target.Query()
+	query.Set("q", "{}")
+	query.Set("limit", "1")
+	query.Set("start", strconv.FormatInt(end.Add(-5*time.Minute).Unix(), 10))
+	query.Set("end", strconv.FormatInt(end.Unix(), 10))
+	target.RawQuery = query.Encode()
+
+	client.CheckRedirect = httputil.SameOriginRedirect
+	if client.Timeout <= 0 {
+		client.Timeout = httputil.DefaultTimeout
+	}
+	resp, status, err := otel.MakeRequest(ctx, client, target.String(), nil)
+	if err != nil {
+		return err
+	}
+	if status != http.StatusOK {
+		return fmt.Errorf("[HTTP Tempo] Search returned HTTP %d", status)
+	}
+	_, err = unmarshal(ctx, resp, baseURL)
+	return err
+}
+
+// GetServices returns the services reported by Tempo.
 func (oc *OtelHTTPClient) GetServices(ctx context.Context, client http.Client, baseURL *url.URL) (serviceList []string, err error) {
 	var u url.URL
 	servicesList := []string{}
@@ -230,29 +307,28 @@ const (
 )
 
 func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otelModel.Traces, error) {
-	zl := getLoggerFromContextHTTPTempo(ctx)
+	response, err := DecodeSearchResponse(r)
+	if err != nil {
+		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Invalid search response: %s [address: %s]", err, u.Host)
+	}
+	return response, err
+}
 
-	// Fail when the body is not shaped like a Tempo search answer, so the caller gets an error
-	// rather than a result: the model's fields are all optional, so any JSON object decodes into
-	// it cleanly and comes out as no traces.
+// DecodeSearchResponse requires a Tempo search envelope, including for empty results.
+func DecodeSearchResponse(body []byte) (*otelModel.Traces, error) {
 	var envelope map[string]json.RawMessage
-	if errEnvelope := json.Unmarshal(r, &envelope); errEnvelope != nil {
-		zl.Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errEnvelope, u)
-		return nil, errEnvelope
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, err
 	}
 	if envelope[keyTraces] == nil && envelope[keyMetrics] == nil {
-		errShape := fmt.Errorf("[HTTP Tempo] not a Tempo search response: it has none of %q and %q, only %q",
+		return nil, fmt.Errorf("[HTTP Tempo] not a Tempo search response: it has none of %q and %q, only %q",
 			keyTraces, keyMetrics, slices.Sorted(maps.Keys(envelope)))
-		zl.Error().Msgf("%s [URL: %v]", errShape, u)
-		return nil, errShape
 	}
 
 	var response otelModel.Traces
-	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		zl.Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
-		return nil, errMarshal
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, err
 	}
-
 	return &response, nil
 }
 
@@ -411,7 +487,7 @@ func ConstructTempoTenantURL(u *url.URL, cfgTracing *config.TracingConfig, isInt
 		// If so, append the tenant-specific path
 		if u.Path == "" || u.Path == "/" {
 			u.Path = fmt.Sprintf("/api/traces/v1/%s/tempo", cfgTracing.TempoConfig.Tenant)
-			log.Debugf("Constructed Tempo tenant URL: %s", u.String())
+			log.Debugf("Constructed Tempo tenant URL for address [%s]", u.Host)
 		}
 	}
 }

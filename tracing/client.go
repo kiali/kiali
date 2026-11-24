@@ -58,6 +58,7 @@ type Client struct {
 	ClientInterface
 	httpTracingClient HTTPClientInterface
 	grpcClient        GRPCClientInterface
+	grpcConn          *grpc.ClientConn
 	httpClient        http.Client
 	baseURL           *url.URL
 	customHeaders     map[string]string
@@ -78,7 +79,7 @@ func NewClient(ctx context.Context, conf *config.Config, token string, retry boo
 	ctx = log.ToContext(ctx, zl)
 
 	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
-		client, err = newClient(ctx, conf, token)
+		client, err = newClient(ctx, conf, token, nil)
 		if err != nil {
 			zl.Error().Msgf("Error creating tracing client: [%v]. Retrying in [%s]", err, newClientRetryInterval)
 			if retry {
@@ -96,7 +97,14 @@ func NewClient(ctx context.Context, conf *config.Config, token string, retry boo
 	return client, nil
 }
 
-func newClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
+func tracingTarget(cfg config.TracingConfig) (rawURL string, internal bool) {
+	if cfg.InternalURL != "" {
+		return cfg.InternalURL, true
+	}
+	return cfg.ExternalURL, false
+}
+
+func newClient(ctx context.Context, conf *config.Config, token string, checkRedirect httputil.RedirectPolicy) (*Client, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
@@ -110,22 +118,11 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		auth.Token = config.Credential(token)
 	}
 
-	var u *url.URL
-	var errParse error
-	isInternalURL := false
-	if cfgTracing.InternalURL != "" {
-		u, errParse = url.Parse(cfgTracing.InternalURL)
-		if errParse != nil {
-			zl.Error().Msgf("Error parsing tracing InternalURL: %s", errParse)
-			return nil, errParse
-		}
-		isInternalURL = true
-	} else {
-		u, errParse = url.Parse(cfgTracing.ExternalURL)
-		if errParse != nil {
-			zl.Error().Msgf("Error parsing tracing ExternalURL: %s", errParse)
-			return nil, errParse
-		}
+	rawURL, isInternalURL := tracingTarget(cfgTracing)
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		zl.Error().Msgf("Error parsing tracing URL: %s", err)
+		return nil, err
 	}
 
 	port := u.Port()
@@ -139,7 +136,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	// Just for internal URL, the external URL can be exposed on a different URL, hidden internal path
 	tempo.ConstructTempoTenantURL(u, &cfgTracing, isInternalURL)
 
-	address := host + ":" + port
+	address := net.JoinHostPort(host, port)
 	zl.Trace().Msgf("[%s] client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
 
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
@@ -160,15 +157,19 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 		// 	})
 		// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
 		// }
+		if checkRedirect != nil {
+			opts = append(opts, grpc.WithDisableServiceConfig())
+		}
 		conn, err := grpc.NewClient(address, opts...)
 		if err == nil {
 			cc := model.NewQueryServiceClient(conn)
 			client, err = jaeger.NewGRPCJaegerClient(cc)
 			if err != nil {
+				_ = conn.Close()
 				return nil, err
 			}
 			zl.Info().Msgf("Create [%s] GRPC client. address=[%s]", cfgTracing.Provider, address)
-			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, customHeaders: cfgTracing.CustomHeaders}, nil
+			return &Client{httpTracingClient: httpTracingClient, grpcClient: client, grpcConn: conn, customHeaders: cfgTracing.CustomHeaders}, nil
 		} else {
 			zl.Error().Msgf("Error creating client: %v", err)
 			return nil, err
@@ -176,20 +177,30 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 
 	} else {
 		// Legacy HTTP client
-		zl.Trace().Msgf("Using legacy HTTP client for Tracing: url=[%v], auth.type=[%s]", u, auth.Type)
+		zl.Trace().Msgf("Using legacy HTTP client for Tracing: address=[%s], auth.type=[%s]", address, auth.Type)
 		timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-		transport, err := httputil.CreateTransport(conf, &auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
+		var client http.Client
+		if checkRedirect != nil {
+			client, err = httputil.NewProbeHTTPClient(conf, &auth, timeout, cfgTracing.CustomHeaders, checkRedirect)
+		} else {
+			var transport http.RoundTripper
+			transport, err = httputil.CreateTransport(conf, &auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
+			client = http.Client{Transport: transport, Timeout: timeout}
+		}
 		if err != nil {
 			return nil, err
 		}
-		client := http.Client{Transport: transport, Timeout: timeout}
-		zl.Info().Msgf("Create Tracing HTTP client [%s]", u)
+		zl.Info().Msgf("Create Tracing HTTP client. address=[%s]", address)
 
 		if cfgTracing.Provider == config.TempoProvider {
-			httpTracingClient, err = tempo.NewOtelClient(ctx)
-			if err != nil {
-				zl.Error().Msgf("Error creating HTTP client: %v", err)
-				return nil, err
+			if checkRedirect != nil {
+				httpTracingClient = &tempo.OtelHTTPClient{HealthCheckURL: cfgTracing.HealthCheckUrl}
+			} else {
+				httpTracingClient, err = tempo.NewOtelClient(ctx)
+				if err != nil {
+					zl.Error().Msgf("Error creating HTTP client: %v", err)
+					return nil, err
+				}
 			}
 
 			// Tempo uses gRPC stream client just for search
@@ -200,7 +211,10 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 					zl.Error().Msgf("Error creating gRPC dial options: %v", err)
 					return nil, err
 				}
-				grpcAddress := fmt.Sprintf("%s:%d", host, conf.ExternalServices.Tracing.GrpcPort)
+				if checkRedirect != nil {
+					dialOps = append(dialOps, grpc.WithDisableServiceConfig())
+				}
+				grpcAddress := net.JoinHostPort(host, strconv.Itoa(cfgTracing.GrpcPort))
 				clientConn, err := grpc.NewClient(grpcAddress, dialOps...)
 				if err != nil {
 					zl.Error().Msgf("Error creating gRPC client connection: %v", err)
@@ -208,10 +222,11 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 				}
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
+					_ = clientConn.Close()
 					zl.Error().Msgf("Error creating gRPC Tempo Client: %v", err)
 					return nil, err
 				}
-				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
+				return &Client{httpTracingClient: httpTracingClient, grpcClient: streamClient, grpcConn: clientConn, httpClient: client, baseURL: u, customHeaders: cfgTracing.CustomHeaders}, nil
 			}
 		} else {
 			httpTracingClient, err = jaeger.NewJaegerClient(client, u)

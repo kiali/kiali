@@ -55,16 +55,26 @@ type ValidConfig struct {
 	Warning           string `json:"warning"`
 }
 
-type TracingDiagnose struct {
-	Code        int           `json:"code"`
-	LogLine     []LogLine     `json:"logLine"`
-	Message     string        `json:"message"`
-	ValidConfig []ValidConfig `json:"validConfig"`
+type TracingProbeStatus string
+
+const (
+	TracingProbeFailed     TracingProbeStatus = "failed"
+	TracingProbePassed     TracingProbeStatus = "passed"
+	TracingProbeUnverified TracingProbeStatus = "unverified"
+)
+
+type TracingProbeResult struct {
+	HTTPStatus int                `json:"httpStatus,omitempty"`
+	Status     TracingProbeStatus `json:"status"`
 }
 
-type ConfigurationValidation struct {
-	Error   string `json:"error"`
-	Message string `json:"message"`
+type TracingDiagnose struct {
+	Code        int                 `json:"code"`
+	LogLine     []LogLine           `json:"logLine"`
+	Message     string              `json:"message"`
+	QueryAPI    *TracingProbeResult `json:"queryAPI,omitempty"`
+	Readiness   *TracingProbeResult `json:"readiness,omitempty"`
+	ValidConfig []ValidConfig       `json:"validConfig"`
 }
 
 type TracingService struct {
