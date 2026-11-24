@@ -534,6 +534,7 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 	// Verify TLS config was returned with RootCAs set
 	if tlscfg == nil {
 		t.Fatal("expected non-nil TLS config when CertPool is initialized")
+		return
 	}
 	if tlscfg.RootCAs == nil {
 		t.Fatal("expected RootCAs to be set from CertPool")
