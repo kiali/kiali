@@ -3,6 +3,7 @@ import { t } from 'utils/I18nUtils';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 const pad3 = (n: number): string => String(n).padStart(3, '0');
+const isValidDate = (date: Date): boolean => !Number.isNaN(date.getTime());
 
 const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
 
@@ -21,17 +22,37 @@ const getRelativeTimeFormatter = (): Intl.RelativeTimeFormat => {
 
 /** UTC `YYYY-MM-DD HH:mm:ss.SSS` (pod logs / span timestamps). */
 export const formatUtcDateTime = (timeMs: number): string => {
+  if (Number.isNaN(timeMs)) {
+    return '';
+  }
   const d = new Date(timeMs);
+  if (!isValidDate(d)) {
+    return '';
+  }
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}.${pad3(d.getUTCMilliseconds())}`;
 };
 
 /** Local `YYYY-MM-DD HH:mm:ss.SSS` from a parseable timestamp string. */
 export const formatLocalDateTime = (timestamp: string): string => {
   const d = new Date(timestamp);
+  if (!isValidDate(d)) {
+    return '';
+  }
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${pad3(d.getMilliseconds())}`;
 };
 
-export const formatLocaleDateTime = (date: Date): string => date.toLocaleString(getDateLocale());
+export const formatLocaleDateTime = (date: Date): string =>
+  isValidDate(date) ? date.toLocaleString(getDateLocale()) : '';
+
+/** Notification list: relative under 60 minutes, otherwise locale datetime. */
+export const formatNotificationTimestamp = (date: Date, now: Date = new Date()): string => {
+  const diffMinutes = Math.floor(-diffMs(date, now) / (60 * 1000));
+
+  if (diffMinutes < 60) {
+    return formatFromNow(date, now);
+  }
+  return formatLocaleDateTime(date);
+};
 
 export const addDaysFromNowIso = (days: number): string => {
   const d = new Date();
@@ -47,6 +68,9 @@ export const diffMs = (expiresOn: string | Date, from: Date = new Date()): numbe
 export const isSameOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 
 export const formatFromNow = (date: Date, now: Date = new Date()): string => {
+  if (!isValidDate(date) || !isValidDate(now)) {
+    return '';
+  }
   const diffSec = Math.round((date.getTime() - now.getTime()) / 1000);
   const formatter = getRelativeTimeFormatter();
   const absSec = Math.abs(diffSec);
@@ -76,6 +100,9 @@ export const formatFromNow = (date: Date, now: Date = new Date()): string => {
 
 /** Locale-aware 12-hour clock for trace list headers. */
 export const format12HourClockTime = (date: Date): string => {
+  if (!isValidDate(date)) {
+    return '';
+  }
   return date.toLocaleTimeString(getDateLocale(), {
     hour: 'numeric',
     hour12: true,
@@ -86,6 +113,9 @@ export const format12HourClockTime = (date: Date): string => {
 
 export const formatRelativeDate = (value: number | Date, fullMonthName = false): string => {
   const m = value instanceof Date ? value : new Date(value);
+  if (!isValidDate(m)) {
+    return '';
+  }
   const dt = new Date();
   const locale = getDateLocale();
   const month: Intl.DateTimeFormatOptions['month'] = fullMonthName ? 'long' : 'short';

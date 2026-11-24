@@ -39,7 +39,7 @@ import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
-import { diffMs, formatFromNow, formatLocaleDateTime } from 'utils/DateTimeUtils';
+import { formatFromNow, formatNotificationTimestamp } from 'utils/DateTimeUtils';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -164,15 +164,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     );
   };
 
-  const formatTimestamp = (date: Date): string => {
-    const diffMinutes = Math.floor(-diffMs(date) / (60 * 1000));
-
-    if (diffMinutes < 60) {
-      return formatFromNow(date);
-    }
-    return formatLocaleDateTime(date);
-  };
-
   const formatDetail = (message: NotificationMessage): React.ReactNode => {
     if (!message.detail) {
       return '';
@@ -211,7 +202,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   return (
-    <NotificationDrawer key={i18n.language} ref={drawerRef}>
+    <NotificationDrawer key={i18n.resolvedLanguage ?? i18n.language} ref={drawerRef}>
       <NotificationDrawerHeader
         closeButtonAriaLabel={t('Close')}
         count={getNumberUnread()}
@@ -292,7 +283,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                               justifyContent: 'space-between'
                             }}
                           >
-                            <span>{formatTimestamp(message.created)}</span>
+                            <span>{formatNotificationTimestamp(message.created)}</span>
                             {message.count > 1 && (
                               <span>
                                 {message.count} {formatFromNow(message.firstTriggered ?? message.created)}

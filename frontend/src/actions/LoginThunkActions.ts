@@ -1,4 +1,3 @@
-import { diffMs } from 'utils/DateTimeUtils';
 import type { KialiAppState, LoginSession, LoginState } from '../store/Store';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
@@ -7,6 +6,7 @@ import { AuthResult } from '../types/Auth';
 import type { KialiDispatch } from '../types/Redux';
 import { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
 import { addError } from '../utils/AlertUtils';
+import { diffMs } from 'utils/DateTimeUtils';
 
 const Dispatcher = new Login.LoginDispatcher();
 

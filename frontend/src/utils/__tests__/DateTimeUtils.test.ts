@@ -1,11 +1,15 @@
+import { i18n } from 'i18n';
 import {
   addDaysFromNowIso,
   diffMs,
   format12HourClockTime,
   formatFromNow,
   formatLocalDateTime,
+  formatLocaleDateTime,
+  formatNotificationTimestamp,
   formatRelativeDate,
   formatUtcDateTime,
+  getDateLocale,
   isSameOrBefore
 } from '../DateTimeUtils';
 
@@ -15,10 +19,18 @@ describe('DateTimeUtils', () => {
     expect(formatUtcDateTime(time)).toBe('2024-01-15 10:05:06.007');
   });
 
+  it('returns empty string for invalid UTC datetime input', () => {
+    expect(formatUtcDateTime(Number.NaN)).toBe('');
+  });
+
   it('formats local datetime from ISO input', () => {
     const iso = '2024-06-01T12:30:45.123Z';
     const expected = formatLocalDateTime(iso);
     expect(expected).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}$/);
+  });
+
+  it('returns empty string for unparseable local datetime input', () => {
+    expect(formatLocalDateTime('not-a-date')).toBe('');
   });
 
   it('adds days to now for session expiry', () => {
@@ -53,6 +65,10 @@ describe('DateTimeUtils', () => {
     expect(formatRelativeDate(yesterday)).toBe('Yesterday');
   });
 
+  it('formatRelativeDate returns empty string for invalid input', () => {
+    expect(formatRelativeDate(Number.NaN)).toBe('');
+  });
+
   it('format12HourClockTime uses locale twelve-hour time', () => {
     const afternoon = new Date(2024, 5, 1, 13, 4, 5);
     expect(format12HourClockTime(afternoon)).toMatch(/1:04:05/);
@@ -74,5 +90,29 @@ describe('DateTimeUtils', () => {
     const date = new Date('2020-03-15T12:00:00Z');
     expect(formatRelativeDate(date)).toMatch(/Mar/);
     expect(formatRelativeDate(date, true)).toMatch(/March/);
+  });
+
+  it('getDateLocale prefers resolvedLanguage', () => {
+    const originalLanguage = i18n.language;
+    i18n.changeLanguage('de');
+    expect(getDateLocale()).toBe(i18n.resolvedLanguage ?? i18n.language);
+    i18n.changeLanguage(originalLanguage);
+  });
+
+  it('formatLocaleDateTime returns localized string for valid dates', () => {
+    const date = new Date('2024-06-01T15:30:00Z');
+    expect(formatLocaleDateTime(date)).toBe(date.toLocaleString(getDateLocale()));
+  });
+
+  it('formatNotificationTimestamp stays relative under 60 minutes', () => {
+    const now = new Date('2024-06-01T12:00:00Z');
+    const fiftyNineMinAgo = new Date('2024-06-01T11:01:00Z');
+    expect(formatNotificationTimestamp(fiftyNineMinAgo, now)).toMatch(/minute/i);
+  });
+
+  it('formatNotificationTimestamp switches to locale datetime at 60 minutes', () => {
+    const now = new Date('2024-06-01T12:00:00Z');
+    const sixtyMinAgo = new Date('2024-06-01T11:00:00Z');
+    expect(formatNotificationTimestamp(sixtyMinAgo, now)).toBe(formatLocaleDateTime(sixtyMinAgo));
   });
 });
