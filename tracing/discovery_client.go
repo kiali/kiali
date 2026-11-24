@@ -162,10 +162,10 @@ func verifyDeployedTracing(ctx context.Context, conf *config.Config, token strin
 	}
 	// Backend and OAuth errors may contain credentials. Only return a fixed message.
 	if errors.Is(err, httputil.ErrRedirectOrigin) {
-		return readiness, errors.New("The tracing query redirected to a different address. Configure that address directly to verify it")
+		return readiness, errors.New("tracing query redirected to a different address. Configure that address directly to verify it")
 	}
 	if err != nil {
-		return readiness, errors.New("Could not verify the tracing query API with these settings")
+		return readiness, errors.New("could not verify the tracing query API with these settings")
 	}
 	return readiness, nil
 }
@@ -517,7 +517,7 @@ func validateEndpoint(ctx context.Context, client http.Client, zl *zerolog.Logge
 	}
 	response, err := tempo.DecodeSearchResponse(resp)
 	if err != nil {
-		msg := "The tracing endpoint did not return a Tempo search response"
+		msg := "the tracing endpoint did not return a Tempo search response"
 		logs = append(logs, model.LogLine{Time: time.Now(), Test: endpoint, Result: msg})
 		zl.Trace().Msg(msg)
 		return nil, logs, errors.New(msg)

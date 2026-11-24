@@ -83,7 +83,7 @@ func (jc JaegerHTTPClient) GetServices(ctx context.Context, client http.Client, 
 		return nil, err
 	}
 	if status != http.StatusOK {
-		return nil, fmt.Errorf("Jaeger services request returned HTTP %d", status)
+		return nil, fmt.Errorf("services request to Jaeger returned HTTP %d", status)
 	}
 	services, err := DecodeServicesResponse(r)
 	if err != nil {
@@ -100,7 +100,7 @@ func DecodeServicesResponse(body []byte) ([]string, error) {
 		return nil, err
 	}
 	if response.Data == nil {
-		return nil, errors.New("Jaeger services response is missing a data array")
+		return nil, errors.New("services response from Jaeger is missing a data array")
 	}
 	return response.Data, nil
 }

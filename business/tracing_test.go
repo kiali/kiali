@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -20,20 +19,6 @@ import (
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/tracing/tracingtest"
 )
-
-func getLayer(t *testing.T, conf *config.Config) *Layer {
-	config.Set(conf)
-	s1 := kubetest.FakeService("Namespace", "reviews")
-	s2 := kubetest.FakeService("Namespace", "httpbin")
-	objects := []runtime.Object{
-		kubetest.FakeNamespace("Namespace"),
-		&s1,
-		&s2,
-	}
-
-	k8s := kubetest.NewFakeK8sClient(objects...)
-	return NewLayerBuilder(t, conf).WithClient(k8s).Build()
-}
 
 var trace1 = jaegerModels.Trace{
 	Spans: []jaegerModels.Span{{
