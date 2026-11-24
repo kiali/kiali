@@ -35,6 +35,23 @@ import (
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
 var getVersionTimeout = time.Second * 3
 
+// meshResolveTimeout bounds one full mesh rebuild. The rebuild runs detached from any
+// caller (a request disconnecting or the control-plane monitor's polling deadline must
+// not kill a result that other callers and the next monitor tick depend on), and the home
+// cluster is resolved first, so this budget is spent almost entirely on remote clusters
+// that are not answering: each of their calls is already bounded by the request timeout,
+// and hitting this overall budget means several remotes are failing concurrently - the
+// rebuild still completes with the clusters that did answer. It is a var so tests can
+// shorten it.
+var meshResolveTimeout = 60 * time.Second
+
+// meshResolveFailureBackoff is how long a failed rebuild suppresses new attempts.
+// Without it, every cache-missing caller after a failure would lead another full,
+// equally doomed rebuild (the mesh cache only stores successes), holding the leadership
+// and burning the resolve budget back to back. Within the window callers are served the
+// retained mesh, or the recorded error when no mesh has ever been built.
+const meshResolveFailureBackoff = 10 * time.Second
+
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
 	if !ok {
@@ -529,11 +546,26 @@ type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	// meshLeadership serializes mesh rebuilds: exactly one leader rebuilds at a time.
+	// It is acquired with TryLock and held only for the duration of a rebuild - callers
+	// are never blocked waiting on it (see Mesh).
+	meshLeadership sync.Mutex
+	// meshStateMu guards the rebuild-completion signal and the failure marks below.
+	meshStateMu sync.Mutex
+	// meshRebuildDone is closed when the in-flight rebuild (if any) finishes; it is nil
+	// when no rebuild is running. Only cold-start callers (no mesh has ever been built)
+	// wait on it - everyone else is served the retained mesh (see Mesh).
+	meshRebuildDone chan struct{}
+	// meshResolveFailedAt and meshResolveErr record the last rebuild failure for the
+	// failure backoff (see meshResolveFailureBackoff).
+	meshResolveFailedAt time.Time
+	meshResolveErr      error
 	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh discovery
 	namespaceMap map[string]*models.ControlPlane
-	// meshMutex protects concurrent access to the Mesh function to prevent race conditions
-	meshMutex  sync.Mutex
-	getVersion getVersionFunc
+	// namespaceMapMu guards namespaceMap: the rebuild swaps in a fully built replacement
+	// (see resolveMesh) while readers such as GetRootNamespace consult it.
+	namespaceMapMu sync.RWMutex
+	getVersion     getVersionFunc
 }
 
 // NewDiscovery initializes a new Discovery.
@@ -617,10 +649,11 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace.
 // If the namespace is not managed by any control plane, it returns an empty string.
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
-	in.meshMutex.Lock()
-	defer in.meshMutex.Unlock()
-
+	// The map is swapped atomically by the rebuild (see resolveMesh); a miss falls back
+	// to the cached mesh below, so the read does not need to exclude a rebuild.
+	in.namespaceMapMu.RLock()
 	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
+	in.namespaceMapMu.RUnlock()
 	if cp != nil {
 		return cp.RootNamespace
 	}
@@ -726,6 +759,24 @@ func (in *Discovery) configuredClusters() []models.KubeCluster {
 	return clusters
 }
 
+// orderedSAClusterNames returns the SA client cluster names with the home cluster first,
+// for serial per-cluster passes whose budget a dead remote must not spend ahead of the
+// mandatory cluster (see resolveMesh).
+func (in *Discovery) orderedSAClusterNames() []string {
+	names := maps.Keys(in.kialiSAClients)
+	slices.SortFunc(names, func(a, b string) int {
+		switch {
+		case a == in.conf.KubernetesConfig.ClusterName:
+			return -1
+		case b == in.conf.KubernetesConfig.ClusterName:
+			return 1
+		default:
+			return 0
+		}
+	})
+	return names
+}
+
 // Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
 // is done as best-effort using the resources that are present in the cluster.
 // TODO: should this go in kubernetes package?
@@ -765,7 +816,15 @@ type clusterRevisionKey struct {
 // Mesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
 // Do not edit the mesh object returned from here directly. It is shared across threads.
-// This function is protected by a mutex to prevent concurrent execution and race conditions.
+//
+// Mesh serves stale-while-revalidate: a caller that misses the mesh cache is served the
+// retained last mesh (see cache.KialiCache.LastMesh) immediately, while at most one
+// background rebuild runs per expiry. Rebuilds are detached from every caller - a request
+// disconnecting, or the control-plane monitor's polling deadline, must not kill a result
+// that other callers and the next monitor tick depend on - and each rebuild resolves the
+// home cluster first within its own budget, so a dead remote cannot starve the mandatory
+// cluster's resolution. Only before the first successful build (cold start, no retained
+// mesh) does a caller wait for the in-flight rebuild, bounded by its own context.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
@@ -773,17 +832,159 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	)
 	defer end()
 
-	// Protect against concurrent access to prevent race conditions
-	in.meshMutex.Lock()
-	defer in.meshMutex.Unlock()
-
-	// Check cache after acquiring the lock in case another goroutine
-	// already populated it while we were waiting for the lock
 	if mesh, ok := in.kialiCache.GetMesh(); ok {
 		return mesh, nil
 	}
 
+	for {
+		// A retained mesh is served immediately while a rebuild refreshes the cache: no
+		// request ever waits on a rebuild once the first mesh exists. The staleness is
+		// bounded by the mesh cache expiration plus one rebuild, the same data the graph
+		// and detail views already serve from their own caches during an outage.
+		if last := in.kialiCache.LastMesh(); last != nil {
+			in.ensureMeshRebuild()
+			return last, nil
+		}
+
+		// Cold start: no mesh has ever been built. Try to lead the initial rebuild
+		// ourselves; if one is already in flight, wait for it and re-evaluate.
+		if in.meshLeadership.TryLock() {
+			// Re-check: a rebuild may have completed between the cache check and the
+			// lock acquisition.
+			if mesh, ok := in.kialiCache.GetMesh(); ok {
+				in.meshLeadership.Unlock()
+				return mesh, nil
+			}
+			if in.meshResolveInBackoff() {
+				err := in.meshResolveErrSnapshot()
+				in.meshLeadership.Unlock()
+				// No mesh has ever been built and the last attempt failed recently:
+				// fail fast rather than lead another immediately-doomed rebuild.
+				if err == nil {
+					err = fmt.Errorf("mesh resolution failed recently and is being retried")
+				}
+				return nil, err
+			}
+			mesh, err := in.leadMeshResolve()
+			in.meshLeadership.Unlock()
+			return mesh, err
+		}
+
+		done := in.meshRebuildDoneSnapshot()
+		if done == nil {
+			// The in-flight rebuild finished between the TryLock and the snapshot;
+			// loop to re-check the cache and the leadership.
+			continue
+		}
+		select {
+		case <-done:
+			// Loop: the cache and the retained mesh are re-checked with the rebuild's
+			// result in place.
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+}
+
+// ensureMeshRebuild starts a background rebuild if none is running and no failure
+// backoff is in effect. It never blocks: callers are served the retained mesh while
+// the rebuild it triggers runs.
+func (in *Discovery) ensureMeshRebuild() {
+	if !in.meshLeadership.TryLock() {
+		return // a rebuild is already in flight
+	}
+	go func() {
+		defer in.meshLeadership.Unlock()
+		if _, ok := in.kialiCache.GetMesh(); ok {
+			return // re-checked under the leadership: the cache was refreshed
+		}
+		if in.meshResolveInBackoff() {
+			return // a recent failure is being backed off; the next expiry retries
+		}
+		// Errors are logged and recorded by leadMeshResolve for the backoff; callers
+		// keep being served the retained mesh in the meantime.
+		_, _ = in.leadMeshResolve()
+	}()
+}
+
+// leadMeshResolve runs one full mesh rebuild while holding the mesh leadership,
+// publishing the result to the mesh cache on success or recording the failure for
+// the backoff. The rebuild runs detached from any caller with meshResolveTimeout as
+// its overall budget.
+func (in *Discovery) leadMeshResolve() (*models.Mesh, error) {
+	done := make(chan struct{})
+	in.meshStateMu.Lock()
+	in.meshRebuildDone = done
+	in.meshStateMu.Unlock()
+	defer func() {
+		in.meshStateMu.Lock()
+		close(done)
+		in.meshRebuildDone = nil
+		in.meshStateMu.Unlock()
+	}()
+
+	resolveCtx, cancel := context.WithTimeout(context.Background(), meshResolveTimeout)
+	defer cancel()
+
+	mesh, err := in.resolveMesh(resolveCtx)
+	if err != nil {
+		log.Errorf("Unable to resolve the mesh; keeping the previously retained mesh. Retrying no sooner than %s. Err: %s", meshResolveFailureBackoff, err)
+		in.meshStateMu.Lock()
+		in.meshResolveFailedAt = time.Now()
+		in.meshResolveErr = err
+		in.meshStateMu.Unlock()
+		return nil, err
+	}
+
+	in.kialiCache.SetMesh(mesh)
+	in.meshStateMu.Lock()
+	in.meshResolveFailedAt = time.Time{}
+	in.meshResolveErr = nil
+	in.meshStateMu.Unlock()
+	return mesh, nil
+}
+
+// meshResolveInBackoff reports whether the last rebuild failed within the backoff window.
+func (in *Discovery) meshResolveInBackoff() bool {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return !in.meshResolveFailedAt.IsZero() && time.Since(in.meshResolveFailedAt) < meshResolveFailureBackoff
+}
+
+// meshResolveErrSnapshot returns the error recorded by the last failed rebuild, if any.
+func (in *Discovery) meshResolveErrSnapshot() error {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return in.meshResolveErr
+}
+
+// meshRebuildDoneSnapshot returns the completion signal of the in-flight rebuild, or
+// nil when no rebuild is running.
+func (in *Discovery) meshRebuildDoneSnapshot() chan struct{} {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return in.meshRebuildDone
+}
+
+// resolveMesh builds the mesh from the clusters Kiali can see. It must only be called
+// through Mesh/ensureMeshRebuild (exactly one caller holds the mesh leadership), and it
+// owns the namespaceMap swap-in.
+func (in *Discovery) resolveMesh(ctx context.Context) (*models.Mesh, error) {
 	clusters := in.Clusters()
+	// The home cluster is resolved first: a remote that is not answering must not
+	// consume the rebuild budget ahead of the mandatory cluster and make the home
+	// resolution fail with a spurious context-deadline error (map iteration order
+	// would otherwise decide whether home is starved by a dead remote).
+	slices.SortStableFunc(clusters, func(a, b models.KubeCluster) int {
+		switch {
+		case a.Name == in.conf.KubernetesConfig.ClusterName:
+			return -1
+		case b.Name == in.conf.KubernetesConfig.ClusterName:
+			return 1
+		default:
+			return 0
+		}
+	})
 
 	// One scoped read per cluster for the whole mesh resolution: several passes below need
 	// the same per-cluster namespace lists - and the same failures, so a remote whose scan
@@ -1154,14 +1355,16 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	// set the NamespaceMap, any previous map will get gc'd
 	// Use the namespaces already collected in namespacesByClusterAndRev which respects cluster_wide_access
-	in.namespaceMap = map[string]*models.ControlPlane{}
+	// Build it fully before the swap so readers never observe a partially filled map.
+	namespaceMap := map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
 		for _, ns := range cp.ManagedNamespaces {
-			in.namespaceMap[in.namespaceMapKey(ns.Cluster, ns.Name)] = cp
+			namespaceMap[in.namespaceMapKey(ns.Cluster, ns.Name)] = cp
 		}
 	}
-
-	in.kialiCache.SetMesh(mesh)
+	in.namespaceMapMu.Lock()
+	in.namespaceMap = namespaceMap
+	in.namespaceMapMu.Unlock()
 
 	return mesh, nil
 }
@@ -1269,7 +1472,10 @@ func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster st
 
 func (in *Discovery) revisionTags(ctx context.Context) map[clusterRevisionKey][]*models.Tag {
 	tagsByClusterRev := map[clusterRevisionKey][]*models.Tag{}
-	for cluster, client := range in.kialiSAClients {
+	// Home cluster first (see resolveMesh): a dead remote's webhook list must not run
+	// ahead of the home cluster's within the rebuild budget.
+	for _, cluster := range in.orderedSAClusterNames() {
+		client := in.kialiSAClients[cluster]
 		if !in.kialiCache.CanListWebhooks(cluster) {
 			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
 			continue
