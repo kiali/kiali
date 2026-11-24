@@ -405,7 +405,11 @@ When('user opens Tracing Discovery', () => {
 });
 
 Then('user sees the Tracing Discovery modal', () => {
-  cy.getBySel('modal-tracing-discovery').should('be.visible').contains('Configuration Discovery');
+  cy.getBySel('modal-tracing-discovery')
+    .closest('[role="dialog"]')
+    .should('be.visible')
+    .contains('Configuration Discovery')
+    .should('be.visible');
 });
 
 Then('user sees the action buttons fixed at the bottom', () => {
