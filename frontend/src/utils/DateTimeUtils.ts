@@ -39,7 +39,7 @@ export const addDaysFromNowIso = (days: number): string => {
   return d.toISOString();
 };
 
-/** Milliseconds from `from` until `expiresOn` (same sign as moment(expiresOn).diff(from)). */
+/** Milliseconds from `from` until `expiresOn` (positive when `expiresOn` is in the future). */
 export const diffMs = (expiresOn: string | Date, from: Date = new Date()): number => {
   return new Date(expiresOn).getTime() - from.getTime();
 };
