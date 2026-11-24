@@ -39,7 +39,7 @@ import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
-import moment from 'moment';
+import { diffMs, formatFromNow } from 'utils/DateTimeUtils';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -165,12 +165,10 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   const formatTimestamp = (date: Date): string => {
-    const now = moment();
-    const created = moment(date);
-    const diffMinutes = now.diff(created, 'minutes');
+    const diffMinutes = Math.floor(-diffMs(date) / (60 * 1000));
 
     if (diffMinutes < 60) {
-      return created.fromNow();
+      return formatFromNow(date);
     }
     return date.toLocaleString();
   };
@@ -297,7 +295,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                             <span>{formatTimestamp(message.created)}</span>
                             {message.count > 1 && (
                               <span>
-                                {message.count} {moment().from(message.firstTriggered)}
+                                {message.count} {formatFromNow(message.firstTriggered)}
                               </span>
                             )}
                           </div>

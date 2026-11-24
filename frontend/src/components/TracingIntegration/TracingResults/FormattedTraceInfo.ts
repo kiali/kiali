@@ -1,5 +1,5 @@
-import { JaegerTrace } from '../../../types/TracingInfo';
-import moment from 'moment';
+import type { JaegerTrace } from '../../../types/TracingInfo';
+import { format12HourClockTime, formatFromNow } from 'utils/DateTimeUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { formatDuration, formatRelativeDate, isErrorTag } from 'utils/tracing/TracingHelper';
@@ -17,44 +17,43 @@ export const fullIDStyle = kialiStyle({
 });
 
 export class FormattedTraceInfo {
-  private mDate: moment.Moment;
   public numErrors: number;
+  private readonly traceStart: Date;
 
   constructor(private trace: JaegerTrace) {
-    this.mDate = moment(trace.startTime / 1000);
+    this.traceStart = new Date(trace.startTime / 1000);
     this.numErrors = this.trace.spans.filter(sp => sp.tags.some(isErrorTag)).length;
   }
 
-  name() {
+  name(): string {
     return this.trace.traceName ? this.trace.traceName : '(Missing root span)';
   }
 
-  fullID() {
+  fullID(): string {
     return this.trace.traceID;
   }
 
-  shortID() {
+  shortID(): string {
     return this.trace.traceID.slice(0, 6);
   }
 
-  duration() {
+  duration(): string {
     return formatDuration(this.trace.duration);
   }
 
-  hasErrors() {
+  hasErrors(): boolean {
     return this.numErrors !== 0;
   }
 
-  relativeDate() {
+  relativeDate(): string {
     return formatRelativeDate(this.trace.startTime / 1000);
   }
 
-  absTime() {
-    const timeStr = this.mDate.format('h:mm:ss a');
-    return `${timeStr.slice(0, -3)} ${timeStr.slice(-2)}`;
+  absTime(): string {
+    return format12HourClockTime(this.traceStart);
   }
 
-  fromNow() {
-    return this.mDate.fromNow();
+  fromNow(): string {
+    return formatFromNow(this.traceStart);
   }
 }

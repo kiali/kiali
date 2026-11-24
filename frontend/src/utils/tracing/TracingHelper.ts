@@ -1,5 +1,4 @@
 import { round } from 'lodash-es';
-import moment from 'moment';
 import type {
   EnvoySpanInfo,
   JaegerTrace,
@@ -393,25 +392,4 @@ export function formatDuration(micros: number): string {
   return round(d, 2) + unit;
 }
 
-const TODAY = 'Today';
-const YESTERDAY = 'Yesterday';
-
-export function formatRelativeDate(value: any, fullMonthName = false): string {
-  const m = moment.isMoment(value) ? value : moment(value);
-  const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
-  const dt = new Date();
-  if (dt.getFullYear() !== m.year()) {
-    return m.format(`${monthFormat} D, YYYY`);
-  }
-  const mMonth = m.month();
-  const mDate = m.date();
-  const date = dt.getDate();
-  if (mMonth === dt.getMonth() && mDate === date) {
-    return TODAY;
-  }
-  dt.setDate(date - 1);
-  if (mMonth === dt.getMonth() && mDate === dt.getDate()) {
-    return YESTERDAY;
-  }
-  return m.format(`${monthFormat} D`);
-}
+export { formatRelativeDate } from 'utils/DateTimeUtils';

@@ -52,7 +52,7 @@ import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { location, router, URLParam } from 'app/History';
 import type { Span, TracingQuery } from 'types/Tracing';
-import moment from 'moment';
+import { formatLocalDateTime, formatUtcDateTime } from 'utils/DateTimeUtils';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { download, isValid } from 'utils/Common';
@@ -1516,7 +1516,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             const startTimeU = Math.floor(span.startTime / 1000);
 
             return {
-              timestamp: moment(startTimeU).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
+              timestamp: formatUtcDateTime(startTimeU),
               timestampUnix: startTimeU,
               span: span
             } as Entry;
@@ -1662,11 +1662,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private hasEntries = (entries: Entry[]): boolean => !!entries && entries.length > 0;
 }
 
-const formatDate = (timestamp: string): string => {
-  const entryTimestamp = moment(timestamp).format('YYYY-MM-DD HH:mm:ss.SSS');
-
-  return entryTimestamp;
-};
+const formatDate = (timestamp: string): string => formatLocalDateTime(timestamp);
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
