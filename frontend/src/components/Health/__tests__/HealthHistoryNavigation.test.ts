@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import { getHealthHistoryGraphUrl, getHealthHistoryRange } from '../HealthHistoryNavigation';
 import type { HealthHistoryType } from 'services/Api';
 
