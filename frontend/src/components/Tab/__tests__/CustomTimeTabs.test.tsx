@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Tab } from '@patternfly/react-core';

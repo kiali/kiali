@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HealthHistoryActions } from '../HealthHistoryActions';
 import { HealthStatusRibbon } from '../HealthStatusRibbon';

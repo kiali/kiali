@@ -115,20 +115,11 @@ When using AI tools to assist with contributions to Kiali projects, contributors
 
 5. **Disclose AI Assistance**
    - Contributors are **REQUIRED** to disclose when AI assistance was used to generate issues, pull requests, and commits
-   - In commit messages or pull request description fields, identify the code assistant that you used
-   - Use a trailer such as `Assisted-by:` or `Generated-by:`
-   - Example for commits and PRs:
+   - Disclose only in **commit messages**, **commit trailers**, or **pull request descriptions** (and in GitHub issues when relevant). Do **not** add disclosure comments to source files (for example, `// Assisted-by:` or `# Generated-by:` headers)
+   - Identify the code assistant you used with a trailer such as `Assisted-by:` or `Generated-by:`
+   - Example for commits (body or trailer) and PR descriptions:
      ```
      Assisted-by: Claude Code
-     ```
-   - In source file comments, indicate the use of the code assistant
-   - Example for source files:
-     ```
-     # Generated-by: Cursor
-     ```
-     or
-     ```
-     // Assisted-by: Claude Code
      ```
    - Be transparent and honest about your development process
    - Maintainers may request additional information about code origin during reviews

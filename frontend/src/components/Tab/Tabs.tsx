@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { Tabs, type TabProps } from '@patternfly/react-core';
 import { classes } from 'typestyle';
