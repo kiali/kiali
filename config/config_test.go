@@ -2089,15 +2089,3 @@ kiali_feature_flags:
 		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'kiali_feature_flags.ui_defaults.i18n.show_selector' has been deprecated")
 	})
 }
-
-// TestKubernetesClientDefaultsBackoffExceedsFailureCost guards the relationship between
-// the namespace-compute failure backoff and the failure it backs off: a failed
-// accessible-namespace-set computation can cost up to NamespaceSetComputeTimeout (its
-// bounded round trips against a dead remote), so a backoff window at or below that cost
-// re-probes the dead remote on every request whose cadence is slower than the window.
-func TestKubernetesClientDefaultsBackoffExceedsFailureCost(t *testing.T) {
-	require.New(t).Greater(
-		NewConfig().KialiInternal.KubernetesClient.NamespaceComputeBackoff,
-		NewConfig().KialiInternal.KubernetesClient.NamespaceSetComputeTimeout,
-		"the failure backoff must exceed the failure cost, or requests spaced slower than the window re-probe every time")
-}

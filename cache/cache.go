@@ -13,7 +13,6 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
-	auth_v1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,12 +40,12 @@ const (
 	// webhookCheckBackoff is how long CanListWebhooks waits before re-checking a cluster
 	// whose webhook permission check failed transiently.
 	webhookCheckBackoff = 30 * time.Second
-	// namespaceComputeFailureTTL bounds how long a recorded namespace-set computation
-	// failure is kept at all: the keys embed user cache keys (bearer tokens under token
-	// auth), so the store must evict them rather than retain tokens - and grow under token
-	// rotation - for the life of the process.
-	namespaceComputeFailureTTL = 10 * time.Minute
 )
+
+// unreachableProbeInterval is how often the background prober re-checks clusters marked
+// unreachable (see MarkClusterUnreachable). It matches the access-probe cadence, which is
+// also the documented recovery cadence. A var so tests can disable or shorten it.
+var unreachableProbeInterval = DefaultAccessProbeInterval
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -141,15 +140,21 @@ type KialiCache interface {
 	// business layer's calls are compile-checked - a silently failed type assertion here
 	// once disabled the whole backoff in production.
 
-	// NamespaceComputeFailedAt returns when the computation identified by key last
-	// failed and the error it failed with, if ever. The key is built by
-	// NewNamespaceComputeKey; see NamespaceComputeKey for the format.
-	NamespaceComputeFailedAt(key NamespaceComputeKey) (time.Time, error, bool)
-	// MarkNamespaceComputeFailed records a failed computation. The backoff is
-	// per-computation (one NamespaceComputeKey), not per-cluster.
-	MarkNamespaceComputeFailed(key NamespaceComputeKey, err error)
-	// ClearNamespaceComputeFailure drops the computation's failure record on success.
-	ClearNamespaceComputeFailure(key NamespaceComputeKey)
+	// MarkClusterUnreachable records that the cluster failed at the transport level
+	// (unreachable, stalled). Every request-path probe of the cluster - session
+	// validation, version fetch, ambient check, namespace-set computation - consults
+	// this signal first and skips its live call while the mark is set, so a dead remote
+	// is probed by the background prober instead of by every request (see
+	// UnreachableClusters and the prober started by NewKialiCache). The home cluster is
+	// never marked: its failures are exceptional and fail loud.
+	MarkClusterUnreachable(cluster string)
+	// ClearClusterUnreachable drops the mark, e.g. after the background prober's call
+	// was answered. Every surface recovers on its next request.
+	ClearClusterUnreachable(cluster string)
+	// IsClusterUnreachable reports whether the cluster is currently marked unreachable.
+	IsClusterUnreachable(cluster string) bool
+	// UnreachableClusters returns the currently marked cluster names, for the prober.
+	UnreachableClusters() []string
 
 	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
 	// serve reads, and returns the cluster's reader when it should not be skipped; callers
@@ -267,8 +272,7 @@ type KialiCache interface {
 // bearer token, or the impersonated username when Kiali impersonates; see
 // kubernetes.K8SClient.GetCacheKey). The NUL separator cannot occur in a cluster name
 // or a cache key, so pairs cannot collide. The same key coalesces concurrent
-// computations (the business layer's singleflight) and records their failure backoff
-// (NamespaceComputeFailedAt and friends).
+// computations (the business layer's singleflight).
 type NamespaceComputeKey string
 
 // NewNamespaceComputeKey builds the key for one (cluster, cacheKey) computation.
@@ -279,12 +283,6 @@ func NewNamespaceComputeKey(cluster, cacheKey string) NamespaceComputeKey {
 
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
-
-	// ambientCheckFailuresMu guards ambientCheckFailures.
-	ambientCheckFailuresMu sync.Mutex
-	// ambientCheckFailures records when a cluster's ambient check last failed
-	// indeterminately, for the ambientCheckFailureBackoff window.
-	ambientCheckFailures map[string]time.Time
 
 	// Cache SelfSubjectAccessReview verdicts ("can the requester list
 	// resource type X in namespace Y") per cacheKey + cluster, mirroring the
@@ -303,19 +301,17 @@ type kialiCacheImpl struct {
 	// for the lazy retry backoff. Guarded by canReadWebhookMutex.
 	webhookCheckFailures map[string]time.Time
 
-	// namespaceComputeFailures records when a cluster's accessible-set computation last
-	// failed and the error it failed with, for the business layer's negative backoff.
-	// Guarded by namespaceComputeMutex. The sweep that evicts expired entries is amortized:
-	// it runs at most once per namespaceComputeFailureTTL/2 (tracked by
-	// namespaceComputeLastSweep), so a burst of failures does not rescan the whole map per
-	// insertion, and a read can also trigger a long-overdue sweep so a quiet period after
-	// an outage does not retain entries beyond the TTL.
-	namespaceComputeFailures  map[NamespaceComputeKey]namespaceComputeFailure
-	namespaceComputeLastSweep time.Time
-	namespaceComputeMutex     sync.Mutex
-	clients                   map[string]kubernetes.ClientInterface
-	clusterAccess             *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
-	conf                      config.Config
+	// unreachableMu guards unreachable. The mark carries no expiry: the background
+	// prober clears it once the cluster answers, which is also what bounds how long a
+	// recovered cluster's data takes to return (one probe interval).
+	unreachableMu sync.RWMutex
+	// unreachable is the set of clusters marked unreachable at the transport level;
+	// see MarkClusterUnreachable.
+	unreachable map[string]struct{}
+
+	clients       map[string]kubernetes.ClientInterface
+	clusterAccess *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
+	conf          config.Config
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -427,7 +423,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
-		ambientCheckFailures:    map[string]time.Time{},
+		unreachable:             map[string]struct{}{},
 		canListStore:            store.NewExpirationStore(ctx, store.New[canListKey, bool](), &namespaceKeyTTL, nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		webhookCheckFailures:    make(map[string]time.Time),
@@ -462,7 +458,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		webhookWg.Add(1)
 		go func(cluster string, client kubernetes.ClientInterface) {
 			defer webhookWg.Done()
-			_, canRead, definitive := checkWebhookPermission(ctx, client)
+			canRead, definitive := checkWebhookPermission(ctx, client)
 			kialiCacheImpl.canReadWebhookMutex.Lock()
 			if definitive {
 				// A successful SSAR is a definitive answer either way: allowed, or a real
@@ -487,6 +483,10 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		return nil, fmt.Errorf("[Kiali Cache] home cluster [%s] not configured in kiali cache", conf.KubernetesConfig.ClusterName)
 	}
 
+	// The unreachable-cluster prober owns recovery detection: request paths never probe
+	// a marked cluster (see MarkClusterUnreachable), so something must.
+	go kialiCacheImpl.probeUnreachableClusters(ctx)
+
 	return &kialiCacheImpl, nil
 }
 
@@ -494,19 +494,19 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 // by its own timeout. It returns the reviews, whether reading is allowed, and whether the
 // answer is definitive: a transport failure (timeout, unreachable) is neither allowed nor a
 // denial - it is retried later - while a successful SSAR is definitive either way.
-func checkWebhookPermission(ctx context.Context, client kubernetes.ClientInterface) (reviews []*auth_v1.SelfSubjectAccessReview, allowed, definitive bool) {
+func checkWebhookPermission(ctx context.Context, client kubernetes.ClientInterface) (allowed, definitive bool) {
 	checkCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
 	defer cancel()
 	reviews, err := client.GetSelfSubjectAccessReview(checkCtx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
 	if err != nil {
-		return nil, false, false
+		return false, false
 	}
 	for _, review := range reviews {
 		if review.Status.Allowed {
-			return reviews, true, true
+			return true, true
 		}
 	}
-	return reviews, false, true
+	return false, true
 }
 
 func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
@@ -532,14 +532,16 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 	// The live re-check runs without the lock: one slow remote must not block the healthy
 	// clusters' webhook lookups. Concurrent callers may duplicate the check; it is rare,
 	// bounded, and idempotent.
-	_, allowed, definitive := checkWebhookPermission(context.Background(), client)
+	allowed, definitive := checkWebhookPermission(context.Background(), client)
 
 	c.canReadWebhookMutex.Lock()
 	defer c.canReadWebhookMutex.Unlock()
 	if definitive {
 		c.canReadWebhookByCluster[cluster] = allowed
 		delete(c.webhookCheckFailures, cluster)
-	} else if !allowed {
+	} else {
+		// checkWebhookPermission only returns here on a transient failure, where
+		// allowed is always false.
 		c.webhookCheckFailures[cluster] = time.Now()
 	}
 	return allowed
@@ -556,6 +558,13 @@ var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
 // all (ErrClusterNotCached). A degraded cluster recovers on its own once access is restored,
 // so the fitting HTTP status for it is 503 (temporarily unavailable) rather than 500.
 var ErrClusterDegraded = errors.New("cluster cache is degraded")
+
+// ErrClusterUnreachable is wrapped into errors for a cluster that recently failed at the
+// transport level (see MarkClusterUnreachable): request paths skip their probes of such a
+// cluster, and a background prober clears the mark once the cluster answers again. It is
+// distinct from an access denial - the fitting HTTP status is 503 (temporarily
+// unavailable), not 403.
+var ErrClusterUnreachable = errors.New("cluster is unreachable")
 
 // ErrNamespaceRevoked is returned by detail paths for a namespace whose access was partially
 // revoked while the rest of the cluster remains readable: its informers are frozen, so reads
@@ -627,57 +636,79 @@ func (c *kialiCacheImpl) UnreadableRemoteSecrets() []string {
 }
 
 // namespaceComputeFailure is one recorded accessible-set computation failure.
-type namespaceComputeFailure struct {
-	at  time.Time
-	err error
-}
-
-// NamespaceComputeFailedAt returns when the given computation last failed and the error it
-// failed with, if ever. See the business layer's namespaceComputeBackoffStore for the contract.
-func (c *kialiCacheImpl) NamespaceComputeFailedAt(key NamespaceComputeKey) (time.Time, error, bool) {
-	c.namespaceComputeMutex.Lock()
-	defer c.namespaceComputeMutex.Unlock()
-	c.sweepNamespaceComputeFailuresLocked()
-	failure, failed := c.namespaceComputeFailures[key]
-	return failure.at, failure.err, failed
-}
-
-// sweepNamespaceComputeFailuresLocked evicts expired failure records. It is amortized: at
-// most one sweep per namespaceComputeFailureTTL/2, so marking N failures in a burst costs
-// O(N) total sweep work rather than O(N^2). It must be called with the mutex held.
-func (c *kialiCacheImpl) sweepNamespaceComputeFailuresLocked() {
-	now := time.Now()
-	if !c.namespaceComputeLastSweep.IsZero() && now.Sub(c.namespaceComputeLastSweep) < namespaceComputeFailureTTL/2 {
+// MarkClusterUnreachable records that the cluster failed at the transport level. The
+// home cluster is never marked (see the interface contract).
+func (c *kialiCacheImpl) MarkClusterUnreachable(cluster string) {
+	if cluster == c.conf.KubernetesConfig.ClusterName {
 		return
 	}
-	c.namespaceComputeLastSweep = now
-	for k, failure := range c.namespaceComputeFailures {
-		if now.Sub(failure.at) > namespaceComputeFailureTTL {
-			delete(c.namespaceComputeFailures, k)
+	c.unreachableMu.Lock()
+	defer c.unreachableMu.Unlock()
+	if _, marked := c.unreachable[cluster]; !marked {
+		c.unreachable[cluster] = struct{}{}
+		c.zl.Info().Msgf("Cluster [%s] is unreachable; its request-path probes are suspended until it answers again", cluster)
+	}
+}
+
+// ClearClusterUnreachable drops the mark; the cluster's data returns on the next request.
+func (c *kialiCacheImpl) ClearClusterUnreachable(cluster string) {
+	c.unreachableMu.Lock()
+	defer c.unreachableMu.Unlock()
+	if _, marked := c.unreachable[cluster]; marked {
+		delete(c.unreachable, cluster)
+		c.zl.Info().Msgf("Cluster [%s] is reachable again", cluster)
+	}
+}
+
+// IsClusterUnreachable reports whether the cluster is currently marked unreachable.
+func (c *kialiCacheImpl) IsClusterUnreachable(cluster string) bool {
+	c.unreachableMu.RLock()
+	defer c.unreachableMu.RUnlock()
+	_, marked := c.unreachable[cluster]
+	return marked
+}
+
+// UnreachableClusters returns the currently marked cluster names.
+func (c *kialiCacheImpl) UnreachableClusters() []string {
+	c.unreachableMu.RLock()
+	defer c.unreachableMu.RUnlock()
+	names := make([]string, 0, len(c.unreachable))
+	for cluster := range c.unreachable {
+		names = append(names, cluster)
+	}
+	return names
+}
+
+// probeUnreachableClusters re-probes marked clusters until they answer or the context is
+// done. It is the only thing that clears the marks: request paths never probe a marked
+// cluster, so recovery is detected here, within one interval of connectivity returning.
+// Any answer - even an API-level error such as Forbidden - proves reachability and clears
+// the mark; only transport-level failures keep it.
+func (c *kialiCacheImpl) probeUnreachableClusters(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(unreachableProbeInterval):
+			c.probeUnreachableOnce(ctx)
 		}
 	}
 }
 
-// ClearNamespaceComputeFailure drops the computation's failure record on success, so the
-// store does not retain user tokens longer than the backoff needs them.
-func (c *kialiCacheImpl) ClearNamespaceComputeFailure(key NamespaceComputeKey) {
-	c.namespaceComputeMutex.Lock()
-	defer c.namespaceComputeMutex.Unlock()
-	delete(c.namespaceComputeFailures, key)
-}
-
-// MarkNamespaceComputeFailed records a failed accessible-set computation. The key identifies
-// the (cluster, cacheKey) computation. Expired entries are swept here: the keys embed user
-// cache keys (bearer tokens under token auth), so the map must not retain them - or grow
-// unboundedly under token rotation - for the life of the process.
-func (c *kialiCacheImpl) MarkNamespaceComputeFailed(key NamespaceComputeKey, err error) {
-	c.namespaceComputeMutex.Lock()
-	defer c.namespaceComputeMutex.Unlock()
-	if c.namespaceComputeFailures == nil {
-		c.namespaceComputeFailures = map[NamespaceComputeKey]namespaceComputeFailure{}
+// probeUnreachableOnce re-probes every marked cluster once; see probeUnreachableClusters.
+func (c *kialiCacheImpl) probeUnreachableOnce(ctx context.Context) {
+	for _, cluster := range c.UnreachableClusters() {
+		client := c.clients[cluster]
+		if client == nil {
+			continue
+		}
+		probeCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
+		_, err := client.GetSelfSubjectAccessReview(probeCtx, "", "apps", "deployments", []string{"list"})
+		cancel()
+		if err == nil || !kubernetes.IsConnectionError(err) {
+			c.ClearClusterUnreachable(cluster)
+		}
 	}
-	c.sweepNamespaceComputeFailuresLocked()
-	c.namespaceComputeFailures[key] = namespaceComputeFailure{at: time.Now(), err: err}
 }
 
 // SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster
@@ -795,44 +826,26 @@ func (in *kialiCacheImpl) IsAmbientEnabled(ctx context.Context, cluster string) 
 	return in.isAmbientEnabled(ctx, cluster)
 }
 
-// ambientCheckFailureBackoff is how long an indeterminate ambient-check failure is
-// trusted before the cluster is probed again. The check runs on request paths
-// (/api/config, the mesh graph), and an unreachable remote would otherwise be
-// re-probed - paying its connection-establishment timeout - on every request. It is
-// a var so tests can shorten it.
-var ambientCheckFailureBackoff = 30 * time.Second
-
 func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
 	if found {
 		return check
 	}
 
-	// An indeterminate failure from a recent check is still trusted: re-probing an
-	// unreachable remote on every request would charge each one its
-	// connection-establishment timeout to re-learn the same verdict. The failure may
-	// be transient, so it is retried after the backoff window rather than cached
-	// indefinitely.
-	in.ambientCheckFailuresMu.Lock()
-	failedAt, failed := in.ambientCheckFailures[cluster]
-	in.ambientCheckFailuresMu.Unlock()
-	if failed && time.Since(failedAt) < ambientCheckFailureBackoff {
+	// A cluster marked unreachable is not probed: the background prober re-checks it,
+	// and the ambient detection resumes once the mark is cleared (see
+	// MarkClusterUnreachable).
+	if in.IsClusterUnreachable(cluster) {
 		return false
 	}
 
 	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
-		in.ambientCheckFailuresMu.Lock()
-		in.ambientCheckFailures[cluster] = time.Now()
-		in.ambientCheckFailuresMu.Unlock()
+		in.MarkClusterUnreachable(cluster)
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return false
 	}
-
-	in.ambientCheckFailuresMu.Lock()
-	delete(in.ambientCheckFailures, cluster)
-	in.ambientCheckFailuresMu.Unlock()
 
 	enabled := len(daemonsets) > 0
 	in.ambientChecksPerCluster.Set(cluster, enabled)

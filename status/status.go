@@ -83,7 +83,7 @@ func Get(ctx context.Context, conf *config.Config, clientFactory kubernetes.Clie
 		WarningMessages: []string{},
 	}
 
-	info.ExternalServices = getVersions(ctx, conf, clientFactory, grafana, perses, prom)
+	info.ExternalServices = getVersions(ctx, conf, clientFactory, cache, grafana, perses, prom)
 
 	return info
 }

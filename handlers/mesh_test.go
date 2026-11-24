@@ -164,7 +164,6 @@ func TestControlPlanes(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	conf.KialiInternal.KubernetesClient.NamespaceComputeBackoff = 0
 	clients := map[string]kubernetes.UserClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
 	}

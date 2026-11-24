@@ -105,7 +105,7 @@ type clientFactory struct {
 	// no user clients either: it is absent from Kiali's inventory until Kiali is restarted with
 	// a fixed registration. Transient problems (a remote that is merely unreachable) are NOT
 	// recorded here - those clusters keep their clients and recover on their own.
-	skippedClusters map[string]error
+	skippedClusters map[string]struct{}
 
 	// saTokenFile is the path to the SA token file for in-cluster authentication.
 	// Saved before stripping auth from baseRestConfig, used for home cluster impersonation.
@@ -144,7 +144,7 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 			continue
 		}
 		log.Errorf("The remote cluster secret data for cluster [%s] could not be processed; skipping the cluster. Fix its kiali-multi-cluster-secret and restart Kiali to recover.", cluster)
-		cf.skippedClusters[cluster] = fmt.Errorf("remote cluster secret data for cluster [%s] could not be processed", cluster)
+		cf.skippedClusters[cluster] = struct{}{}
 	}
 
 	for cluster, clusterInfo := range inventory.Clusters {
@@ -163,7 +163,7 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 			// misconfigured: skipping it keeps the rest of Kiali serving instead of aborting
 			// startup. The home cluster stays fatal below.
 			log.Errorf("Unable to create remote Kiali Service Account client for cluster [%s]; skipping the cluster. Fix its kiali-multi-cluster-secret and restart Kiali to recover. Err: %s", cluster, err)
-			cf.skippedClusters[cluster] = err
+			cf.skippedClusters[cluster] = struct{}{}
 			continue
 		}
 		log.Debugf("Adding saClientEntry [%s]", cluster)
@@ -225,7 +225,7 @@ func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restCo
 		homeCluster:     kialiConf.KubernetesConfig.ClusterName,
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
-		skippedClusters: make(map[string]error),
+		skippedClusters: make(map[string]struct{}),
 		saTokenFile:     saTokenFile,
 	}
 
@@ -578,7 +578,7 @@ func (cf *clientFactory) SkipCluster(cluster string, reason error) {
 	if _, already := cf.skippedClusters[cluster]; already {
 		return
 	}
-	cf.skippedClusters[cluster] = reason
+	cf.skippedClusters[cluster] = struct{}{}
 	delete(cf.saClientEntries, cluster)
 }
 

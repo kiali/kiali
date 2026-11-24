@@ -7,10 +7,6 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
-	"io"
 	"maps"
 	"net"
 	"sync"
@@ -148,13 +144,13 @@ func classifyRemoteProbeError(err error) remoteProbeVerdict {
 		// denied. Keep the cluster (its data may be perfectly readable) and let the caller
 		// note that revocation detection is limited.
 		return remoteKeepTransient
-	case isTLSError(err):
+	case kubernetes.IsTLSError(err):
 		// A bad CA bundle or wrong server name is a definitive registration problem. This
 		// must be checked before the connection classes: client-go wraps TLS failures in
 		// *url.Error, which itself implements net.Error, so a certificate problem would
 		// otherwise look like a recoverable network failure and keep the broken cluster.
 		return remoteSkipConfig
-	case isConnectionError(err):
+	case kubernetes.IsConnectionError(err):
 		// Unreachable, refused, DNS, timed out: possibly transient, and the informer retry
 		// machinery recovers it without a restart.
 		return remoteKeepTransient
@@ -168,43 +164,6 @@ func classifyRemoteProbeError(err error) remoteProbeVerdict {
 		// in an unknown state.
 		return remoteSkipConfig
 	}
-}
-
-// isConnectionError reports whether the error is a network-level failure (dial, DNS, EOF)
-// as opposed to an API-level response.
-func isConnectionError(err error) bool {
-	var netErr net.Error
-	if errors.As(err, &netErr) {
-		return true
-	}
-	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) {
-		return true
-	}
-	var opErr *net.OpError
-	if errors.As(err, &opErr) {
-		return true
-	}
-	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
-}
-
-// isTLSError reports whether the error is a TLS handshake or certificate verification
-// failure, which indicates a definitive configuration problem rather than a transient one.
-func isTLSError(err error) bool {
-	var certVerificationErr *tls.CertificateVerificationError
-	if errors.As(err, &certVerificationErr) {
-		return true
-	}
-	var unknownAuthorityErr x509.UnknownAuthorityError
-	if errors.As(err, &unknownAuthorityErr) {
-		return true
-	}
-	var hostnameErr x509.HostnameError
-	if errors.As(err, &hostnameErr) {
-		return true
-	}
-	var certInvalidErr x509.CertificateInvalidError
-	return errors.As(err, &certInvalidErr)
 }
 
 // setupRemoteClusters builds, probes, and starts the caches of every configured remote

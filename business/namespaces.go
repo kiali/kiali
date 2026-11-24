@@ -7,11 +7,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
-	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -118,9 +116,15 @@ var namespaceSetFlight singleflight.Group
 // rather than a best-effort listing.
 func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	// A cluster with no user client is an access denial, not an internal
-	// error: callers map AccessibleNamespaceError to 403.
+	// error: callers map AccessibleNamespaceError to 403. A cluster marked
+	// unreachable is the exception: the missing client comes from its skipped session
+	// validation, which is Kiali's connectivity problem, not the user's access - the
+	// fitting answer is the 503 of cache.ErrClusterUnreachable.
 	client, ok := in.userClients[cluster]
 	if !ok {
+		if in.kialiCache.IsClusterUnreachable(cluster) {
+			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterUnreachable)
+		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
 	cacheKey := client.GetCacheKey()
@@ -137,7 +141,7 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 	// would otherwise degrade the result (e.g. control plane decorations
 	// silently skipped when discovery calls fail) for every follower, and
 	// the degraded set would be cached. One key identifies the computation
-	// for both the singleflight coalescing and the failure backoff.
+	// for the singleflight coalescing.
 	computeKey := cache.NewNamespaceComputeKey(cluster, cacheKey)
 	result, err, _ := namespaceSetFlight.Do(string(computeKey), func() (any, error) {
 		// Bound the whole computation: it is a sequence of per-namespace round trips, and
@@ -153,24 +157,19 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 		}
 		defer cancel()
 
-		// Negative backoff: a cluster whose set computation just failed is not retried on
-		// every request - the token cache only populates on success, so without this a dead
-		// remote is re-queried back to back. The backoff window is
-		// kiali_internal.kubernetes_client.namespace_compute_backoff; 0 always retries. The
-		// failure is never cached as a denial. The home cluster is exempt: it is reachable
-		// by definition, its failures are exceptional and fail loud, and retrying it keeps
-		// the behavior unchanged for the mandatory cluster.
-		if cluster != in.conf.KubernetesConfig.ClusterName {
-			if failedAt, failedErr, failed := in.kialiCache.NamespaceComputeFailedAt(computeKey); failed && time.Since(failedAt) < in.conf.KialiInternal.KubernetesClient.NamespaceComputeBackoff {
-				// Wrap the original error so its class (and API status) survives.
-				return nil, fmt.Errorf("namespaces for cluster [%s] could not be computed recently, retrying later: %w", cluster, failedErr)
-			}
+		// A cluster marked unreachable is not probed from the request path: the shared
+		// signal (see kialiCache.MarkClusterUnreachable) suspends every request-path
+		// probe of the cluster, and the background prober re-checks it. The home
+		// cluster is exempt: it is reachable by definition, its failures are
+		// exceptional and fail loud.
+		if cluster != in.conf.KubernetesConfig.ClusterName && in.kialiCache.IsClusterUnreachable(cluster) {
+			return nil, fmt.Errorf("namespaces for cluster [%s] cannot be computed: %w", cluster, cache.ErrClusterUnreachable)
 		}
 
 		namespaces, err := in.fetchNamespacesForCluster(computeCtx, cluster)
 		if err != nil {
 			if cluster != in.conf.KubernetesConfig.ClusterName {
-				in.kialiCache.MarkNamespaceComputeFailed(computeKey, err)
+				in.kialiCache.MarkClusterUnreachable(cluster)
 			}
 			return nil, err
 		}
@@ -180,7 +179,7 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 			// truncated set for the whole token TTL. Fail instead.
 			err := fmt.Errorf("namespaces for cluster [%s] took too long to compute: %w", cluster, computeCtx.Err())
 			if cluster != in.conf.KubernetesConfig.ClusterName {
-				in.kialiCache.MarkNamespaceComputeFailed(computeKey, err)
+				in.kialiCache.MarkClusterUnreachable(cluster)
 			}
 			return nil, err
 		}
@@ -196,7 +195,6 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 		namespaces = in.decorateNamespaces(computeCtx, namespaces, cluster)
 		namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(computeCtx, in.discovery, cluster, in.conf))
 
-		in.kialiCache.ClearNamespaceComputeFailure(computeKey)
 		in.kialiCache.SetClusterNamespaces(cacheKey, cluster, namespaces)
 		return namespaces, nil
 	})
@@ -369,8 +367,7 @@ func (in *NamespaceService) decorateNamespaces(ctx context.Context, namespaces [
 				namespaces[i].Revision = strings.Join(revs, ",")
 			}
 			if in.kialiCache.IsAmbientEnabled(ctx, cluster) {
-				ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(ctx, cluster)
-				in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+				in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster)
 			}
 		}
 	}
@@ -432,11 +429,21 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		return cachedNs, nil
 	}
 
+	// The SA set computation is a request-path probe like the user's: a cluster marked
+	// unreachable is skipped, and the background prober re-checks it (see
+	// kialiCache.MarkClusterUnreachable). The home cluster is exempt.
+	if cluster != in.conf.KubernetesConfig.ClusterName && in.kialiCache.IsClusterUnreachable(cluster) {
+		return nil, fmt.Errorf("namespaces for cluster [%s] cannot be computed: %w", cluster, cache.ErrClusterUnreachable)
+	}
+
 	var namespaces []models.Namespace
 
 	if in.conf.Deployment.ClusterWideAccess {
 		nss, err := saClient.GetNamespaces(ctx, "")
 		if err != nil {
+			if cluster != in.conf.KubernetesConfig.ClusterName {
+				in.kialiCache.MarkClusterUnreachable(cluster)
+			}
 			return nil, err
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
@@ -450,6 +457,9 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 			if err != nil {
 				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
 					continue
+				}
+				if cluster != in.conf.KubernetesConfig.ClusterName {
+					in.kialiCache.MarkClusterUnreachable(cluster)
 				}
 				return nil, err
 			}
@@ -589,6 +599,12 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	if !ok {
 		if in.kialiCache.IsClusterSkipped(cluster) {
 			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterNotCached)
+		}
+		// An unreachable cluster has no user client because its session validation was
+		// skipped - Kiali's connectivity problem, not the user's access. The fitting
+		// answer is the 503 of ErrClusterUnreachable, not the 403 of a denial.
+		if in.kialiCache.IsClusterUnreachable(cluster) {
+			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterUnreachable)
 		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
@@ -815,7 +831,7 @@ func (in *NamespaceService) HasMeshAccess(ctx context.Context, cluster string) b
 // validateControlPlaneNamespaceAmbient validates if a control plane namespace should be marked as ambient
 // by checking if there's a ztunnel daemonset with the same revision in the same cluster.
 // It modifies the namespace's IsAmbient field if validation fails.
-func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string, ztunnelDaemonSets []apps_v1.DaemonSet) {
+func (in *NamespaceService) validateControlPlaneNamespaceAmbient(ctx context.Context, ns *models.Namespace, cluster string) {
 	// Use the cache method to check if the namespace is ambient
 	// Pass empty string for istiodName to check all istiod deployments
 	ns.IsAmbient = in.kialiCache.IsControlPlaneNamespaceAmbient(ctx, cluster, ns.Name, "")

@@ -211,6 +211,13 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			if client == nil {
 				continue
 			}
+			// A cluster marked unreachable is not probed (the shared signal; see
+			// kialiCache.MarkClusterUnreachable): the background prober re-checks it,
+			// and this page load reports false for it - the same partial result a
+			// cluster that misses the discovery deadline produces.
+			if cache.IsClusterUnreachable(cluster) {
+				continue
+			}
 			result := &results[i]
 			wg.Go(func() {
 				result.gateway = client.IsGatewayAPIContext(discoveryCtx)

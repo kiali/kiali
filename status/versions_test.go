@@ -1,18 +1,21 @@
 package status
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/version"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func TestTracingVersionSkipsJaegerGRPC(t *testing.T) {
@@ -62,13 +65,13 @@ func TestTracingVersionUsesConfiguredJaegerHTTPURL(t *testing.T) {
 type countingVersionClient struct {
 	kubernetes.ClientInterface
 	fail   bool
-	probes *int
+	probes *atomic.Int32
 }
 
 func (c *countingVersionClient) GetServerVersion() (*version.Info, error) {
-	*c.probes++
+	c.probes.Add(1)
 	if c.fail {
-		return nil, errVersionFetch
+		return nil, errors.New("context deadline exceeded")
 	}
 	return &version.Info{GitVersion: "v1.30.0"}, nil
 }
@@ -83,57 +86,65 @@ func (f *saclientsOnlyFactory) GetSAClients() map[string]kubernetes.ClientInterf
 	return f.clients
 }
 
-// errVersionFetch stands in for an indeterminate transport failure (unreachable,
-// stalled) rather than an authentication or authorization problem.
-var errVersionFetch = &timeoutError{}
-
-type timeoutError struct{}
-
-func (e *timeoutError) Error() string { return "context deadline exceeded" }
-
-// TestGetKubernetesVersionsMemoizesFailuresAndSuccesses verifies the version-fetch
-// memoization: an indeterminate failure is probed once per backoff window instead of
-// on every call (the mesh graph calls this on every render, and an unreachable remote
-// would otherwise cost its full request timeout each time), and a successful fetch is
-// cached for the process lifetime since a cluster's server version is effectively
-// static.
-func TestGetKubernetesVersionsMemoizesFailuresAndSuccesses(t *testing.T) {
+// TestGetKubernetesVersionsSuspendsOnUnreachableCluster verifies the version fetch
+// through the shared unreachable signal: a failed fetch marks the cluster (the mesh
+// graph runs this on every render, and an unreachable remote would otherwise cost its
+// request timeout each time), a marked cluster is skipped without probing, and a
+// successful fetch is cached for the process lifetime since a cluster's server version
+// is effectively static.
+func TestGetKubernetesVersionsSuspendsOnUnreachableCluster(t *testing.T) {
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
 
-	var probes int
-	client := &countingVersionClient{fail: true, probes: &probes}
-	factory := &saclientsOnlyFactory{clients: map[string]kubernetes.ClientInterface{"east": client}}
-	t.Cleanup(func() { kubeVersionCache.Delete("east") })
+	var probes atomic.Int32
+	west := &countingVersionClient{fail: true, probes: &probes}
+	// The cache is built from plain fakes (its constructor runs startup access reviews
+	// against every client); only the factory - the path getKubernetesVersions probes
+	// through - serves the counting client.
+	factory := &saclientsOnlyFactory{clients: map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": west,
+	}}
+	kialiCache := cache.NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+	}, *conf)
+	t.Cleanup(func() { kubeVersionCache.Delete("west") })
 
-	// The first call probes the cluster and records the indeterminate failure.
-	versions := getKubernetesVersions(factory)
-	require.Empty(versions)
-	require.Equal(1, probes)
-
-	// Within the backoff window the failure is trusted: no re-probe.
-	versions = getKubernetesVersions(factory)
-	require.Empty(versions)
-	require.Equal(1, probes)
-
-	// After the window expires the cluster is probed again.
-	entry, ok := kubeVersionCache.Load("east")
-	require.True(ok)
-	result := entry.(kubeVersionResult)
-	kubeVersionCache.Store("east", kubeVersionResult{failedAt: result.failedAt.Add(-kubeVersionFailureBackoff - time.Second)})
-	versions = getKubernetesVersions(factory)
-	require.Empty(versions)
-	require.Equal(2, probes)
-
-	// A successful fetch is cached for the process lifetime.
-	client.fail = false
-	kubeVersionCache.Delete("east")
-	versions = getKubernetesVersions(factory)
+	// The first call probes the remote and marks it unreachable; the reachable home
+	// cluster's version is still fetched.
+	versions := getKubernetesVersions(factory, kialiCache)
 	require.Len(versions, 1)
-	require.Equal("v1.30.0", versions[0].Version)
-	require.Equal(3, probes)
+	require.Equal("Kubernetes-east", versions[0].Name)
+	require.Equal(int32(1), probes.Load())
+	require.True(kialiCache.IsClusterUnreachable("west"))
 
-	versions = getKubernetesVersions(factory)
+	// While marked, the remote is skipped: no re-probe.
+	versions = getKubernetesVersions(factory, kialiCache)
 	require.Len(versions, 1)
-	require.Equal("v1.30.0", versions[0].Version)
-	require.Equal(3, probes, "a successful fetch must be served from the cache without re-probing")
+	require.Equal("Kubernetes-east", versions[0].Name)
+	require.Equal(int32(1), probes.Load())
+
+	// The prober clears the mark on recovery; the fetch probes again and succeeds.
+	west.fail = false
+	kialiCache.ClearClusterUnreachable("west")
+	versions = getKubernetesVersions(factory, kialiCache)
+	require.Len(versions, 2)
+	versionByName := func(name string) string {
+		for _, v := range versions {
+			if v.Name == name {
+				return v.Version
+			}
+		}
+		return ""
+	}
+	require.Equal("v1.30.0", versionByName("Kubernetes-west"))
+	require.Equal(int32(2), probes.Load())
+
+	// A successful fetch is served from the cache for the process lifetime.
+	versions = getKubernetesVersions(factory, kialiCache)
+	require.Len(versions, 2)
+	require.Equal("v1.30.0", versionByName("Kubernetes-west"))
+	require.Equal(int32(2), probes.Load(), "a successful fetch must be served from the cache without re-probing")
 }

@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/version"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
@@ -22,8 +23,8 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
-	components := getKubernetesVersions(clientFactory)
+func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
+	components := getKubernetesVersions(clientFactory, kialiCache)
 
 	if conf.ExternalServices.Prometheus.Enabled {
 		pv, err := prometheusVersion(ctx, prom)
@@ -238,58 +239,41 @@ func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*m
 	}, nil
 }
 
-// kubeVersionResult is the memoized outcome of one cluster's GetServerVersion.
-type kubeVersionResult struct {
-	version *version.Info
-	// failedAt is set when the fetch failed; an indeterminate failure (an unreachable
-	// or stalled cluster) is retried after kubeVersionFailureBackoff rather than on
-	// every call.
-	failedAt time.Time
-}
-
 // kubeVersionCache memoizes GetServerVersion per cluster. A cluster's server version
 // is effectively static for Kiali's lifetime, and getKubernetesVersions runs on the
-// mesh graph's request path (the graph labels cluster nodes with versions), where an
-// unreachable remote would otherwise cost its full request timeout on every render.
-var kubeVersionCache sync.Map // cluster name -> kubeVersionResult
+// mesh graph's request path (the graph labels cluster nodes with versions), so a
+// successful fetch is remembered for the process lifetime. A failed fetch is not
+// memoized: the cluster is marked unreachable (see kialiCache.MarkClusterUnreachable)
+// and skipped until the background prober detects its recovery.
+var kubeVersionCache sync.Map // cluster name -> *version.Info
 
-// kubeVersionFailureBackoff is how long an indeterminate version-fetch failure is
-// trusted before the cluster is probed again. It matches the indeterminate-validation
-// window of the openshift auth controller for the same reason: the failure is
-// transport-level, and re-probing a dead cluster on every request only re-learns it.
-const kubeVersionFailureBackoff = 30 * time.Second
-
-func getKubernetesVersions(clientFactory kubernetes.ClientFactory) []models.ExternalServiceInfo {
+func getKubernetesVersions(clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache) []models.ExternalServiceInfo {
 	// Use the Kiali Service Account client to get the Kubernetes version
 	// since the status endpoint does not have a user token.
 	// Loop through all SA clients to get Kubernetes versions of all clusters
 	var k8sVersions []models.ExternalServiceInfo
 	for clusterName, saClient := range clientFactory.GetSAClients() {
-		var cached kubeVersionResult
-		if entry, ok := kubeVersionCache.Load(clusterName); ok {
-			cached = entry.(kubeVersionResult)
-			if cached.version != nil {
-				k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
-					Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
-					Version: cached.version.GitVersion,
-				})
-				continue
-			}
-			if time.Since(cached.failedAt) < kubeVersionFailureBackoff {
-				// The cluster answered indeterminately recently: skip it for this
-				// request rather than pay its request timeout again.
-				continue
-			}
+		if cached, ok := kubeVersionCache.Load(clusterName); ok {
+			k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
+				Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
+				Version: cached.(*version.Info).GitVersion,
+			})
+			continue
+		}
+
+		// A cluster marked unreachable is not probed; the background prober re-checks it.
+		if kialiCache.IsClusterUnreachable(clusterName) {
+			continue
 		}
 
 		serverVersion, err := saClient.GetServerVersion()
 		if err != nil {
 			log.Debugf("Unable to get Kubernetes version for cluster [%s]: %v", clusterName, err)
-			kubeVersionCache.Store(clusterName, kubeVersionResult{failedAt: time.Now()})
+			kialiCache.MarkClusterUnreachable(clusterName)
 			continue
 		}
 
-		kubeVersionCache.Store(clusterName, kubeVersionResult{version: serverVersion})
+		kubeVersionCache.Store(clusterName, serverVersion)
 		k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
 			Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
 			Version: serverVersion.GitVersion,

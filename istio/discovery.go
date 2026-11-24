@@ -1426,10 +1426,8 @@ type scopedNamespaces struct {
 }
 
 func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster string, memo map[string]scopedNamespaces) ([]corev1.Namespace, error) {
-	if memo != nil {
-		if cached, found := memo[cluster]; found {
-			return cached.namespaces, cached.err
-		}
+	if cached, found := memo[cluster]; found {
+		return cached.namespaces, cached.err
 	}
 
 	client, ok := in.kialiSAClients[cluster]
@@ -1461,9 +1459,7 @@ func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster st
 			namespaces = append(namespaces, *ns)
 		}
 	}
-	if memo != nil {
-		memo[cluster] = scopedNamespaces{namespaces: namespaces, err: err}
-	}
+	memo[cluster] = scopedNamespaces{namespaces: namespaces, err: err}
 	if err != nil {
 		return nil, err
 	}

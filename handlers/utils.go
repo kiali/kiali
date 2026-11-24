@@ -172,7 +172,7 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 		// namespace's informers are frozen: exclude it from the aggregate (the cluster's
 		// remaining namespaces still serve) rather than fail the whole request on it -
 		// the same contract as the health aggregate.
-		return slices.DeleteFunc(slices.Clone(names), func(ns string) bool {
+		return slices.DeleteFunc(names, func(ns string) bool {
 			return kialiCache.IsNamespaceRevoked(cluster, ns)
 		}), true
 	}

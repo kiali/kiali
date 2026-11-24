@@ -429,13 +429,6 @@ func checkInferenceAPIs(ctx context.Context, in *K8SClient, version string, type
 			found++
 		}
 	}
-	if found > 0 && found < len(types) {
-		keys := make([]string, 0, len(types))
-		for key := range types {
-			keys = append(keys, key)
-		}
-		log.Warningf("Not all required K8s Gateway API Inference Extension CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
-	}
 	return found == len(types), false
 }
 

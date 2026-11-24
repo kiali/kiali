@@ -368,11 +368,10 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 }
 
 // TestUnreachableRemoteSessionValidationIsCached verifies that an indeterminate remote
-// validation (an unreachable or stalled cluster) is not re-probed on every request: the
-// first request pays the probe and its failure, subsequent requests within the TTL skip
-// it, and the probe resumes once the window expires. Without the cache, every request of
-// every session that includes the remote pays the full request timeout to re-learn the
-// same verdict.
+// validation (an unreachable or stalled cluster) marks the cluster through the shared
+// unreachable signal rather than re-probing on every request: the first request pays
+// the probe and its failure, subsequent requests skip it while the cluster is marked,
+// and probing resumes once the mark is cleared (the background prober's job).
 func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -382,62 +381,49 @@ func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
 
 	metadataServer := fakeOAuthMetadataServer(t)
 
-	eastClient := kubetest.NewFakeK8sClient(
-		fakeNamespace("bookinfo"),
-		&osoauth_v1.OAuthClient{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "kiali-istio-system",
+	newClient := func() *kubetest.FakeK8sClient {
+		client := kubetest.NewFakeK8sClient(
+			fakeNamespace("bookinfo"),
+			&osoauth_v1.OAuthClient{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "kiali-istio-system",
+				},
+				RedirectURIs: []string{"http://localhost:20001/kiali"},
 			},
-			RedirectURIs: []string{"http://localhost:20001/kiali"},
-		},
-		&osuser_v1.User{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "~", // tilde means user for this token
+			&osuser_v1.User{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "~", // tilde means user for this token
+				},
 			},
-		},
-	)
-	eastClient.OpenShift = true
-	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+		)
+		client.OpenShift = true
+		client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+		return client
+	}
 
-	westClient := kubetest.NewFakeK8sClient(
-		fakeNamespace("bookinfo"),
-		&osoauth_v1.OAuthClient{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "kiali-istio-system",
-			},
-			RedirectURIs: []string{"http://localhost:20001/kiali"},
-		},
-		&osuser_v1.User{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "~", // tilde means user for this token
-			},
-		},
-	)
-	westClient.OpenShift = true
-	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	eastClient := newClient()
+	westClient := newClient()
 	clients := map[string]kubernetes.UserClientInterface{
 		"east": eastClient,
 		"west": westClient,
 	}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
-
-	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
+	require.NoError(err)
 
 	sessionCookieEast := validSession(t, authController, "east")
 	sessionCookieWest := validSession(t, authController, "west")
 
 	// west's user-info endpoint goes dead after the sessions exist. The error is a
-	// deadline, not an authentication failure: the token is fine, the cluster just
-	// cannot answer - the indeterminate case the cache exists for.
+	// deadline, not an authentication failure: the token is fine, the cluster cannot
+	// answer - the indeterminate case the shared signal exists for.
 	var westUserProbes atomic.Int32
 	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
 		westUserProbes.Add(1)
 		return true, nil, context.DeadlineExceeded
 	})
-
-	// A controllable clock so the test can age the verdict past its TTL.
-	clock := &util.ClockMock{Time: time.Now()}
-	util.Clock = clock
 
 	validate := func() {
 		r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
@@ -445,26 +431,26 @@ func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
 		r.AddCookie(sessionCookieEast)
 		r.AddCookie(sessionCookieWest)
 		_, err := authController.ValidateSession(r, w)
-		require.NoError(err, "an indeterminate remote must not fail the request")
-		// The west session is skipped, not terminated: its cookie is preserved.
+		require.NoError(err, "an unreachable remote must not fail the request")
+		// The west session is skipped, not terminated: its cookie survives.
 		for _, c := range w.Result().Cookies() {
 			if c.Name == authentication.SessionCookieName+"-west" {
-				require.False(c.MaxAge < 0, "the indeterminate remote's session must not be dropped")
+				require.False(c.MaxAge < 0, "the unreachable remote's session must not be dropped")
 			}
 		}
 	}
 
 	validate()
 	require.Equal(int32(1), westUserProbes.Load(), "first validation probes the unreachable remote once")
+	require.True(kialiCache.IsClusterUnreachable("west"), "the failed probe must mark the cluster")
 
 	validate()
-	require.Equal(int32(1), westUserProbes.Load(), "a cached indeterminate verdict must not re-probe the remote")
+	require.Equal(int32(1), westUserProbes.Load(), "a marked cluster must not be re-probed")
 
-	// The verdict expires: the next request probes the remote again.
-	// (The TTL constant is unexported; keep this in sync with indeterminateValidationTTL.)
-	clock.Time = clock.Time.Add(31 * time.Second)
+	// The mark is cleared (the background prober's job on recovery): probing resumes.
+	kialiCache.ClearClusterUnreachable("west")
 	validate()
-	require.Equal(int32(2), westUserProbes.Load(), "an expired verdict must be probed again")
+	require.Equal(int32(2), westUserProbes.Load(), "probing must resume once the mark is cleared")
 }
 
 func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
@@ -1259,7 +1245,14 @@ func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *
 	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
-	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+	// Built inline (rather than through setupOpenshiftAuthController) so the test
+	// holds the cache: the failed namespace lookup marks the cluster unreachable
+	// through the shared signal, and the test must model the background prober
+	// clearing the mark on recovery.
+	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
+	require.NoError(err)
 
 	util.Clock = util.RealClock{}
 
@@ -1296,7 +1289,10 @@ func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *
 	}
 
 	// Once the west cluster recovers, the same cookies yield both sessions
-	// again: the session was preserved through the outage, not consumed.
+	// again: the session was preserved through the outage, not consumed. The
+	// failed namespace lookup marked the cluster unreachable (the shared signal),
+	// and the background prober owns clearing the mark - model its success here.
+	kialiCache.ClearClusterUnreachable("west")
 	recoveredWest := newOpenshiftAuthTestClient(t, metadataServer, true)
 	recoveredWest.Token = "west-recovered"
 	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
