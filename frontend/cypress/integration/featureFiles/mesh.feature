@@ -166,24 +166,14 @@ Feature: Kiali Mesh page
 
   @core-2
   # TODO: offline - no tracing
-  Scenario: User opens and interacts with the Trace Configuration modal
+  Scenario: User opens and interacts with Tracing Discovery
     When user selects tracing mesh node
-    And user opens the Trace Configuration modal
-    Then user sees the Trace Configuration modal
-    And user sees the Discovery and Tester tabs
+    And user opens Tracing Discovery
+    Then user sees the Tracing Discovery modal
     And user sees the action buttons fixed at the bottom
     And user verifies the Discovery information is correct
-    When user clicks the Rediscover button in the Discovery tab
+    When user clicks the Rediscover button
     And user verifies the Discovery information is correct
-    When user switches to the Tester tab
-    And user changes the provider in the Tester tab
-    And user changes the useGRPC in the Tester tab
-    And user clicks the Test Configuration button
-    Then user sees the Tester result "incorrect"
-    And user changes the provider in the Tester tab
-    And user changes the useGRPC in the Tester tab
-    And user clicks the Test Configuration button
-    Then user sees the Tester result "correct"
 
   @external-kiali
   Scenario: External-kiali: see one dataplane and one controlplane for mesh cluster

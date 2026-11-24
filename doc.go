@@ -850,13 +850,6 @@ type ClusterTlsResponse struct {
 	Body models.MTLSStatus
 }
 
-// Response of the configuration validation query
-// swagger:response configurationValidation
-type ConfigurationValidationResponse struct {
-	// in: body
-	Body model.ConfigurationValidation
-}
-
 // Response of the tracing diagnose query
 // swagger:response tracingDiagnose
 type TracingDiagnoseResponse struct {
