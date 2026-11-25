@@ -1425,8 +1425,8 @@ func convertToDiscoverySelectors(istioSelectors []*istiov1alpha1.LabelSelector) 
 // or the error that stopped the scan, memoized so every pass over the cluster observes the
 // same result.
 type scopedNamespaces struct {
-	namespaces []corev1.Namespace
 	err        error
+	namespaces []corev1.Namespace
 }
 
 func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster string, memo map[string]scopedNamespaces) ([]corev1.Namespace, error) {

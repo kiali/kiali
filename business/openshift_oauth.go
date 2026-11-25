@@ -72,8 +72,8 @@ type OpenshiftOAuthService struct {
 // oAuthConfigBuild carries one in-flight lazy OAuth config build.
 type oAuthConfigBuild struct {
 	config *oAuthConfig
-	err    error
 	done   chan struct{}
+	err    error
 }
 
 // Structure that's returned by the openshift oauth authorization server.
