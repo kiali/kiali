@@ -209,6 +209,7 @@ func TestSetCreatesNewCredentialManagerAndClosesOld(t *testing.T) {
 	firstMgr := Get().Credentials
 	if firstMgr == nil {
 		t.Fatalf("expected credential manager to be initialized")
+		return
 	}
 
 	// Clear credentials to force Set to provision a new manager.

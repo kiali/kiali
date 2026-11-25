@@ -420,19 +420,17 @@ Then('user does not see {string} in the {string} configuration tab', (configOpt:
   cy.getBySel(`${tab}-config-editor`).should('not.contain', configOpt);
 });
 
-When('user opens the Trace Configuration modal', () => {
+When('user opens Tracing Discovery', () => {
   cy.waitForReact();
-  cy.contains('Configuration Tester').click();
+  cy.contains('button', 'Configuration Discovery').click();
 });
 
-Then('user sees the Trace Configuration modal', () => {
-  cy.get('.pf-v6-c-modal-box').should('be.visible');
-  cy.contains('Configuration Tester').should('be.visible');
-});
-
-Then('user sees the Discovery and Tester tabs', () => {
-  cy.get('.pf-v6-c-tabs__item').contains('Discovery').should('exist');
-  cy.get('.pf-v6-c-tabs__item').contains('Tester').should('exist');
+Then('user sees the Tracing Discovery modal', () => {
+  cy.getBySel('modal-tracing-discovery')
+    .closest('[role="dialog"]')
+    .should('be.visible')
+    .contains('Configuration Discovery')
+    .should('be.visible');
 });
 
 Then('user sees the action buttons fixed at the bottom', () => {
@@ -452,88 +450,9 @@ Then('user verifies the Discovery information is correct', () => {
   cy.get('#discovery-tab-content').get('#configuration-logs').contains('Checking open ports');
 });
 
-When('user clicks the Rediscover button in the Discovery tab', () => {
-  cy.get('.pf-v6-c-modal-box').within(() => {
+When('user clicks the Rediscover button', () => {
+  cy.getBySel('modal-tracing-discovery').within(() => {
     cy.contains('button', 'Rediscover').click();
-  });
-});
-
-When('user switches to the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.contains('button', 'Tester').click();
-  });
-});
-
-When('user changes the provider in the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
-    cy.window().then((win: any) => {
-      const editor = win.tracingConfigEditor;
-      if (!editor) {
-        throw new Error('Tracing config Monaco editor not found');
-      }
-      const editorText = editor.getValue();
-
-      let replacer = 'tempo';
-      let provider = 'jaeger';
-
-      if (editorText.includes('tempo')) {
-        replacer = 'jaeger';
-        provider = 'tempo';
-      }
-
-      const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
-      const model = editor.getModel();
-      const fullRange = model.getFullModelRange();
-      editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
-    });
-  });
-});
-
-When('user changes the useGRPC in the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
-    cy.window().then((win: any) => {
-      const editor = win.tracingConfigEditor;
-      if (!editor) {
-        throw new Error('Tracing config Monaco editor not found');
-      }
-      const editorText = editor.getValue();
-
-      let currentValue: string | null = null;
-      let targetValue = 'true';
-
-      if (/useGRPC\s*:\s*true/i.test(editorText)) {
-        currentValue = 'true';
-        targetValue = 'false';
-      } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
-        currentValue = 'false';
-        targetValue = 'true';
-      }
-
-      if (currentValue !== null) {
-        const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
-        const model = editor.getModel();
-        const fullRange = model.getFullModelRange();
-        editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
-      }
-    });
-  });
-});
-
-When('user clicks the Test Configuration button', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.contains('Test Configuration').click();
-  });
-});
-
-Then('user sees the Tester result {string}', (result: string) => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    if (result === 'incorrect') {
-      cy.get('span[data-test="icon-error-validation"]').should('exist');
-    } else {
-      cy.get('span[data-test="icon-correct-validation"]').should('exist');
-    }
   });
 });
 
