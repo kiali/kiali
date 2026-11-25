@@ -553,6 +553,12 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 	if client == nil {
 		return false
 	}
+	// A cluster marked unreachable is not probed - the background prober owns its
+	// recovery detection (the invariant at cache construction: request paths never
+	// probe a marked cluster). The re-check resumes once the mark is cleared.
+	if c.IsClusterUnreachable(cluster) {
+		return false
+	}
 
 	// The live re-check runs without the lock: one slow remote must not block the healthy
 	// clusters' webhook lookups. Concurrent callers may duplicate the check; it is rare,

@@ -2,13 +2,18 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	authv1 "k8s.io/api/authorization/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
@@ -180,4 +185,49 @@ func TestIsAmbientEnabledDoesNotMarkDegradedClusterUnreachable(t *testing.T) {
 	// as unreachable: only a transport failure may.
 	require.False(kialiCache.IsAmbientEnabled(context.Background(), cluster))
 	require.False(kialiCache.IsClusterUnreachable(cluster), "a degraded cache must not be classified as an unreachable cluster")
+}
+
+// TestCanListWebhooksSkipsUnreachableCluster pins the webhook re-check's respect for the
+// shared unreachable signal: a cluster marked unreachable is not live-probed - the
+// background prober owns its recovery detection, the invariant every request-path probe
+// follows - and the re-check resumes once the mark is cleared.
+func TestCanListWebhooksSkipsUnreachableCluster(t *testing.T) {
+	var probes atomic.Int32
+	forbidden := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		probes.Add(1)
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(&metav1.Status{
+			Status: metav1.StatusFailure,
+			Reason: metav1.StatusReasonForbidden,
+			Code:   http.StatusForbidden,
+		})
+	}))
+	t.Cleanup(forbidden.Close)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	kialiCache := NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": newCacheTestClient(t, "west", forbidden.URL),
+	}, *conf)
+
+	// The startup check already probed west once; count from here.
+	baseline := probes.Load()
+	impl := kialiCache.(*kialiCacheImpl)
+
+	// A stale transient failure (backoff expired) plus the unreachable mark: the
+	// re-check must not probe the cluster while it is marked.
+	impl.canReadWebhookMutex.Lock()
+	impl.webhookCheckFailures["west"] = time.Now().Add(-2 * webhookCheckBackoff)
+	impl.canReadWebhookMutex.Unlock()
+	kialiCache.MarkClusterUnreachable("west")
+
+	require.False(t, kialiCache.CanListWebhooks("west"))
+	require.Equal(t, baseline, probes.Load(), "a cluster marked unreachable must not be live-probed by the webhook re-check")
+
+	// Once the mark is cleared, the re-check resumes.
+	kialiCache.ClearClusterUnreachable("west")
+	require.False(t, kialiCache.CanListWebhooks("west"))
+	require.Equal(t, baseline+1, probes.Load(), "the re-check must resume after the mark is cleared")
 }
