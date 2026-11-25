@@ -733,17 +733,28 @@ func (c *kialiCacheImpl) probeUnreachableClusters(ctx context.Context) {
 }
 
 // probeUnreachableOnce re-probes every marked cluster once; see probeUnreachableClusters.
+// The clusters are probed concurrently, each bounded by its own timeout: a sequential
+// sweep would let a few stalled remotes push the sweep past the probe interval, delaying
+// every other marked cluster's recovery by whole cycles - breaking the one-interval
+// recovery contract the request paths rely on (they never probe a marked cluster
+// themselves). The same fan-out the startup path uses; see setupRemoteClusters.
 func (c *kialiCacheImpl) probeUnreachableOnce(ctx context.Context) {
+	var wg sync.WaitGroup
 	for _, cluster := range c.UnreachableClusters() {
 		client := c.clients[cluster]
 		if client == nil {
 			continue
 		}
-		err := kubernetes.ProbeClusterCredentials(ctx, client, c.conf.KialiInternal.KubernetesClient.ClusterProbeTimeout)
-		if err == nil || !kubernetes.IsConnectionError(err) {
-			c.ClearClusterUnreachable(cluster)
-		}
+		wg.Add(1)
+		go func(cluster string, client kubernetes.ClientInterface) {
+			defer wg.Done()
+			err := kubernetes.ProbeClusterCredentials(ctx, client, c.conf.KialiInternal.KubernetesClient.ClusterProbeTimeout)
+			if err == nil || !kubernetes.IsConnectionError(err) {
+				c.ClearClusterUnreachable(cluster)
+			}
+		}(cluster, client)
 	}
+	wg.Wait()
 }
 
 // SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster

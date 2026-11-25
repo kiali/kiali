@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -230,4 +231,54 @@ func TestCanListWebhooksSkipsUnreachableCluster(t *testing.T) {
 	kialiCache.ClearClusterUnreachable("west")
 	require.False(t, kialiCache.CanListWebhooks("west"))
 	require.Equal(t, baseline+1, probes.Load(), "the re-check must resume after the mark is cleared")
+}
+
+// delayedStallClient answers the prober's access review with a transport failure, but
+// only after a delay: it models a connected-but-stalled remote that holds each probe.
+type delayedStallClient struct {
+	kubernetes.ClientInterface
+	delay time.Duration
+}
+
+func (c *delayedStallClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*authv1.SelfSubjectAccessReview, error) {
+	time.Sleep(c.delay)
+	return nil, &transportError{}
+}
+
+// TestProbeUnreachableOnceProbesConcurrently pins the sweep's fan-out: with several
+// stalled remotes each holding its probe for a fixed delay, a sequential sweep takes
+// clusters x delay while a concurrent one completes in about one delay - keeping
+// recovery within the documented one-interval contract no matter how many remotes are
+// down at once.
+func TestProbeUnreachableOnceProbesConcurrently(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	const stalled = 5
+	const delay = 750 * time.Millisecond
+	clients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+	}
+	names := make([]string, 0, stalled)
+	for i := 0; i < stalled; i++ {
+		name := fmt.Sprintf("stalled-%d", i)
+		names = append(names, name)
+		clients[name] = &delayedStallClient{
+			ClientInterface: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+			delay:           delay,
+		}
+	}
+	kialiCache := NewTestingCacheWithClients(t, clients, *conf)
+	for _, name := range names {
+		kialiCache.MarkClusterUnreachable(name)
+	}
+
+	impl := kialiCache.(*kialiCacheImpl)
+	start := time.Now()
+	impl.probeUnreachableOnce(context.Background())
+	elapsed := time.Since(start)
+
+	require.Len(kialiCache.UnreachableClusters(), stalled, "stalled remotes keep their marks")
+	require.Less(elapsed, stalled*delay/2, "the sweep must fan out: %d stalled remotes at %s each would take %s sequentially, took %s", stalled, delay, stalled*delay, elapsed)
 }
