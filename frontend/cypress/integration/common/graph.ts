@@ -56,19 +56,15 @@ export const ensureGraphDuration = (durationSeconds: number = DEFAULT_GRAPH_DURA
 export const refetchNamespacesGraph = (): Cypress.Chainable<void> => {
   cy.intercept('**/api/namespaces/graph*').as('graphNamespacesRefetch');
 
+  cy.get('[data-test="refresh-button"]').first().should('be.visible').and('not.be.disabled').click();
+
   return cy
-    .get('[data-test="refresh-button"]')
-    .first()
-    .should('be.visible')
-    .and('not.be.disabled')
-    .click()
-    .then(() =>
-      cy.url().then(url => {
-        if (!url.includes('/ossmconsole/')) {
-          return cy.wait('@graphNamespacesRefetch');
-        }
-      })
-    )
+    .url()
+    .then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        return cy.wait('@graphNamespacesRefetch');
+      }
+    })
     .then(() => {
       cy.getBySel('loading-screen').should('not.exist');
       cy.getBySel('login-form').should('not.exist');
