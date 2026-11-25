@@ -149,30 +149,35 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) RemoteClusterInventory 
 		for _, sf := range secretFiles {
 			clusterName := sf.Name()
 			secretAbsFile := secretAbsDir + "/" + clusterName
+			// Stat before anything else, and skip directories outright: kubelet-mounted
+			// secrets carry non-file entries (the ..data symlink-to-dir in every secret,
+			// possibly stray directories), and those must not reserve a cluster name - a
+			// directory entry named like a real cluster would silently reject the valid
+			// secret's registration, leaving the cluster in no inventory at all. The
+			// stat-error check comes first: a file that disappears between the directory
+			// read and the stat leaves statinfo nil, and dereferencing it panics.
+			statinfo, staterr := os.Stat(secretAbsFile)
+			if staterr == nil && statinfo.IsDir() {
+				continue // we only want to process files - we are not interested in other entries that get mounted here
+			}
 			// Reserve the cluster name at discovery, before any per-file processing:
 			// two secrets must not provide information on the same cluster, and reserving
 			// first keeps the active and skipped inventories disjoint whichever secret
 			// sorts first - a broken definition cannot be overridden by a later valid one,
-			// and a valid one cannot be shadowed into the skip registry.
+			// and a valid one cannot be shadowed into the skip registry. A discovered name
+			// whose file cannot be stat'ed (for example a dangling projected-secret
+			// symlink) still reserves: it is a registration Kiali can see but cannot read,
+			// recorded as unprocessable rather than silently forgotten.
 			if previousSecret, ok := remoteClusterSecretNames[clusterName]; ok {
 				log.Errorf("Cluster [%s] was already defined in secret [%v]. Two secrets must not provide information on the same cluster.", clusterName, previousSecret)
 				continue
 			}
 			remoteClusterSecretNames[clusterName] = secretName
 
-			// Check the error first: a file that disappears between the directory read
-			// and the stat leaves statinfo nil, and dereferencing it panics. A discovered
-			// name whose file cannot be stat'ed (for example a dangling projected-secret
-			// symlink) is a registration Kiali can see but cannot read: record it as
-			// unprocessable rather than silently forgetting it.
-			statinfo, staterr := os.Stat(secretAbsFile)
 			if staterr != nil {
 				log.Errorf("Failed to stat remote cluster secret file [%s] for cluster [%s]: %v", secretAbsFile, clusterName, staterr)
 				unprocessableClusters = append(unprocessableClusters, clusterName)
 				continue
-			}
-			if statinfo.IsDir() {
-				continue // we only want to process files - we are not interested in other entries that get mounted here
 			}
 
 			nextCluster, err := newRemoteClusterInfo(secretName, secretAbsFile)

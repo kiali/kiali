@@ -134,6 +134,47 @@ func TestRemoteInventoryUnreadableRootKeepsServing(t *testing.T) {
 	require.Equal(t, []string{root}, inventory.UnreadableSecrets, "the unreadable root must fail unscoped authorization closed")
 }
 
+// TestNonFileSecretEntriesDoNotReserveClusterNames pins the reservation's scope: only
+// entries that could be registrations (regular files after symlink resolution, or
+// stat failures - a registration Kiali can see but not read) may reserve a cluster
+// name. The secrets below reproduce the kubelet volume layout: each secret directory
+// holds a ..data symlink to a timestamped data directory, the timestamped directory
+// itself as a sibling entry, and the payload keys as symlinks resolving through
+// ..data - plus a stray directory named like the real cluster. With
+// reservation-first ordering, any of those non-file entries reserved a cluster name:
+// every multi-secret startup logged a bogus "Cluster [..data] was already defined"
+// error, and the stray directory silently rejected the valid secret's registration
+// (the cluster ended up in no inventory at all).
+func TestNonFileSecretEntriesDoNotReserveClusterNames(t *testing.T) {
+	root := t.TempDir()
+
+	// kubeletSecretDir builds a secret directory in the kubelet volume shape: the
+	// payload files live in a timestamped data directory, ..data symlinks to it, and
+	// each payload key is a symlink resolving through ..data.
+	kubeletSecretDir := func(secret string, payload map[string]string) {
+		dir := root + "/" + secret
+		dataDir := dir + "/..2026_11_25_15_30_00.000000000"
+		require.NoError(t, os.MkdirAll(dataDir, 0o700))
+		require.NoError(t, os.Symlink(dataDir, dir+"/..data"))
+		for name, content := range payload {
+			require.NoError(t, os.WriteFile(dataDir+"/"+name, []byte(content), 0o600))
+			require.NoError(t, os.Symlink("..data/"+name, dir+"/"+name))
+		}
+	}
+
+	kubeletSecretDir("aaa-stray", nil)
+	// The stray secret also holds a plain directory entry named like the real cluster,
+	// ahead of the valid secret alphabetically.
+	require.NoError(t, os.Mkdir(root+"/aaa-stray/west", 0o700))
+
+	kubeletSecretDir("zzz-valid", map[string]string{"west": remoteClusterYAML})
+
+	inventory := getRemoteClusterInfosFromDir(root)
+	require.Contains(t, inventory.Clusters, "west", "the valid secret's symlinked registration must load despite the earlier stray directory with the same name")
+	require.Empty(t, inventory.UnprocessableClusters, "a directory entry is not a registration")
+	require.Empty(t, inventory.UnreadableSecrets)
+}
+
 // An unreadable secret must not be recorded in the cluster-keyed skip registry: a
 // secret name is not a cluster name. One named like the home cluster would be
 // discarded by the home-shadowing guard and silently re-enable unscoped queries, and
