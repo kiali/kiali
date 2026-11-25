@@ -871,7 +871,13 @@ func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) 
 	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
-		in.MarkClusterUnreachable(cluster)
+		// A degraded or uncached cluster is not an unreachable one: a degraded cache
+		// (the SA lost access) recovers through its own probe, and marking it
+		// unreachable here would flap against the background prober, which correctly
+		// sees the cluster answer at the transport level.
+		if !errors.Is(err, ErrClusterDegraded) && !errors.Is(err, ErrClusterNotCached) {
+			in.MarkClusterUnreachable(cluster)
+		}
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return false
 	}

@@ -151,3 +151,33 @@ func TestIsAmbientEnabledSuspendsOnUnreachableCluster(t *testing.T) {
 	require.False(kialiCache.IsAmbientEnabled(context.Background(), cluster))
 	require.Equal(int32(2), lists.Load())
 }
+
+// TestIsAmbientEnabledDoesNotMarkDegradedClusterUnreachable verifies the ambient check's
+// classification when the cluster's cache is degraded (the SA lost access): the cluster is
+// reachable at the transport level, so the check must not mark it unreachable. Marking it
+// flapped against the background prober, which correctly cleared the mark on the next
+// probe, oscillating the UI between the degraded and the unreachable presentations.
+func TestIsAmbientEnabledDoesNotMarkDegradedClusterUnreachable(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	kialiCache := NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+	}, *conf)
+	cluster := "west"
+
+	// Degrade the cluster the way the access check does on a confirmed revocation. The
+	// testing cache has no cluster access by default (cmd/gather-style), so attach one.
+	impl := kialiCache.(*kialiCacheImpl)
+	impl.clusterAccess = NewClusterAccess(nil)
+	impl.clusterAccess.mu.Lock()
+	impl.clusterAccess.markDegradedLocked(cluster, groupResource{resource: "pods"})
+	impl.clusterAccess.mu.Unlock()
+
+	// The ambient check fails on the degraded cache but must not classify the cluster
+	// as unreachable: only a transport failure may.
+	require.False(kialiCache.IsAmbientEnabled(context.Background(), cluster))
+	require.False(kialiCache.IsClusterUnreachable(cluster), "a degraded cache must not be classified as an unreachable cluster")
+}
