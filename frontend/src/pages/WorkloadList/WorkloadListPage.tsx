@@ -198,7 +198,17 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           istioResources: istioResources
         },
         cluster
-      );
+      ).catch(err => {
+        // One cluster's failure (e.g. a partially-revoked namespace) must degrade
+        // the list to that cluster's rows, not blank the page: surface it as a
+        // toast and let the other clusters' results render. Cancellations still
+        // propagate so the registry keeps its semantics.
+        if (err?.isCanceled) {
+          throw err;
+        }
+        addError(`Could not fetch workloads list for cluster [${cluster}]`, err);
+        return null;
+      });
     });
 
     this.promises
@@ -207,6 +217,9 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         let workloadsItems: WorkloadListItem[] = [];
 
         responses.forEach(response => {
+          if (!response) {
+            return;
+          }
           endPerfTimer(perfKey);
           workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
         });

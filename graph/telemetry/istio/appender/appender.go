@@ -2,11 +2,13 @@ package appender
 
 import (
 	"context"
+	goerrors "errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -361,7 +363,15 @@ func getServiceList(cluster, namespace string, gi *GlobalInfo) *models.ServiceLi
 		IncludeOnlyDefinitions: true,
 	}
 	serviceList, err := gi.Business.Svc.GetServiceList(context.TODO(), criteria)
-	graph.CheckError(err)
+	// A partially-revoked namespace has no live list to serve: the empty list keeps
+	// the graph building for the remaining namespaces - the same contract as
+	// GetIstioConfigListForNamespace. The namespace's telemetry nodes still render,
+	// without the withheld kube details.
+	if goerrors.Is(err, cache.ErrNamespaceRevoked) {
+		serviceList = &models.ServiceList{}
+	} else {
+		graph.CheckError(err)
+	}
 	gi.Vendor.ServiceLists[key] = serviceList
 
 	return serviceList
@@ -414,7 +424,15 @@ func getWorkloadList(cluster, namespace string, gi *GlobalInfo) *models.Workload
 
 	criteria := business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := gi.Business.Workload.GetWorkloadList(context.TODO(), criteria)
-	graph.CheckError(err)
+	// A partially-revoked namespace has no live list to serve: the empty list keeps
+	// the graph building for the remaining namespaces - the same contract as
+	// GetIstioConfigListForNamespace. The namespace's telemetry nodes still render,
+	// without the withheld kube details.
+	if goerrors.Is(err, cache.ErrNamespaceRevoked) {
+		workloadList = models.WorkloadList{}
+	} else {
+		graph.CheckError(err)
+	}
 	gi.Vendor.WorkloadLists[key] = &workloadList
 
 	return &workloadList
