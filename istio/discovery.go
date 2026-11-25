@@ -111,11 +111,13 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 }
 
 // sets the mesh configuration for a controlplane from the istio configmap(s).
-func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
+// The ctx is the mesh-resolve budget: the network lookup's live namespace fetch
+// must not outlive it (see resolveMesh).
+func (in *Discovery) setControlPlaneConfig(ctx context.Context, kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
 	configMapName := istioConfigMapName(controlPlane.Revision)
 
 	controlPlaneConf := &models.ControlPlaneConfiguration{
-		Network: in.resolveNetwork(context.Background(), kubeCache, controlPlane),
+		Network: in.resolveNetwork(ctx, kubeCache, controlPlane),
 		StandardConfig: &models.MeshConfigSource{
 			Cluster:   controlPlane.Cluster.Name,
 			ConfigMap: &models.MeshConfigMap{},
@@ -1087,7 +1089,7 @@ func (in *Discovery) resolveMesh(ctx context.Context) (*models.Mesh, error) {
 
 			// Need to get control plane config after reading env vars since reading config
 			// relies on reading some env vars.
-			if err := in.setControlPlaneConfig(kubeCache, &controlPlane); err != nil {
+			if err := in.setControlPlaneConfig(ctx, kubeCache, &controlPlane); err != nil {
 				// If this errors the configuration will likely be wrong but Kiali will fallback
 				// to the istio defaults for the mesh config values it relies on.
 				log.Warningf("Unable to set control plane configuration: %s", err)

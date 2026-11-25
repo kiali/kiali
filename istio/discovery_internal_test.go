@@ -117,7 +117,7 @@ func TestLoadServiceEntryVisibility(t *testing.T) {
 			cp := &models.ControlPlane{
 				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodNamespace: "istio-system", MeshConfig: models.NewMeshConfig(),
 			}
-			require.NoError(t, discovery.setControlPlaneConfig(kubeCache, cp))
+			require.NoError(t, discovery.setControlPlaneConfig(t.Context(), kubeCache, cp))
 			assert.Equal(t, tt.policyConfigured, cp.MeshConfig.GetServiceEntryVisibility() != nil)
 			policy := cp.MeshConfig.ServiceEntryVisibilityPolicy()
 			assert.Same(t, policy, cp.MeshConfig.ServiceEntryVisibilityPolicy(), "discovery should prepare the policy even when it is unconfigured")
@@ -198,7 +198,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				Revision:        tc.configMap.Labels[config.IstioRevisionLabel],
 				MeshConfig:      &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}},
 			}
-			err = discovery.setControlPlaneConfig(kubeCache, controlPlane)
+			err = discovery.setControlPlaneConfig(t.Context(), kubeCache, controlPlane)
 			if tc.expectErr {
 				require.Error(err)
 			} else {
@@ -670,10 +670,84 @@ func TestSetControlPlaneConfigWarnsWhenSharedClusterIsUnreachable(t *testing.T) 
 		SharedMeshConfig: "istio",
 	}
 
-	require.NoError(discovery.setControlPlaneConfig(kubeCache, controlPlane))
+	require.NoError(discovery.setControlPlaneConfig(t.Context(), kubeCache, controlPlane))
 	require.Contains(controlPlane.ConfigWarning, "Unable to load shared mesh configuration from cluster [remote]: cluster unreachable")
 	require.NotNil(controlPlane.Config.FileConfig)
 	require.Equal("external.local", controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.TrustDomain)
+}
+
+// stalledNamespaceClient's GetNamespace waits for the caller's context - the mesh
+// resolve budget - instead of its own timeout, so the test can tell whether the
+// network lookup ran under the caller's deadline.
+type stalledNamespaceClient struct {
+	kubernetes.ClientInterface
+	returned chan error
+}
+
+func (c *stalledNamespaceClient) GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
+	select {
+	case <-ctx.Done():
+		c.returned <- ctx.Err()
+		return nil, ctx.Err()
+	case <-time.After(5 * time.Second):
+		c.returned <- nil
+		return &corev1.Namespace{}, nil
+	}
+}
+
+// TestSetControlPlaneConfigNetworkLookupHonorsResolveBudget pins the budget threading:
+// resolveNetwork's live namespace fetch runs under the caller's context (the
+// MeshResolveTimeout budget resolveMesh applies), so a stalled remote's network lookup
+// is cut off at the budget instead of running to the client's own request timeout
+// while mesh leadership is held.
+func TestSetControlPlaneConfigNetworkLookupHonorsResolveBudget(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	west := &stalledNamespaceClient{
+		ClientInterface: kubetest.NewFakeK8sClient(
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
+				Data:       map[string]string{"mesh": ""},
+			},
+			certtest.FakeIstioCertificateConfigMap("istio-system"),
+		),
+		returned: make(chan error, 1),
+	}
+	clients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": west,
+	}
+	kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := NewDiscovery(clients, kialiCache, conf)
+	kubeCache, err := kialiCache.GetKubeCache("west")
+	require.NoError(err)
+
+	controlPlane := &models.ControlPlane{
+		Cluster:         &models.KubeCluster{Name: "west"},
+		IstiodNamespace: "istio-system",
+		MeshConfig:      &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() { done <- discovery.setControlPlaneConfig(ctx, kubeCache, controlPlane) }()
+
+	select {
+	case err := <-done:
+		require.NoError(err)
+	case <-time.After(3 * time.Second):
+		t.Fatal("setControlPlaneConfig did not return within the resolve budget")
+	}
+	select {
+	case err := <-west.returned:
+		require.ErrorIs(err, context.DeadlineExceeded, "the stalled cluster's fetch must observe the caller's deadline")
+	default:
+		t.Fatal("the network lookup never reached the stalled cluster")
+	}
 }
 
 func TestSetControlPlaneConfigWarnsWhenSharedConfigMapIsMissing(t *testing.T) {
@@ -707,7 +781,7 @@ func TestSetControlPlaneConfigWarnsWhenSharedConfigMapIsMissing(t *testing.T) {
 		SharedMeshConfig: "istio",
 	}
 
-	require.NoError(discovery.setControlPlaneConfig(kubeCache, controlPlane))
+	require.NoError(discovery.setControlPlaneConfig(t.Context(), kubeCache, controlPlane))
 	require.Contains(controlPlane.ConfigWarning, "Unable to load shared mesh configuration: unable to get Shared User ConfigMap [istio]")
 	require.NotNil(controlPlane.Config.FileConfig)
 	require.Equal("external.local", controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.TrustDomain)
@@ -742,7 +816,7 @@ func TestSetControlPlaneConfigUsesLocalSharedConfigForMismatchedClusterID(t *tes
 		SharedMeshConfig: "shared",
 	}
 
-	require.NoError(discovery.setControlPlaneConfig(kubeCache, controlPlane))
+	require.NoError(discovery.setControlPlaneConfig(t.Context(), kubeCache, controlPlane))
 	require.Empty(controlPlane.ConfigWarning)
 	require.Equal("cluster", controlPlane.Config.SharedConfig.Cluster)
 	require.True(controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.EnableTracing)
