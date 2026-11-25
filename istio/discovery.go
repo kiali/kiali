@@ -148,7 +148,7 @@ func (in *Discovery) setControlPlaneConfig(ctx context.Context, kubeCache ctrlcl
 			}
 		}
 		if sharedConfigCache != nil {
-			if err := setSharedConfig(controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
+			if err := setSharedConfig(ctx, controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
 				log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
 				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration: %s", err))
 			}
@@ -157,7 +157,7 @@ func (in *Discovery) setControlPlaneConfig(ctx context.Context, kubeCache ctrlcl
 
 	loadedFileConfig := false
 	if shouldLoadMeshConfigFile(controlPlane, configMapName) {
-		if err := setFileConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
+		if err := setFileConfig(ctx, controlPlane, controlPlaneConf, kubeCache); err != nil {
 			log.Warningf("Unable to load mounted mesh configuration file; falling back to the standard ConfigMap: %s", err)
 			appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load mounted mesh configuration file; displaying the standard ConfigMap instead: %s", err))
 		} else {
@@ -224,7 +224,7 @@ func shouldLoadMeshConfigFile(controlPlane *models.ControlPlane, standardConfigM
 		controlPlane.MeshConfigFile.ConfigMapKey != "mesh"
 }
 
-func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
+func setFileConfig(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
 	fileRef := controlPlane.MeshConfigFile
 	fileConfig := &models.MeshConfigSource{
 		Cluster:   controlPlane.Cluster.Name,
@@ -236,7 +236,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 
 	configMap := &corev1.ConfigMap{}
 	if err := kubeCache.Get(
-		context.Background(),
+		ctx,
 		ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
 		configMap,
 	); err != nil {
@@ -253,7 +253,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 	if err := parseMeshConfigFile(meshConfigYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
 		return fmt.Errorf("unable to parse mesh configuration file [%s] into EffectiveConfig: %w", fileRef.Path, err)
 	}
-	if err := setFileMeshNetworks(controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
+	if err := setFileMeshNetworks(ctx, controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
 		return err
 	}
 
@@ -262,7 +262,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 	return nil
 }
 
-func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
+func setFileMeshNetworks(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
 	fileRef := controlPlane.MeshNetworksConfigFile
 	if fileRef == nil {
 		return nil
@@ -272,7 +272,7 @@ func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *mo
 	if fileRef.ConfigMapName != meshConfigMap.Name {
 		networksConfigMap = &corev1.ConfigMap{}
 		if err := kubeCache.Get(
-			context.Background(),
+			ctx,
 			ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
 			networksConfigMap,
 		); err != nil {
@@ -293,7 +293,7 @@ func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *mo
 	return nil
 }
 
-func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader, cluster string) error {
+func setSharedConfig(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader, cluster string) error {
 	sharedConfig := &models.MeshConfigSource{
 		Cluster:   cluster,
 		ConfigMap: &models.MeshConfigMap{},
@@ -303,7 +303,7 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 
 	sharedUserConfigMap := &corev1.ConfigMap{}
 	if err := kubeCache.Get(
-		context.Background(),
+		ctx,
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
@@ -789,10 +789,13 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 	}
 	clusters := in.configuredClusters()
 	// TODO: Separate KialiInstance from Cluster model.
+	// This is the cached-mesh accessor path (no caller deadline exists here); the
+	// mesh-resolve path passes its own budget down instead, see resolveMesh.
+	ctx := context.Background()
 	for i := range clusters {
 		// need the actual object for update, so use the index, not the copy
 		cluster := &clusters[i]
-		instances, err := in.getKialiInstances(*cluster)
+		instances, err := in.getKialiInstances(ctx, *cluster)
 		if err != nil {
 			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
 			continue
@@ -1016,7 +1019,7 @@ func (in *Discovery) resolveMesh(ctx context.Context) (*models.Mesh, error) {
 		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
 		if in.conf.Clustering.IgnoreHomeCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
 			log.Tracef("Cluster [%s] is an external Kiali cluster. Adding the external management cluster.", cluster.Name)
-			externalKialis := in.discoverKiali(cluster)
+			externalKialis := in.discoverKiali(ctx, cluster)
 			if len(externalKialis) != 0 {
 				mesh.ExternalKiali = &models.ExternalKialiInstance{
 					Cluster: &cluster,
@@ -1507,7 +1510,7 @@ func (in *Discovery) revisionTags(ctx context.Context) map[clusterRevisionKey][]
 	return tagsByClusterRev
 }
 
-func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.KialiInstance, error) {
+func (in *Discovery) getKialiInstances(ctx context.Context, cluster models.KubeCluster) ([]models.KialiInstance, error) {
 	kialiConfigURLsForCluster := []config.KialiURL{}
 	for _, cfgurl := range in.conf.Clustering.KialiURLs {
 		if cfgurl.ClusterName == cluster.Name {
@@ -1516,7 +1519,7 @@ func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.Kia
 	}
 
 	var instances []models.KialiInstance
-	instances = append(instances, in.discoverKiali(cluster)...)
+	instances = append(instances, in.discoverKiali(ctx, cluster)...)
 	for _, cfgURL := range kialiConfigURLsForCluster {
 		instances = appendKialiInstancesFromConfig(instances, cfgURL)
 	}
@@ -1537,7 +1540,7 @@ func convertKialiServiceToInstance(svc *corev1.Service) models.KialiInstance {
 }
 
 // discoverKiali tries to find a Kiali installation on the cluster.
-func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiInstance {
+func (in *Discovery) discoverKiali(ctx context.Context, cluster models.KubeCluster) []models.KialiInstance {
 	clusterName := cluster.Name
 	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
 	if err != nil {
@@ -1548,7 +1551,7 @@ func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiIns
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
 	svcList := &corev1.ServiceList{}
-	if err := cache.ListReadable(context.Background(), kubeCache, in.conf, in.kialiCache, clusterName, svcList,
+	if err := cache.ListReadable(ctx, kubeCache, in.conf, in.kialiCache, clusterName, svcList,
 		ctrlclient.MatchingLabels{"app.kubernetes.io/part-of": "kiali"}); err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
 		return nil
@@ -1591,14 +1594,14 @@ func appendKialiInstancesFromConfig(instances []models.KialiInstance, cfgurl con
 	return instances
 }
 
-func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient.Reader, namespace, revision string) string {
+func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(ctx context.Context, kubeCache ctrlclient.Reader, namespace, revision string) string {
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
 	configMapName := sidecarInjectorConfigMapName(revision)
 
 	istioSidecarConfig := &corev1.ConfigMap{}
-	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
+	err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
@@ -1656,7 +1659,7 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient
 // one fails. So, errors are only logged to let processing continue.
 func (in *Discovery) resolveNetwork(ctx context.Context, kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
 	clusterName := controlPlane.Cluster.Name
-	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
+	if network := in.getNetworkFromSidecarInejctorConfigMap(ctx, kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
 		return network
 	}
 

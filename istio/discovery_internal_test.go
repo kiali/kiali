@@ -864,7 +864,7 @@ networks:
 		StandardConfig:  &models.MeshConfigSource{ConfigMap: &models.MeshConfigMap{}},
 	}
 
-	require.NoError(setFileConfig(controlPlane, controlPlaneConf, kubeCache))
+	require.NoError(setFileConfig(t.Context(), controlPlane, controlPlaneConf, kubeCache))
 	require.Equal("cluster.local", controlPlaneConf.FileConfig.ConfigMap.Mesh.TrustDomain)
 	require.Contains(controlPlaneConf.FileConfig.ConfigMap.MeshNetworks.Networks, "network1")
 	require.Contains(controlPlaneConf.EffectiveConfig.ConfigMap.MeshNetworks.Networks, "network1")

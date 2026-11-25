@@ -675,7 +675,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			continue
 		}
 
-		objectCheckers, err := in.getAllObjectCheckers(vInfo)
+		objectCheckers, err := in.getAllObjectCheckers(ctx, vInfo)
 		// Skip validations for a particular namespace, mesh config was not found
 		if err != nil {
 			log.Trace(err)
@@ -847,7 +847,10 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 
 // getAllObjectCheckers returns all of the checkers to be executed for a full validation.
 // TODO: we may want to to pass vInfo into all of these, if the checkers themselves are re-computing information
-func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) ([]checkers.ObjectChecker, error) {
+// getAllObjectCheckers returns all of the checkers to be executed for a full validation.
+// The ctx is the caller's request deadline: it bounds the capability probes the
+// checker construction may trigger (see KialiCache.GatewayAPIClasses).
+func (in *IstioValidationsService) getAllObjectCheckers(ctx context.Context, vInfo *validationInfo) ([]checkers.ObjectChecker, error) {
 	cluster := vInfo.clusterInfo.cluster
 	namespaces := vInfo.nsMap[cluster]
 	nsNames := getNsNames(namespaces)
@@ -876,7 +879,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, KnownTrustDomains: vInfo.knownTrustDomains, KubeServiceHosts: kubeServiceHosts, MtlsDetails: *mtlsDetails, Namespaces: nsNames, PolicyAllowAny: policyAllowAny, ServiceAccounts: vInfo.saMap, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.DestinationRulesChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, ImportScope: importScope, MTLSDetails: *mtlsDetails, Namespaces: namespaces},
 		checkers.GatewayChecker{Cluster: cluster, Conf: conf, Gateways: istioConfigList.Gateways, IsGatewayToNamespace: gatewayToNamespace, WorkloadsPerNamespace: workloadsPerNamespace},
-		checkers.K8sGatewayChecker{Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(context.Background(), cluster), K8sGateways: istioConfigList.K8sGateways},
+		checkers.K8sGatewayChecker{Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(ctx, cluster), K8sGateways: istioConfigList.K8sGateways},
 		checkers.K8sGRPCRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sHTTPRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
@@ -1046,7 +1049,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			return nil, istioReferences, nil
 		}
 
-		objectCheckers, referenceChecker, err := in.getSingleObjectCheckers(vInfo, cluster, validationNamespaces[i].Name, objectGVK)
+		objectCheckers, referenceChecker, err := in.getSingleObjectCheckers(ctx, vInfo, cluster, validationNamespaces[i].Name, objectGVK)
 		if err != nil {
 			log.Trace(err)
 			return nil, istioReferences, err
@@ -1153,7 +1156,10 @@ func objectValidationSupported(objectGVK schema.GroupVersionKind) bool {
 	return !unsupported
 }
 
-func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo, cluster, namespace string, objectGVK schema.GroupVersionKind) ([]checkers.ObjectChecker, ReferenceChecker, error) {
+// getSingleObjectCheckers returns the checkers for a single object's validation. The
+// ctx is the caller's request deadline: it bounds the capability probes the checker
+// construction may trigger (see KialiCache.GatewayAPIClasses).
+func (in *IstioValidationsService) getSingleObjectCheckers(ctx context.Context, vInfo *validationInfo, cluster, namespace string, objectGVK schema.GroupVersionKind) ([]checkers.ObjectChecker, ReferenceChecker, error) {
 	namespaces := vInfo.nsMap[cluster]
 	nsNames := getNsNames(namespaces)
 	istioConfigList := vInfo.nsInfo.istioConfig
@@ -1259,7 +1265,7 @@ func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo
 		}
 	case kubernetes.K8sGateways:
 		objectCheckers = []checkers.ObjectChecker{
-			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(context.Background(), cluster)},
+			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(ctx, cluster)},
 		}
 		referenceChecker = references.K8sGatewayReferences{Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sGRPCRoutes:

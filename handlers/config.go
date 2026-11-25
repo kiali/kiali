@@ -133,7 +133,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig(conf, prom, logger)
+		promConfig := getPrometheusConfig(r.Context(), conf, prom, logger)
 
 		log.Debugf("AI Info: %+v", conf.AI.Metrics)
 		aiConfig := getAIConfig(conf, r)
@@ -392,7 +392,9 @@ type PrometheusPartialConfig struct {
 	}
 }
 
-func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
+// The ctx is the caller's request deadline: the two live Prometheus calls it may
+// make must not outlive the requesting client.
+func getPrometheusConfig(ctx context.Context, conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
 	var disabledReason string
 	if drp, ok := client.(prometheus.DisabledReasonProvider); ok {
 		disabledReason = drp.DisabledReason()
@@ -418,7 +420,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 		}
 	} else {
-		configResult, err := client.GetConfiguration(context.Background())
+		configResult, err := client.GetConfiguration(ctx)
 		if checkErr(err, "Failed to fetch Prometheus configuration", logger) {
 			var config PrometheusPartialConfig
 			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration", logger) {
@@ -430,7 +432,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			}
 		}
 
-		promRuntimeinfoResults, err := client.GetRuntimeinfo(context.Background())
+		promRuntimeinfoResults, err := client.GetRuntimeinfo(ctx)
 		if checkErr(err, "Failed to fetch Prometheus runtime info", logger) {
 			// the storage retention as reported by Prometheus endpoint /api/v1/status/runtimeinfo
 			// It will either be time-based (e.g. "1d") or size-based (e.g "10GB") or both (e.g "1d or 10GB").
