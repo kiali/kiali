@@ -133,7 +133,7 @@ func ClusterHealth(
 				// has no user client, so its namespaces are never in the accessible set
 				// and the not-accessible guard above has already responded.
 				if kialiCache.IsNamespaceRevoked(cluster, ns) {
-					RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("namespace [%s] in cluster [%s]: %s", ns, cluster, cache.ErrNamespaceRevoked.Error()))
+					RespondWithError(w, http.StatusServiceUnavailable, cache.NewNamespaceRevokedError(cluster, ns).Error())
 					return
 				}
 			}

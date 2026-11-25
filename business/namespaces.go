@@ -634,7 +634,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 			return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
 		}
 		if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
-			return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+			return nil, cache.NewNamespaceRevokedError(cluster, namespace)
 		}
 		return &ns, nil
 	}
@@ -648,7 +648,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return nil, err
 	}
 	if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
-		return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+		return nil, cache.NewNamespaceRevokedError(cluster, namespace)
 	}
 	return ns, nil
 }

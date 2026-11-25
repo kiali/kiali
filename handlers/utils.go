@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -184,7 +183,7 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 			// with the detail paths' 503: its informers cannot refresh, so serving the
 			// frozen snapshot would show resources that may no longer exist.
 			if kialiCache.IsNamespaceRevoked(cluster, ns.Name) {
-				RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("namespace [%s] in cluster [%s]: %s", ns.Name, cluster, cache.ErrNamespaceRevoked.Error()))
+				RespondWithError(w, http.StatusServiceUnavailable, cache.NewNamespaceRevokedError(cluster, ns.Name).Error())
 				return nil, false
 			}
 			names = append(names, ns.Name)

@@ -616,6 +616,13 @@ func NewClusterUnreachableError(cluster string) error {
 // exists and the user may well see it again shortly.
 var ErrNamespaceRevoked = errors.New("namespace access is revoked")
 
+// NewNamespaceRevokedError returns the error for a request that names a namespace whose
+// access was revoked: temporarily unavailable (503), not an access denial. Use it instead
+// of hand-rolling the wrapping, so every site wraps (errors.Is works) and reads the same.
+func NewNamespaceRevokedError(cluster, namespace string) error {
+	return fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, ErrNamespaceRevoked)
+}
+
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
 		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
