@@ -171,3 +171,28 @@ findings 1–7 are folded in below.
   - a failed suite is retried exactly once, on a fresh runner, with suffixed
     artifact names;
   - failures on one branch do not cancel other branches' runs.
+
+## Independent verification of the plan + Phase 1 dispatch results
+
+I verified the capability matrix and the failure claims in the dispatch comments against the actual branch contents (`hack/run-integration-tests.sh`, `make/Makefile.build.mk`, golangci config locations, `hack/setup-kind-in-ci.sh` per branch). Everything checks out:
+
+- **Capability matrix: 100% accurate.** All 7 rows (`--stern`, `--waypoint`, `--mcp-tools`, `local`/`offline`, `frontend-external-kiali`, `frontend-multi-mesh`, `ai-chatbot`) match grep results on each branch's script exactly. The v2.4 parser citations are also exact (suite validation ~line 59, unknown-arg `exit 1` at line 109), as are the master workflow-side claims (`integration-tests-frontend.yml:89` passes `--stern` unconditionally, etc.).
+- **Makefile bug confirmed:** v2.4 (`Makefile.build.mk:76`), v2.11 (`:83`), v2.17 (`:89`) all use `$(shell ./hack/fix_imports.sh)`; v2.22/v2.27/master use `@./hack/fix_imports.sh`.
+- **golangci config location confirmed:** v2.22 and v2.27 both keep the config at `.github/workflows/config/.golangci.yml` with nothing at repo root; master has a root-level config with `build-tags: [exclude_frontend]`. The failure mechanism (action runs with defaults → no `exclude_frontend` → typechecks `frontend/frontend.go` embed) is real.
+
+### Two small inaccuracies found
+
+1. **`review-of-the-issue.md`, Finding 4** claims "the old branches do not support `frontend-core-1`/`2` suite values anyway" — this is only true for v2.4/v2.11. **v2.17 and v2.22 do define `frontend-core-1`, `frontend-core-2`, and `frontend-core-optional`** (only `frontend-core-caching` is v2.27+). Doesn't change the conclusion (the unsplit `frontend` suite is still the right choice since all five branches support it), but the stated reason should be corrected.
+2. **The Istio version table / testing commands have drifted.** The branches' own resolvers now map `v2.17 → 1.27.9`, `v2.22 → 1.28.10`, `v2.27 → 1.30.8` (the plan and PR body say 1.27.5 / 1.28.3 / 1.29.1). Since the workflow passes `istio_version` explicitly, re-running with the PR body's commands would test against older patch versions than the branches currently specify. Also note the master root golangci config is `.golangci.yml` (yml), not `.golangci.yaml` — worth using the exact filename in the backport.
+
+### Suggested next steps
+
+1. **Open the two backport PRs now** — they're independent of this doc PR and unblock all five branches:
+   - `$(shell ./hack/fix_imports.sh)` → `@./hack/fix_imports.sh` on v2.4, v2.11, v2.17 (oldest first, chained forward, mirroring #10489–#10493)
+   - Root-level `.golangci.yml` config move (backport of #9840) on v2.17, v2.22, v2.27
+2. **Re-dispatch Phase 1 verification** after those merge, with the *current* resolver versions (`v2.4=1.23.6`, `v2.11=1.26.8`, `v2.17=1.27.9`, `v2.22=1.28.10`, `v2.27=1.30.8`) so the runs exercise what the branches actually pin. This is the first dispatch cycle that will reach the integration suites — that's where real test rot (if any) will surface.
+3. **Update this PR** with the corrections above (Finding 4 wording, Istio table) and fold the dispatch findings into the plan — specifically, note that `test-lint-backend.yml` from master is itself a rot vector (it assumes a root-level golangci config), which strengthens the case for keeping the lint job per-branch-config-aware in Phase 2.
+4. **After Phase 1 goes green per the capability table**, merge this plan and open the Phase 2 PR: coordinator + single-branch workflow per the recommended shape (one run per branch, per-branch suite matrix, fresh-runner retry with `run_suffix`, `concurrency` group, branch in `run-name`).
+5. Consider whether these two `.md` files belong at the repo root or under `docs/` before merge.
+
+Happy to help with any of the backports or the Phase 2 workflow when you get there.
