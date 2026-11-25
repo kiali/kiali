@@ -85,8 +85,8 @@ format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
 			${GOFMT} -w $$gofile; \
-	done; \
-	$(shell ./hack/fix_imports.sh)
+	done
+	@./hack/fix_imports.sh
 
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test: go-check
@@ -139,7 +139,7 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+	golangci-lint run
 
 # Assuming here that if the bin dir exists then the tools also exist inside of it.
 .ensure-envtest-bin-dir-exists: .ensure-envtest-exists

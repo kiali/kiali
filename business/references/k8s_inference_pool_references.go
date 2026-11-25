@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/labels"
 	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
-
-	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
