@@ -470,6 +470,7 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	}
 	if tlscfg == nil || tlscfg.GetClientCertificate == nil {
 		t.Fatalf("expected GetClientCertificate to be set")
+		return
 	}
 	c1, err := tlscfg.GetClientCertificate(nil)
 	if err != nil {
@@ -538,6 +539,7 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 	}
 	if tlscfg.RootCAs == nil {
 		t.Fatal("expected RootCAs to be set from CertPool")
+		return
 	}
 
 	// Verify ServerName is set
@@ -583,6 +585,7 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 	}
 	if tlscfgWithoutCA == nil {
 		t.Fatal("Expected TLS config even when no CA bundle and no auth to enforce default policy")
+		return
 	}
 	if tlscfgWithoutCA.MinVersion != tls.VersionTLS12 {
 		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfgWithoutCA.MinVersion)
@@ -605,11 +608,13 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 	// Should return a TLS config even though auth is nil, because custom CA is configured
 	if tlscfg == nil {
 		t.Fatal("GetTLSConfig should return non-nil config when custom CA bundle is configured, even without auth")
+		return
 	}
 
 	// Verify RootCAs contains our custom CA
 	if tlscfg.RootCAs == nil {
 		t.Fatal("expected RootCAs to be set from CertPool")
+		return
 	}
 
 	// Verify the custom CA is in RootCAs
@@ -650,6 +655,7 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	}
 	if tlscfgWithoutCA == nil {
 		t.Fatal("Expected TLS config even when no CA bundle and no auth to enforce default policy")
+		return
 	}
 	if tlscfgWithoutCA.MinVersion != tls.VersionTLS12 {
 		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfgWithoutCA.MinVersion)
@@ -672,6 +678,7 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	// Should return a TLS config even though auth is nil, because custom CA is configured
 	if tlscfg == nil {
 		t.Fatal("GetTLSConfigForServer should return non-nil config when custom CA bundle is configured, even without auth")
+		return
 	}
 
 	// Verify ServerName is set correctly
@@ -682,6 +689,7 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	// Verify RootCAs contains our custom CA
 	if tlscfg.RootCAs == nil {
 		t.Fatal("expected RootCAs to be set from CertPool")
+		return
 	}
 
 	// Verify the custom CA is in RootCAs
@@ -718,6 +726,7 @@ func TestGetTLSConfig_CAFileIgnored(t *testing.T) {
 	// present to enforce the default policy (min TLS1.2).
 	if tlscfg == nil {
 		t.Fatalf("expected TLS config to enforce default policy even though CAFile is ignored")
+		return
 	}
 	if tlscfg.MinVersion != tls.VersionTLS12 {
 		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfg.MinVersion)
@@ -793,6 +802,7 @@ func TestCertPool_CARotation(t *testing.T) {
 	// Verify leaf1 (signed by CA1) FAILS with refreshed pool (CA2 only)
 	if _, err := leaf1Cert.Verify(verifyOpts2); err == nil {
 		t.Fatal("leaf1 should NOT verify with refreshed pool - CA rotation should invalidate old certs")
+		return
 	}
 
 	// Verify the old pool (pool1) still has CA1 - pools are cloned and don't change
@@ -874,6 +884,7 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 	if err == nil {
 		connBad.Close()
 		t.Fatal("dial with wrong hostname should fail due to hostname verification")
+		return
 	}
 	// Verify it's a hostname verification error
 	if !isHostnameError(err) {
@@ -971,6 +982,7 @@ func TestTLSConfigPolicyTLS13Enforcement_ConfigSource(t *testing.T) {
 		return conf
 	}()); err == nil {
 		t.Fatal("expected TLS1.2-only client to fail against TLS1.3-only server")
+		return
 	}
 }
 
@@ -1001,6 +1013,7 @@ func TestCreateTransport_PolicyAppliedWithoutAuthOrCA(t *testing.T) {
 	}
 	if tr.TLSClientConfig == nil {
 		t.Fatal("expected TLSClientConfig to be set")
+		return
 	}
 	if tr.TLSClientConfig.MinVersion != tls.VersionTLS13 || tr.TLSClientConfig.MaxVersion != tls.VersionTLS13 {
 		t.Fatalf("expected TLS1.3-only policy, got min [%x] max [%x]", tr.TLSClientConfig.MinVersion, tr.TLSClientConfig.MaxVersion)
@@ -1040,6 +1053,7 @@ func TestCreateTransport_SkipVerifyStillEnforcesPolicy(t *testing.T) {
 	}
 	if tr.TLSClientConfig == nil {
 		t.Fatal("expected TLSClientConfig to be set")
+		return
 	}
 	if !tr.TLSClientConfig.InsecureSkipVerify {
 		t.Fatal("expected InsecureSkipVerify to be preserved")
@@ -1102,6 +1116,7 @@ func TestHttpGet_CustomCAWithoutAuth(t *testing.T) {
 	_, _, _, errWithoutCA := HttpGet(url, auth, 5*time.Second, nil, nil, confWithoutCA)
 	if errWithoutCA == nil {
 		t.Fatal("Expected request to fail without custom CA bundle, but it succeeded")
+		return
 	}
 	// Verify it's a certificate verification error
 	if !bytes.Contains([]byte(errWithoutCA.Error()), []byte("certificate")) &&
@@ -1181,9 +1196,11 @@ func TestCreateTransport_UsesVerifyConnectionForDynamicCA(t *testing.T) {
 	// Verify TLSClientConfig is set with VerifyConnection callback
 	if transport.TLSClientConfig == nil {
 		t.Fatal("expected TLSClientConfig to be set when custom CA is configured")
+		return
 	}
 	if transport.TLSClientConfig.VerifyConnection == nil {
 		t.Fatal("expected VerifyConnection callback to be set for dynamic CA verification")
+		return
 	}
 
 	// Verify InsecureSkipVerify is true (because we verify manually in VerifyConnection)
@@ -1252,6 +1269,7 @@ func TestVerifyServerCertificate_WrongCA(t *testing.T) {
 	// Verify should FAIL - cert signed by CA1, but pool only has CA2
 	if err := verifyServerCertificate(cs, pool); err == nil {
 		t.Fatal("verification should fail when cert is signed by different CA")
+		return
 	}
 }
 
@@ -1279,6 +1297,7 @@ func TestVerifyServerCertificate_WrongHostname(t *testing.T) {
 	// Verify should FAIL due to hostname mismatch
 	if err := verifyServerCertificate(cs, pool); err == nil {
 		t.Fatal("verification should fail when hostname doesn't match certificate")
+		return
 	}
 }
 
@@ -1293,6 +1312,7 @@ func TestVerifyServerCertificate_NoCerts(t *testing.T) {
 	err := verifyServerCertificate(cs, pool)
 	if err == nil {
 		t.Fatal("verification should fail when no peer certificates provided")
+		return
 	}
 	if err.Error() != "server provided no certificates" {
 		t.Errorf("expected 'server provided no certificates' error, got: %v", err)
@@ -1320,6 +1340,7 @@ func TestGetTLSConfigAppliesPolicyWithoutAuthOrCA(t *testing.T) {
 	}
 	if tlscfg == nil {
 		t.Fatal("expected TLS config to be returned")
+		return
 	}
 	if tlscfg.MinVersion != tls.VersionTLS13 || tlscfg.MaxVersion != tls.VersionTLS13 {
 		t.Fatalf("expected TLS1.3-only policy, got min [%x] max [%x]", tlscfg.MinVersion, tlscfg.MaxVersion)
