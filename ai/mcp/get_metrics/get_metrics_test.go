@@ -1,7 +1,5 @@
 package get_metrics
 
-// Assisted-by: Claude Code
-
 import (
 	"net/http"
 	"net/http/httptest"

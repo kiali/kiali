@@ -1,7 +1,5 @@
 package mcputil
 
-// Assisted-by: Claude Code
-
 import (
 	"context"
 	"errors"
