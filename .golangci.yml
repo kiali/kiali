@@ -1,0 +1,48 @@
+version: "2"
+run:
+  timeout: 5m
+  tests: true
+  relative-path-mode: gomod
+  build-tags:
+  - exclude_frontend
+  modules-download-mode: readonly
+linters:
+  settings:
+    govet:
+      disable:
+      - inline
+    staticcheck:
+      checks:
+      - all
+      - -QF*
+      - -ST*
+  exclusions:
+    generated: lax
+    presets:
+    - comments
+    - common-false-positives
+    - legacy
+    - std-error-handling
+    paths:
+    - doc.go
+    - .*\.pb\.go$
+    - frontend
+    - third_party$
+    - builtin$
+    - examples$
+formatters:
+  enable:
+  - goimports
+  settings:
+    goimports:
+      local-prefixes:
+      - github.com/kiali/kiali
+  exclusions:
+    generated: lax
+    paths:
+    - doc.go
+    - .*\.pb\.go$
+    - frontend
+    - third_party$
+    - builtin$
+    - examples$

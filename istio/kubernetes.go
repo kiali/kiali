@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"golang.org/x/exp/maps"
-
 	corev1 "k8s.io/api/core/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
