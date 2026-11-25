@@ -1,7 +1,6 @@
 package status
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -71,10 +70,20 @@ type countingVersionClient struct {
 func (c *countingVersionClient) GetServerVersion() (*version.Info, error) {
 	c.probes.Add(1)
 	if c.fail {
-		return nil, errors.New("context deadline exceeded")
+		// A transport-level failure (net.Error), the kind the unreachable signal
+		// classifies a dead remote by.
+		return nil, dialTimeoutError{}
 	}
 	return &version.Info{GitVersion: "v1.30.0"}, nil
 }
+
+// dialTimeoutError models a transport-level failure: it implements net.Error, which is
+// how the unreachable signal classifies a dead remote.
+type dialTimeoutError struct{}
+
+func (dialTimeoutError) Error() string   { return "dial tcp: i/o timeout" }
+func (dialTimeoutError) Timeout() bool   { return true }
+func (dialTimeoutError) Temporary() bool { return true }
 
 // saclientsOnlyFactory serves getKubernetesVersions, which needs only GetSAClients.
 type saclientsOnlyFactory struct {

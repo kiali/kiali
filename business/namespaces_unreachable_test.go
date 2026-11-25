@@ -7,13 +7,23 @@ import (
 
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
+
+// dialTimeoutError models a transport-level failure: it implements net.Error, which
+// is how the unreachable signal classifies a dead remote.
+type dialTimeoutError struct{}
+
+func (dialTimeoutError) Error() string   { return "dial tcp: i/o timeout" }
+func (dialTimeoutError) Timeout() bool   { return true }
+func (dialTimeoutError) Temporary() bool { return true }
 
 // stallingNamespaceClient stalls every live namespace read, modeling an unreachable
 // cluster. It wraps a fake so everything else (cache keys, access reviews) behaves.
@@ -22,11 +32,22 @@ type stallingNamespaceClient struct {
 }
 
 func (c *stallingNamespaceClient) GetNamespace(ctx context.Context, name string) (*core_v1.Namespace, error) {
-	return nil, errors.New("dial tcp: i/o timeout")
+	return nil, dialTimeoutError{}
 }
 
 func (c *stallingNamespaceClient) GetNamespaces(ctx context.Context, labelSelector string) ([]core_v1.Namespace, error) {
-	return nil, errors.New("dial tcp: i/o timeout")
+	return nil, dialTimeoutError{}
+}
+
+// forbiddenListClient answers every namespace list with an authorization denial: the
+// cluster is reachable, but the SA may not list namespaces at the cluster scope (e.g. a
+// CWA-enabled Kiali paired with a remote that only holds per-namespace roles).
+type forbiddenListClient struct {
+	*kubetest.FakeK8sClient
+}
+
+func (c *forbiddenListClient) GetNamespaces(ctx context.Context, labelSelector string) ([]core_v1.Namespace, error) {
+	return nil, k8serrors.NewForbidden(schema.GroupResource{Resource: "namespaces"}, "", errors.New("denied"))
 }
 
 // TestNamespaceComputeMarksClusterUnreachableAcrossTokens verifies the consolidation the
@@ -70,6 +91,41 @@ func TestNamespaceComputeMarksClusterUnreachableAcrossTokens(t *testing.T) {
 	_, err = svcTwo.GetClusterNamespacesForCluster(context.Background(), "west")
 	require.Error(t, err)
 	require.ErrorIs(t, err, cache.ErrClusterUnreachable, "a suppressed computation must fail with the unreachable error, not probe again")
+}
+
+// TestNamespaceComputeDoesNotMarkReachableClusterOnDenial verifies the classification the
+// compute path makes when the namespace list is denied rather than unreachable: an
+// authorization denial is an API-level answer - the cluster is demonstrably reachable -
+// so it must not set the unreachable signal. Marking it flapped against the background
+// prober, which correctly cleared the mark on its next probe.
+func TestNamespaceComputeDoesNotMarkReachableClusterOnDenial(t *testing.T) {
+	conf := nonCwaConf()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.Deployment.ClusterWideAccess = true
+
+	saClients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+		"west":                            &forbiddenListClient{FakeK8sClient: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))},
+	}
+	kialiCache, _, err := cachetest.NewFakeKialiCache(context.Background(), conf, saClients, nil)
+	require.NoError(t, err)
+	discovery := istioDiscovery(t, conf, saClients)
+
+	svc := NewNamespaceService(kialiCache, conf, discovery, saClients, map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+		"west":                            kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+	})
+
+	// The denied list fails the computation - the caller still sees the error - but the
+	// cluster must not be marked unreachable: only a transport failure may.
+	_, err = svc.GetClusterNamespacesForCluster(context.Background(), "west")
+	require.Error(t, err, "the denied list must fail the computation")
+	require.False(t, kialiCache.IsClusterUnreachable("west"), "an authorization denial is an API-level answer; the cluster is reachable")
+
+	// The SA-path computation holds the same contract.
+	_, err = svc.GetKialiSAClusterNamespaces(context.Background(), "west")
+	require.Error(t, err)
+	require.False(t, kialiCache.IsClusterUnreachable("west"), "the SA path must classify a denial the same way")
 }
 
 // TestGetClusterNamespacesUnreachableIsNotAccessDenial verifies the 503 semantics: a

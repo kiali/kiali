@@ -243,8 +243,10 @@ func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*m
 // is effectively static for Kiali's lifetime, and getKubernetesVersions runs on the
 // mesh graph's request path (the graph labels cluster nodes with versions), so a
 // successful fetch is remembered for the process lifetime. A failed fetch is not
-// memoized: the cluster is marked unreachable (see kialiCache.MarkClusterUnreachable)
-// and skipped until the background prober detects its recovery.
+// memoized: a transport-level failure marks the cluster unreachable (see
+// kialiCache.MarkClusterUnreachable) and it is skipped until the background prober
+// detects its recovery; an API-level answer proves the cluster reachable and is
+// simply retried on the next fetch.
 var kubeVersionCache sync.Map // cluster name -> *version.Info
 
 func getKubernetesVersions(clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache) []models.ExternalServiceInfo {
@@ -269,7 +271,11 @@ func getKubernetesVersions(clientFactory kubernetes.ClientFactory, kialiCache ca
 		serverVersion, err := saClient.GetServerVersion()
 		if err != nil {
 			log.Debugf("Unable to get Kubernetes version for cluster [%s]: %v", clusterName, err)
-			kialiCache.MarkClusterUnreachable(clusterName)
+			// Transport failures only - the prober's classification: an API-level
+			// answer, even an error status, proves the cluster is reachable.
+			if kubernetes.IsConnectionError(err) {
+				kialiCache.MarkClusterUnreachable(clusterName)
+			}
 			continue
 		}
 

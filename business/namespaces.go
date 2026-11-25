@@ -175,7 +175,13 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 
 		namespaces, err := in.fetchNamespacesForCluster(computeCtx, cluster)
 		if err != nil {
-			in.kialiCache.MarkClusterUnreachable(cluster)
+			// Only a transport-level failure marks the cluster unreachable - the same
+			// classification the background prober uses when it clears the mark. An
+			// API-level answer, even an authorization denial, proves the cluster is
+			// reachable; marking on it would only flap against the prober's next clear.
+			if kubernetes.IsConnectionError(err) {
+				in.kialiCache.MarkClusterUnreachable(cluster)
+			}
 			return nil, err
 		}
 		if computeCtx.Err() != nil {
@@ -444,7 +450,11 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	if in.conf.Deployment.ClusterWideAccess {
 		nss, err := saClient.GetNamespaces(ctx, "")
 		if err != nil {
-			in.kialiCache.MarkClusterUnreachable(cluster)
+			// Transport failures only, like the user-path computation above: an
+			// authorization denial is an API-level answer, not an unreachable cluster.
+			if kubernetes.IsConnectionError(err) {
+				in.kialiCache.MarkClusterUnreachable(cluster)
+			}
 			return nil, err
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
@@ -459,7 +469,10 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
 					continue
 				}
-				in.kialiCache.MarkClusterUnreachable(cluster)
+				// Transport failures only, like the user-path computation above.
+				if kubernetes.IsConnectionError(err) {
+					in.kialiCache.MarkClusterUnreachable(cluster)
+				}
 				return nil, err
 			}
 			k8sNamespaces = append(k8sNamespaces, *k8sNs)
