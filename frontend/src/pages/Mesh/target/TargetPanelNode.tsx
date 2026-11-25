@@ -1,12 +1,8 @@
 import * as React from 'react';
-import {
-  TargetPanelCommonProps,
-  renderNodeHeader,
-  targetBodyStyle,
-  targetPanelHR,
-  targetPanelStyle
-} from './TargetPanelCommon';
-import { MeshNodeData, NodeTarget, isExternal, MeshInfraType } from 'types/Mesh';
+import type { TargetPanelCommonProps } from './TargetPanelCommon';
+import { renderNodeHeader, targetBodyStyle, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
+import type { MeshNodeData, NodeTarget } from 'types/Mesh';
+import { isExternal, MeshInfraType } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -37,9 +33,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
       <div className={targetBodyStyle}>
         <div style={{ display: 'flex' }}>
           <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
-          {data.infraType === MeshInfraType.TRACE_STORE && (
-            <TracingDiagnose cluster={data.cluster} configData={data.infraData} />
-          )}
+          {data.infraType === MeshInfraType.TRACE_STORE && <TracingDiagnose cluster={data.cluster} />}
         </div>
         {targetPanelHR}
 

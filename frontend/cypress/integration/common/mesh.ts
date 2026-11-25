@@ -348,19 +348,17 @@ Then('user does not see {string} in the {string} configuration tab', (configOpt:
   cy.getBySel(`${tab}-config-editor`).should('not.contain', configOpt);
 });
 
-When('user opens the Trace Configuration modal', () => {
+When('user opens Tracing Discovery', () => {
   cy.waitForReact();
-  cy.contains('Configuration Tester').click();
+  cy.contains('button', 'Configuration Discovery').click();
 });
 
-Then('user sees the Trace Configuration modal', () => {
-  cy.get('.pf-v5-c-modal-box').should('be.visible');
-  cy.contains('Configuration Tester').should('be.visible');
-});
-
-Then('user sees the Discovery and Tester tabs', () => {
-  cy.get('.pf-v5-c-tabs__item').contains('Discovery').should('exist');
-  cy.get('.pf-v5-c-tabs__item').contains('Tester').should('exist');
+Then('user sees the Tracing Discovery modal', () => {
+  cy.getBySel('modal-tracing-discovery')
+    .closest('[role="dialog"]')
+    .should('be.visible')
+    .contains('Configuration Discovery')
+    .should('be.visible');
 });
 
 Then('user sees the action buttons fixed at the bottom', () => {
@@ -380,97 +378,8 @@ Then('user verifies the Discovery information is correct', () => {
   cy.get('#discovery-tab-content').get('#configuration-logs').contains('Checking open ports');
 });
 
-When('user clicks the Rediscover button in the Discovery tab', () => {
-  cy.get('.pf-v5-c-modal-box').within(() => {
+When('user clicks the Rediscover button', () => {
+  cy.getBySel('modal-tracing-discovery').within(() => {
     cy.contains('button', 'Rediscover').click();
-  });
-});
-
-When('user switches to the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.contains('button', 'Tester').click();
-  });
-});
-
-When('user changes the provider in the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'provider';
-      let replacer = 'tempo';
-      let provider = 'jaeger';
-
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        if (line.toString().toLowerCase().includes(searchText)) {
-          if (line.includes('tempo')) {
-            replacer = 'jaeger';
-            provider = 'tempo';
-          }
-          break;
-        }
-      }
-      let val: string = editor.getValue();
-      val = val.replace(`provider: ${provider}`, `provider: ${replacer}`);
-      editor.setValue(val);
-    });
-  });
-});
-
-When('user changes the useGRPC in the Tester tab', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'useGRPC';
-      let currentValue: string | null = null;
-      let targetValue = 'true';
-
-      // Find the line containing useGRPC and determine current value
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        const lowerLine = line.toLowerCase();
-        if (lowerLine.includes(searchText.toLowerCase())) {
-          // Check for both true and false patterns
-          if (line.match(/:\s*(true|false)/i)) {
-            if (line.match(/:\s*true/i)) {
-              currentValue = 'true';
-              targetValue = 'false';
-            } else if (line.match(/:\s*false/i)) {
-              currentValue = 'false';
-              targetValue = 'true';
-            }
-          }
-          break;
-        }
-      }
-
-      // Replace the value using regex to handle various formats (with/without spaces, quotes, etc.)
-      let val: string = editor.getValue();
-      if (currentValue !== null) {
-        // Replace useGRPC with various formats: "useGRPC: true", "useGRPC:false", "useGRPC: true", etc.
-        val = val.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
-        editor.setValue(val);
-      }
-    });
-  });
-});
-
-When('user clicks the Test Configuration button', () => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.contains('Test Configuration').click();
-  });
-});
-
-Then('user sees the Tester result {string}', (result: string) => {
-  cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    if (result === 'incorrect') {
-      cy.get('span[data-test="icon-error-validation"]').should('exist');
-    } else {
-      cy.get('span[data-test="icon-correct-validation"]').should('exist');
-    }
   });
 });

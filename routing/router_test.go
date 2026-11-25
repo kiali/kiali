@@ -19,6 +19,20 @@ import (
 	"github.com/kiali/kiali/util/filetest"
 )
 
+func TestTracingTesterRouteRemoved(t *testing.T) {
+	conf := new(config.Config)
+	clientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router, err := NewRouter(conf, nil, clientFactory, nil, nil, nil, nil, nil, nil, filetest.StaticAssetDir(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/tracing/check", nil))
+	assert.Equal(t, http.StatusNotFound, response.Code)
+	assert.NotNil(t, router.Get("Diagnose"))
+}
+
 func TestDrawPathProperly(t *testing.T) {
 	conf := new(config.Config)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
