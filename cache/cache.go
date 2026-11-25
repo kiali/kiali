@@ -407,7 +407,13 @@ func WithClusterAccess(clusterAccess *ClusterAccess) Option {
 
 // WithSkippedClusters records the remote clusters whose registration was definitively broken at
 // startup, so consumers of the cache can treat them consistently: they are not in kubeCache, and
-// authorization surfaces must fail closed for them (see SkippedClusters).
+// authorization surfaces must fail closed for them (see SkippedClusters). The list is a snapshot
+// of the client factory's registry taken once at cache construction - a deliberate shape: the
+// per-request checks that read it stay a lock-free map read rather than a cross-package call
+// into the factory's mutex. It is therefore consistent only because cluster skipping is
+// startup-only (see ClientFactory.SkipCluster's contract): construction order in runServer
+// guarantees every skip has been recorded before the snapshot is taken, and no caller may skip
+// a cluster afterwards.
 func WithSkippedClusters(clusters []string) Option {
 	return func(c *kialiCacheImpl) {
 		if c.skippedClusters == nil {

@@ -59,6 +59,11 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 
 	log.Info("Initializing Kiali Cache")
+	// WithSkippedClusters takes a snapshot of the factory's registry: newManager above
+	// has already run setupRemoteClusters, so every definitively broken registration
+	// has been recorded. Skipping is startup-only by contract (see
+	// ClientFactory.SkipCluster) - a later skip would desynchronize the cache's
+	// authorization surfaces from client creation.
 	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf,
 		cache.WithClusterAccess(clusterAccess),
 		cache.WithSkippedClusters(clientFactory.SkippedClusters()),

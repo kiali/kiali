@@ -45,6 +45,11 @@ type ClientFactory interface {
 	// subsequent user-client requests for it are refused. Callers must only skip clusters whose
 	// registration is definitively broken (for example, credentials rejected with 401 or a TLS
 	// misconfiguration) - never one that is merely unreachable, which recovers on its own.
+	// This is startup-only: the Kiali cache snapshots the skipped set at its construction
+	// (see WithSkippedClusters) to keep per-request authorization checks a lock-free map
+	// read, so a call made after the cache is built would drop the cluster's clients here
+	// while the cache's authorization surfaces still serve it - the two would silently
+	// diverge. The runtime degradation path is the ClusterAccess machinery, not this.
 	SkipCluster(cluster string, reason error)
 	// SkippedClusters returns the names of the skipped clusters, sorted.
 	SkippedClusters() []string
