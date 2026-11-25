@@ -13,6 +13,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
@@ -33,20 +34,23 @@ const (
 	defaultTailLines           = 100
 	defaultTraceLimit          = 20
 	maxLogFetchBytes           = int64(256 * 1024)
+	maxMaxEnvoyConfigDumps     = 10
+	maxMaxLogPods              = 20
+	maxSnapshotDurationSeconds = 24 * 60 * 60
 )
 
-func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
+func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (TroubleshootingSnapshotResponse, string, int) {
 	parsed, errMsg, code := parseArgs(args, kialiInterface)
 	if code != http.StatusOK {
-		return errMsg, code
+		return TroubleshootingSnapshotResponse{}, errMsg, code
 	}
 	if errMsg, code := validateNamespaceAccess(kialiInterface, parsed); code != http.StatusOK {
-		return errMsg, code
+		return TroubleshootingSnapshotResponse{}, errMsg, code
 	}
 
 	workloads, target, resolveErrMsg, resolveCode := resolveTarget(kialiInterface, parsed)
 	if resolveCode != http.StatusOK {
-		return resolveErrMsg, resolveCode
+		return TroubleshootingSnapshotResponse{}, resolveErrMsg, resolveCode
 	}
 
 	response := TroubleshootingSnapshotResponse{
@@ -67,7 +71,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	collectLogs(kialiInterface, parsed, workloads, &response)
 	collectEnvoyConfigDumps(kialiInterface, parsed, workloads, &response)
 
-	return response, http.StatusOK
+	return response, "", http.StatusOK
 }
 
 func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterface) (TroubleshootingSnapshotArgs, string, int) {
@@ -85,14 +89,25 @@ func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterfa
 	parsed.Reporter = mcputil.GetStringOrDefault(args, "source", "reporter")
 	parsed.Since = mcputil.GetStringArg(args, "since", "startTime", "start_time")
 	parsed.To = mcputil.GetStringArg(args, "to", "endTime", "end_time")
-	parsed.DurationSeconds = mcputil.AsIntOrDefault(args, defaultSnapshotSeconds, "durationSeconds", "duration_seconds")
+	var errMsg string
+	var code int
+	parsed.DurationSeconds, errMsg, code = parsePositiveIntArg(args, defaultSnapshotSeconds, maxSnapshotDurationSeconds, "durationSeconds", "duration_seconds")
+	if code != http.StatusOK {
+		return parsed, errMsg, code
+	}
 	parsed.IncludeLogs = mcputil.AsBoolOrDefault(args, true, "includeLogs", "include_logs")
 	parsed.IncludeMetrics = mcputil.AsBoolOrDefault(args, true, "includeMetrics", "include_metrics")
 	parsed.IncludeTraces = mcputil.AsBoolOrDefault(args, true, "includeTraces", "include_traces")
 	parsed.IncludeGraph = mcputil.AsBoolOrDefault(args, true, "includeGraph", "include_graph")
 	parsed.IncludeEnvoyConfigDump = mcputil.AsBoolOrDefault(args, true, "includeEnvoyConfigDump", "include_envoy_config_dump")
-	parsed.MaxLogPods = mcputil.AsIntOrDefault(args, defaultMaxLogPods, "maxLogPods", "max_log_pods")
-	parsed.MaxEnvoyConfigDumps = mcputil.AsIntOrDefault(args, defaultMaxEnvoyConfigDumps, "maxEnvoyConfigDumps", "max_envoy_config_dumps")
+	parsed.MaxLogPods, errMsg, code = parsePositiveIntArg(args, defaultMaxLogPods, maxMaxLogPods, "maxLogPods", "max_log_pods")
+	if code != http.StatusOK {
+		return parsed, errMsg, code
+	}
+	parsed.MaxEnvoyConfigDumps, errMsg, code = parsePositiveIntArg(args, defaultMaxEnvoyConfigDumps, maxMaxEnvoyConfigDumps, "maxEnvoyConfigDumps", "max_envoy_config_dumps")
+	if code != http.StatusOK {
+		return parsed, errMsg, code
+	}
 
 	if parsed.Namespace == "" {
 		return parsed, "namespace is required", http.StatusBadRequest
@@ -102,9 +117,6 @@ func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterfa
 	}
 	if parsed.WorkloadName != "" && parsed.ServiceName != "" {
 		return parsed, "provide either workloadName or serviceName, not both", http.StatusBadRequest
-	}
-	if parsed.DurationSeconds <= 0 {
-		return parsed, "durationSeconds must be greater than zero", http.StatusBadRequest
 	}
 	if (parsed.Since == "") != (parsed.To == "") {
 		return parsed, "provide both since and to, or omit them to use durationSeconds ending now", http.StatusBadRequest
@@ -137,6 +149,9 @@ func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterfa
 		if !end.After(start) {
 			return parsed, "to must be later than since", http.StatusBadRequest
 		}
+		if end.Sub(start) > time.Duration(maxSnapshotDurationSeconds)*time.Second {
+			return parsed, fmt.Sprintf("the since/to window must not exceed %d seconds", maxSnapshotDurationSeconds), http.StatusBadRequest
+		}
 		parsed.SinceTime = start
 		parsed.ToTime = end
 	} else {
@@ -147,6 +162,23 @@ func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterfa
 	}
 
 	return parsed, "", http.StatusOK
+}
+
+func parsePositiveIntArg(args map[string]interface{}, defaultValue, maxValue int, keys ...string) (int, string, int) {
+	label := keys[0]
+	for _, key := range keys {
+		if val, ok := args[key]; ok {
+			parsed := mcputil.AsInt(val)
+			if parsed <= 0 {
+				return 0, fmt.Sprintf("%s must be greater than zero", label), http.StatusBadRequest
+			}
+			if parsed > maxValue {
+				return 0, fmt.Sprintf("%s must not exceed %d", label, maxValue), http.StatusBadRequest
+			}
+			return parsed, "", http.StatusOK
+		}
+	}
+	return defaultValue, "", http.StatusOK
 }
 
 func argsContainAny(args map[string]interface{}, names ...string) bool {
@@ -172,26 +204,34 @@ func validateNamespaceAccess(kialiInterface *mcputil.KialiInterface, args Troubl
 func resolveTarget(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs) ([]*models.Workload, TargetSummary, string, int) {
 	ctx := kialiInterface.Request.Context()
 	if args.ServiceName != "" {
-		details, err := kialiInterface.BusinessLayer.Svc.GetServiceDetails(ctx, args.ClusterName, args.Namespace, args.ServiceName, args.ToTime.Sub(args.SinceTime).String(), args.ToTime)
+		svc, err := kialiInterface.BusinessLayer.Svc.GetService(ctx, args.ClusterName, args.Namespace, args.ServiceName)
 		if err != nil {
 			errMsg, code := resourceError("service", args.Namespace, args.ServiceName, err)
 			return nil, TargetSummary{}, errMsg, code
 		}
 
-		workloads := make([]*models.Workload, 0, len(details.Workloads))
-		for _, workload := range details.Workloads {
-			if workload == nil || workload.Name == "" {
-				continue
-			}
-			fullWorkload, workloadErr := kialiInterface.BusinessLayer.Workload.GetWorkload(ctx, business.WorkloadCriteria{
-				Cluster:      args.ClusterName,
-				Namespace:    args.Namespace,
-				WorkloadName: workload.Name,
-				QueryTime:    args.ToTime,
-				RateInterval: args.ToTime.Sub(args.SinceTime).String(),
-			})
-			if workloadErr == nil {
-				workloads = append(workloads, fullWorkload)
+		rateInterval := args.ToTime.Sub(args.SinceTime).String()
+		workloads := make([]*models.Workload, 0)
+		labelSelector := labels.Set(svc.Selectors).String()
+		if labelSelector != "" {
+			namespaceWorkloads, listErr := kialiInterface.BusinessLayer.Workload.GetNamespaceWorkloads(ctx, args.ClusterName, args.Namespace, labelSelector)
+			if listErr == nil {
+				workloads = make([]*models.Workload, 0, len(namespaceWorkloads))
+				for _, workload := range namespaceWorkloads {
+					if workload == nil || workload.Name == "" {
+						continue
+					}
+					fullWorkload, workloadErr := kialiInterface.BusinessLayer.Workload.GetWorkload(ctx, business.WorkloadCriteria{
+						Cluster:      args.ClusterName,
+						Namespace:    args.Namespace,
+						WorkloadName: workload.Name,
+						QueryTime:    args.ToTime,
+						RateInterval: rateInterval,
+					})
+					if workloadErr == nil {
+						workloads = append(workloads, fullWorkload)
+					}
+				}
 			}
 		}
 
@@ -261,7 +301,8 @@ func collectMetrics(kialiInterface *mcputil.KialiInterface, args Troubleshooting
 				resourceType = "service"
 				resourceName = args.ServiceName
 			}
-			response.Metrics = get_metrics.SummarizeMetricsForLLM(metrics, resourceType, args.Namespace, resourceName, &query)
+			summary := get_metrics.SummarizeMetricsForLLM(metrics, resourceType, args.Namespace, resourceName, &query)
+			response.Metrics = &summary
 			status.Included = true
 		}
 	}
@@ -299,7 +340,8 @@ func collectGraph(kialiInterface *mcputil.KialiInterface, args TroubleshootingSn
 				setError(response, "graph", err)
 				status.Reason = "graph response encoding failed"
 			} else {
-				response.Graph = get_mesh_traffic_graph.TransformGraph(raw, args.GraphType, []string{args.Namespace}, nil, nil)
+				graph := get_mesh_traffic_graph.TransformGraph(raw, args.GraphType, []string{args.Namespace}, nil, nil)
+				response.Graph = &graph
 				status.Included = true
 			}
 		}
@@ -314,16 +356,6 @@ func collectTraces(kialiInterface *mcputil.KialiInterface, args TroubleshootingS
 	} else if !status.Enabled {
 		status.Reason = "tracing is disabled"
 	} else {
-		serviceName := args.ServiceName
-		if serviceName == "" {
-			tracingName, err := kialiInterface.BusinessLayer.Workload.GetWorkloadTracingName(kialiInterface.Request.Context(), args.ClusterName, args.Namespace, args.WorkloadName)
-			if err == nil && tracingName.Lookup != "" {
-				serviceName = tracingName.Lookup
-			} else {
-				serviceName = args.WorkloadName
-			}
-		}
-
 		traceQuery := models.TracingQuery{
 			Start:   args.SinceTime,
 			End:     args.ToTime,
@@ -336,12 +368,12 @@ func collectTraces(kialiInterface *mcputil.KialiInterface, args TroubleshootingS
 		}
 		traceQuery.Tags[models.IstioClusterTag] = args.ClusterName
 
-		traces, err := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(kialiInterface.Request.Context(), args.Namespace, serviceName, traceQuery)
+		traces, err := fetchSnapshotTraces(kialiInterface.Request.Context(), &kialiInterface.BusinessLayer.Tracing, args, traceQuery)
 		if err != nil {
 			setError(response, "traces", err)
 			status.Reason = "trace request failed"
 		} else {
-			response.Traces = buildTraceSummary(serviceName, traces)
+			response.Traces = &traces
 			status.Included = true
 		}
 	}
@@ -364,8 +396,7 @@ func collectLogs(kialiInterface *mcputil.KialiInterface, args TroubleshootingSna
 				if pod == nil || pod.Name == "" || podCount >= args.MaxLogPods {
 					continue
 				}
-				podCount++
-				item := SourceResult{
+				item := PodLogSource{
 					Cluster:   args.ClusterName,
 					Kind:      "pod",
 					Name:      pod.Name,
@@ -376,6 +407,7 @@ func collectLogs(kialiInterface *mcputil.KialiInterface, args TroubleshootingSna
 					item.Error = err.Error()
 				} else {
 					item.Data = logs
+					podCount++
 					status.Included = true
 				}
 				response.Logs = append(response.Logs, item)
@@ -460,8 +492,7 @@ func collectEnvoyConfigDumps(kialiInterface *mcputil.KialiInterface, args Troubl
 		if pod == nil {
 			continue
 		}
-		dumpCount++
-		item := SourceResult{
+		item := EnvoyConfigDumpSource{
 			Cluster:   args.ClusterName,
 			Kind:      "pod",
 			Name:      pod.Name,
@@ -472,6 +503,7 @@ func collectEnvoyConfigDumps(kialiInterface *mcputil.KialiInterface, args Troubl
 			item.Error = err.Error()
 		} else {
 			item.Data = dump
+			dumpCount++
 			status.Included = true
 		}
 		response.EnvoyConfigDumps = append(response.EnvoyConfigDumps, item)
@@ -506,6 +538,26 @@ func countPods(workloads []*models.Workload) int {
 		}
 	}
 	return count
+}
+
+type snapshotTracing interface {
+	GetServiceTraces(ctx context.Context, ns, service string, query models.TracingQuery) (*jaegerModel.TracingResponse, error)
+	GetWorkloadTraces(ctx context.Context, ns, workload string, query models.TracingQuery) (*jaegerModel.TracingResponse, error)
+}
+
+func fetchSnapshotTraces(ctx context.Context, tracing snapshotTracing, args TroubleshootingSnapshotArgs, query models.TracingQuery) (TracesResult, error) {
+	if args.WorkloadName != "" {
+		traces, err := tracing.GetWorkloadTraces(ctx, args.Namespace, args.WorkloadName, query)
+		if err != nil {
+			return TracesResult{}, err
+		}
+		return buildTraceSummary(args.WorkloadName, traces), nil
+	}
+	traces, err := tracing.GetServiceTraces(ctx, args.Namespace, args.ServiceName, query)
+	if err != nil {
+		return TracesResult{}, err
+	}
+	return buildTraceSummary(args.ServiceName, traces), nil
 }
 
 func buildTraceSummary(serviceName string, traces *jaegerModel.TracingResponse) TracesResult {

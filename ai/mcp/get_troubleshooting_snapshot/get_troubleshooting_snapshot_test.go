@@ -1,6 +1,7 @@
 package get_troubleshooting_snapshot
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -14,6 +15,21 @@ import (
 	jaegerModel "github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
+
+type stubSnapshotTracing struct {
+	serviceCalls  int
+	workloadCalls int
+}
+
+func (s *stubSnapshotTracing) GetServiceTraces(_ context.Context, _, _ string, _ models.TracingQuery) (*jaegerModel.TracingResponse, error) {
+	s.serviceCalls++
+	return &jaegerModel.TracingResponse{}, nil
+}
+
+func (s *stubSnapshotTracing) GetWorkloadTraces(_ context.Context, _, _ string, _ models.TracingQuery) (*jaegerModel.TracingResponse, error) {
+	s.workloadCalls++
+	return &jaegerModel.TracingResponse{}, nil
+}
 
 func testKialiInterface() *mcputil.KialiInterface {
 	return &mcputil.KialiInterface{Conf: &config.Config{}}
@@ -162,6 +178,67 @@ func TestContainerForPod(t *testing.T) {
 
 	pod.Containers = []*models.ContainerInfo{{Name: "productpage"}, {Name: "istio-proxy"}}
 	assert.Equal(t, "productpage", containerForPod(pod))
+}
+
+func TestFetchSnapshotTraces_RoutesByTarget(t *testing.T) {
+	query := models.TracingQuery{Cluster: "east"}
+	stub := &stubSnapshotTracing{}
+
+	_, err := fetchSnapshotTraces(context.Background(), stub, TroubleshootingSnapshotArgs{
+		Namespace:    "bookinfo",
+		ServiceName:  "productpage",
+		WorkloadName: "",
+	}, query)
+	require.NoError(t, err)
+	assert.Equal(t, 1, stub.serviceCalls)
+	assert.Equal(t, 0, stub.workloadCalls)
+
+	stub = &stubSnapshotTracing{}
+	_, err = fetchSnapshotTraces(context.Background(), stub, TroubleshootingSnapshotArgs{
+		Namespace:    "bookinfo",
+		WorkloadName: "productpage-v1",
+	}, query)
+	require.NoError(t, err)
+	assert.Equal(t, 0, stub.serviceCalls)
+	assert.Equal(t, 1, stub.workloadCalls)
+}
+
+func TestParseArgs_RejectsInvalidLimits(t *testing.T) {
+	base := map[string]any{
+		"namespace":    "bookinfo",
+		"workloadName": "details-v1",
+	}
+
+	_, errMsg, code := parseArgs(map[string]any{
+		"namespace":    "bookinfo",
+		"workloadName": "details-v1",
+		"maxLogPods":   0,
+	}, testKialiInterface())
+	assert.Equal(t, http.StatusBadRequest, code)
+	assert.Contains(t, errMsg, "maxLogPods")
+
+	_, errMsg, code = parseArgs(map[string]any{
+		"namespace":           "bookinfo",
+		"workloadName":        "details-v1",
+		"maxEnvoyConfigDumps": -1,
+	}, testKialiInterface())
+	assert.Equal(t, http.StatusBadRequest, code)
+	assert.Contains(t, errMsg, "maxEnvoyConfigDumps")
+
+	_, errMsg, code = parseArgs(mergeArgs(base, map[string]any{"durationSeconds": maxSnapshotDurationSeconds + 1}), testKialiInterface())
+	assert.Equal(t, http.StatusBadRequest, code)
+	assert.Contains(t, errMsg, "durationSeconds")
+}
+
+func mergeArgs(base, extra map[string]any) map[string]any {
+	merged := map[string]any{}
+	for key, value := range base {
+		merged[key] = value
+	}
+	for key, value := range extra {
+		merged[key] = value
+	}
+	return merged
 }
 
 func TestDefaultWindowHelpers(t *testing.T) {

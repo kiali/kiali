@@ -1,6 +1,12 @@
 package get_troubleshooting_snapshot
 
-import "time"
+import (
+	"time"
+
+	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
+	"github.com/kiali/kiali/ai/mcp/get_metrics"
+	"github.com/kiali/kiali/models"
+)
 
 type TroubleshootingSnapshotArgs struct {
 	ClusterName            string    `json:"clusterName,omitempty"`
@@ -30,13 +36,22 @@ type SourceStatus struct {
 	Reason   string `json:"reason,omitempty"`
 }
 
-type SourceResult struct {
-	Cluster   string      `json:"cluster"`
-	Data      interface{} `json:"data,omitempty"`
-	Error     string      `json:"error,omitempty"`
-	Kind      string      `json:"kind"`
-	Name      string      `json:"name"`
-	Namespace string      `json:"namespace"`
+type PodLogSource struct {
+	Cluster   string     `json:"cluster"`
+	Data      LogsResult `json:"data,omitempty"`
+	Error     string     `json:"error,omitempty"`
+	Kind      string     `json:"kind"`
+	Name      string     `json:"name"`
+	Namespace string     `json:"namespace"`
+}
+
+type EnvoyConfigDumpSource struct {
+	Cluster   string                `json:"cluster"`
+	Data      models.EnvoyProxyDump `json:"data,omitempty"`
+	Error     string                `json:"error,omitempty"`
+	Kind      string                `json:"kind"`
+	Name      string                `json:"name"`
+	Namespace string                `json:"namespace"`
 }
 
 type TargetSummary struct {
@@ -73,14 +88,14 @@ type TracesResult struct {
 }
 
 type TroubleshootingSnapshotResponse struct {
-	EnvoyConfigDumps []SourceResult              `json:"envoyConfigDumps,omitempty"`
-	Errors           map[string]string           `json:"errors,omitempty"`
-	Graph            interface{}                 `json:"graph,omitempty"`
-	Logs             []SourceResult              `json:"logs,omitempty"`
-	Metrics          interface{}                 `json:"metrics,omitempty"`
-	Query            TroubleshootingSnapshotArgs `json:"query"`
-	Sources          map[string]SourceStatus     `json:"sources"`
-	Target           TargetSummary               `json:"target"`
-	Traces           interface{}                 `json:"traces,omitempty"`
-	Warnings         []string                    `json:"warnings,omitempty"`
+	EnvoyConfigDumps []EnvoyConfigDumpSource                      `json:"envoyConfigDumps,omitempty"`
+	Errors           map[string]string                            `json:"errors,omitempty"`
+	Graph            *get_mesh_traffic_graph.CompactGraphResponse `json:"graph,omitempty"`
+	Logs             []PodLogSource                               `json:"logs,omitempty"`
+	Metrics          *get_metrics.LLMMetricsSummary               `json:"metrics,omitempty"`
+	Query            TroubleshootingSnapshotArgs                  `json:"query"`
+	Sources          map[string]SourceStatus                      `json:"sources"`
+	Target           TargetSummary                                `json:"target"`
+	Traces           *TracesResult                                `json:"traces,omitempty"`
+	Warnings         []string                                     `json:"warnings,omitempty"`
 }

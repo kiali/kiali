@@ -210,7 +210,11 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 	case "get_metrics":
 		return get_metrics.Execute(kialiInterface, args)
 	case "get_troubleshooting_snapshot":
-		return get_troubleshooting_snapshot.Execute(kialiInterface, args)
+		resp, errMsg, code := get_troubleshooting_snapshot.Execute(kialiInterface, args)
+		if errMsg != "" {
+			return errMsg, code
+		}
+		return resp, code
 	default:
 		return nil, http.StatusNotFound
 	}
