@@ -353,7 +353,11 @@ func (in *K8SClient) checkIsIstioGateway(ctx context.Context) bool {
 	return in.capabilityProbe(ctx, "istioGateway", &in.isIstioGateway, func() (bool, bool) {
 		res, err := serverResourcesForGroupVersion(ctx, in, NetworkingGroupVersionV1.String())
 		if err != nil {
-			return false, true
+			if !errors.IsNotFound(err) {
+				// Could not tell (timeout, unreachable): not a definitive absence.
+				return false, true
+			}
+			return false, false
 		}
 		for _, r := range res.APIResources {
 			if r.Kind == GatewayType && r.Name == PluralNames[GatewayType] {
@@ -451,7 +455,11 @@ func (in *K8SClient) checkIsIstioAPI(ctx context.Context) bool {
 	}
 	return in.capabilityProbe(ctx, "istioAPI", &in.isIstioAPI, func() (bool, bool) {
 		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/networking.istio.io").Do(ctx).Raw()
-		return err == nil, err != nil
+		if err != nil && !errors.IsNotFound(err) {
+			// Could not tell (timeout, unreachable): not a definitive absence.
+			return false, true
+		}
+		return err == nil, false
 	})
 }
 

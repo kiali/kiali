@@ -350,6 +350,103 @@ func TestCapabilityProbeBackoffAndMemoization(t *testing.T) {
 	}
 }
 
+// TestCapabilityProbeNotFoundIsDefinitive covers the Istio capability probes' error
+// classification: a 404 from the discovery endpoint is a definitive "not installed"
+// and must be memoized - a cluster without Istio CRDs would otherwise be re-probed
+// with a live discovery round trip after every backoff expiry, for the process
+// lifetime - while a 500 stays transient (backoff, no memo). The gateway-API and
+// platform probes already classify this way; the Istio probes must match.
+func TestCapabilityProbeNotFoundIsDefinitive(t *testing.T) {
+	var requests int
+	newServer := func(status int) *httptest.Server {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			requests++
+			w.WriteHeader(status)
+			if status == http.StatusNotFound {
+				_ = json.NewEncoder(w).Encode(&struct {
+					Kind   string `json:"kind"`
+					Code   int    `json:"code"`
+					Status string `json:"status"`
+				}{Kind: "Status", Code: status, Status: "Failure"})
+			}
+		}))
+		t.Cleanup(server.Close)
+		return server
+	}
+	rewindBackoff := func(client *K8SClient, probe string) {
+		client.rwMutex.Lock()
+		defer client.rwMutex.Unlock()
+		if client.probeFailures == nil {
+			client.probeFailures = map[string]time.Time{}
+		}
+		client.probeFailures[probe] = time.Now().Add(-2 * capabilityProbeBackoff)
+	}
+
+	// The istioAPI probe: a 404 is definitive - memoized across calls, and not
+	// re-probed even after a backoff expiry.
+	requests = 0
+	server := newServer(http.StatusNotFound)
+	client, err := NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "home"}, config.NewConfig())
+	if err != nil {
+		t.Fatalf("NewClient failed: %v", err)
+	}
+	for i := 0; i < 3; i++ {
+		if client.IsIstioAPI() {
+			t.Error("a 404 must report no Istio API")
+		}
+	}
+	if requests != 1 {
+		t.Errorf("probe made %d requests, want 1 (404 memoized)", requests)
+	}
+	if client.isIstioAPI == nil || *client.isIstioAPI {
+		t.Error("an Istio API 404 must memoize false - it is a definitive answer, not a transient one")
+	}
+	rewindBackoff(client, "istioAPI")
+	_ = client.IsIstioAPI()
+	if requests != 1 {
+		t.Errorf("probe made %d requests after backoff expiry, want 1 (a definitive 404 stays memoized)", requests)
+	}
+
+	// The istioGateway probe holds the same contract.
+	requests = 0
+	server = newServer(http.StatusNotFound)
+	client, err = NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "home"}, config.NewConfig())
+	if err != nil {
+		t.Fatalf("NewClient failed: %v", err)
+	}
+	for i := 0; i < 3; i++ {
+		if client.IsIstioGateway() {
+			t.Error("a 404 must report no Istio gateway type")
+		}
+	}
+	if requests != 1 {
+		t.Errorf("gateway probe made %d requests, want 1 (404 memoized)", requests)
+	}
+	if client.isIstioGateway == nil || *client.isIstioGateway {
+		t.Error("an Istio gateway 404 must memoize false - it is a definitive answer, not a transient one")
+	}
+
+	// A 500 is transient: not memoized, and the back-to-back call is suppressed.
+	requests = 0
+	server = newServer(http.StatusInternalServerError)
+	client, err = NewClient(ClusterInfo{ClientConfig: &rest.Config{Host: server.URL}, Name: "home"}, config.NewConfig())
+	if err != nil {
+		t.Fatalf("NewClient failed: %v", err)
+	}
+	if client.IsIstioAPI() {
+		t.Error("a 500ing discovery endpoint must not report the Istio API")
+	}
+	if client.IsIstioAPI() {
+		t.Error("a 500ing discovery endpoint must not report the Istio API on retry either")
+	}
+	if requests != 1 {
+		t.Errorf("probe made %d requests, want 1 (second call backed off)", requests)
+	}
+	if client.isIstioAPI != nil {
+		t.Error("a transient failure must not be memoized")
+	}
+}
+
 // TestCapabilityProbeCtxDeadlineAbandoned covers the context-aware capability probes: a
 // probe abandoned at the caller's deadline answers false without memoizing (a later call
 // retries), and once the peer answers the same client discovers the capability without a
