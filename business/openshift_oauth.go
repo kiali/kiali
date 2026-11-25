@@ -355,10 +355,6 @@ func (in *OpenshiftOAuthService) getOAuthConfig(ctx context.Context, cluster str
 		building.err = err
 		return nil, building.err
 	}
-	if client == nil {
-		building.err = fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
-		return nil, building.err
-	}
 
 	buildTimeout := in.conf.KialiInternal.KubernetesClient.OAuthConfigTimeout
 	var cancel context.CancelFunc

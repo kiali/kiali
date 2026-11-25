@@ -129,8 +129,10 @@ func ClusterHealth(
 				// A partially-revoked namespace passes the user's accessible check (the
 				// cached sets are deliberately unfiltered), but its health is the SA's
 				// frozen pre-revocation snapshot: refuse it like the detail endpoints,
-				// with the same 503 semantics.
-				if kialiCache.IsClusterSkipped(cluster) || kialiCache.IsNamespaceRevoked(cluster, ns) {
+				// with the same 503 semantics. A skipped cluster cannot reach here: it
+				// has no user client, so its namespaces are never in the accessible set
+				// and the not-accessible guard above has already responded.
+				if kialiCache.IsNamespaceRevoked(cluster, ns) {
 					RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("namespace [%s] in cluster [%s]: %s", ns, cluster, cache.ErrNamespaceRevoked.Error()))
 					return
 				}
