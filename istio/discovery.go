@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"golang.org/x/exp/maps"
-
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
