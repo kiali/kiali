@@ -108,81 +108,14 @@ func Execute(
 		resp.Resolved = "pod"
 	}
 
-	// Always compute requests/limits from the Pod spec so we can return that even if metrics are missing.
-	pod, podErr := getPod(kialiInterface.Request, kialiInterface.ClientFactory, clusterName, namespace, resp.PodName)
+	built, podErr := BuildPodPerformanceForPod(kialiInterface, clusterName, namespace, workloadName, resp.PodName, timeRange, queryTime)
 	if podErr != nil {
 		if k8serrors.IsNotFound(podErr) {
 			return fmt.Sprintf("Pod %q was not found in namespace %q (cluster %q). The pod may have been deleted, not yet created, or the name may be incorrect.", resp.PodName, namespace, clusterName), http.StatusOK
 		}
 		return fmt.Sprintf("Unable to retrieve pod %q in namespace %q: %v", resp.PodName, namespace, podErr), http.StatusOK
 	}
-	containerReqLim := extractContainerRequestsLimits(pod)
-	resp.Containers = make([]ContainerPerformance, 0, len(containerReqLim))
-
-	// Fill requests/limits into response (per container + total).
-	var totalCPUReq, totalCPULim float64
-	var totalMemReqBytes, totalMemLimBytes float64
-	for containerName, rl := range containerReqLim {
-		c := ContainerPerformance{Container: containerName}
-
-		if rl.CPURequestCores != nil {
-			v := *rl.CPURequestCores
-			c.CPU.Request = &ScalarValue{Value: v, Unit: "cores"}
-			totalCPUReq += v
-		}
-		if rl.CPULimitCores != nil {
-			v := *rl.CPULimitCores
-			c.CPU.Limit = &ScalarValue{Value: v, Unit: "cores"}
-			totalCPULim += v
-		}
-		if rl.MemoryRequestBytes != nil {
-			v := *rl.MemoryRequestBytes
-			c.Memory.Request = &ScalarValue{Value: v, Unit: "bytes"}
-			totalMemReqBytes += v
-		}
-		if rl.MemoryLimitBytes != nil {
-			v := *rl.MemoryLimitBytes
-			c.Memory.Limit = &ScalarValue{Value: v, Unit: "bytes"}
-			totalMemLimBytes += v
-		}
-
-		resp.Containers = append(resp.Containers, c)
-	}
-	if totalCPUReq > 0 {
-		resp.CPU.Request = &ScalarValue{Value: totalCPUReq, Unit: "cores"}
-	}
-	if totalCPULim > 0 {
-		resp.CPU.Limit = &ScalarValue{Value: totalCPULim, Unit: "cores"}
-	}
-	if totalMemReqBytes > 0 {
-		resp.Memory.Request = &ScalarValue{Value: totalMemReqBytes, Unit: "bytes"}
-	}
-	if totalMemLimBytes > 0 {
-		resp.Memory.Limit = &ScalarValue{Value: totalMemLimBytes, Unit: "bytes"}
-	}
-
-	// Use resolved pod name (when workloadName was provided).
-	fillFromPrometheus(kialiInterface.Request, kialiInterface.Prom, namespace, resp.PodName, timeRange, queryTime, &resp)
-
-	// Compute ratios on totals.
-	resp.CPU.UsageRequestRatio = ratio(resp.CPU.Usage, resp.CPU.Request)
-	resp.CPU.UsageLimitRatio = ratio(resp.CPU.Usage, resp.CPU.Limit)
-	resp.Memory.UsageRequestRatio = ratio(resp.Memory.Usage, resp.Memory.Request)
-	resp.Memory.UsageLimitRatio = ratio(resp.Memory.Usage, resp.Memory.Limit)
-
-	// Compute ratios on per container rows.
-	for i := range resp.Containers {
-		c := &resp.Containers[i]
-		c.CPU.UsageRequestRatio = ratio(c.CPU.Usage, c.CPU.Request)
-		c.CPU.UsageLimitRatio = ratio(c.CPU.Usage, c.CPU.Limit)
-		c.Memory.UsageRequestRatio = ratio(c.Memory.Usage, c.Memory.Request)
-		c.Memory.UsageLimitRatio = ratio(c.Memory.Usage, c.Memory.Limit)
-	}
-
-	if len(resp.Errors) == 0 {
-		resp.Errors = nil
-	}
-	return renderHumanSummary(resp), http.StatusOK
+	return renderHumanSummary(built), http.StatusOK
 }
 
 func renderHumanSummary(resp PodPerformanceResponse) string {

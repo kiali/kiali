@@ -17,6 +17,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
+	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -69,6 +70,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	collectGraph(kialiInterface, parsed, &response)
 	collectTraces(kialiInterface, parsed, workloads, &response)
 	collectLogs(kialiInterface, parsed, workloads, &response)
+	collectPodPerformance(kialiInterface, parsed, workloads, &response)
 	collectEnvoyConfigDumps(kialiInterface, parsed, workloads, &response)
 
 	return response, "", http.StatusOK
@@ -98,6 +100,7 @@ func parseArgs(args map[string]interface{}, kialiInterface *mcputil.KialiInterfa
 	parsed.IncludeLogs = mcputil.AsBoolOrDefault(args, true, "includeLogs", "include_logs")
 	parsed.IncludeMetrics = mcputil.AsBoolOrDefault(args, true, "includeMetrics", "include_metrics")
 	parsed.IncludeTraces = mcputil.AsBoolOrDefault(args, true, "includeTraces", "include_traces")
+	parsed.IncludePodPerformance = mcputil.AsBoolOrDefault(args, true, "includePodPerformance", "include_pod_performance")
 	parsed.IncludeGraph = mcputil.AsBoolOrDefault(args, true, "includeGraph", "include_graph")
 	parsed.IncludeEnvoyConfigDump = mcputil.AsBoolOrDefault(args, true, "includeEnvoyConfigDump", "include_envoy_config_dump")
 	parsed.MaxLogPods, errMsg, code = parsePositiveIntArg(args, defaultMaxLogPods, maxMaxLogPods, "maxLogPods", "max_log_pods")
@@ -266,84 +269,96 @@ func resourceError(kind, namespace, name string, err error) (string, int) {
 
 func collectMetrics(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs, response *TroubleshootingSnapshotResponse) {
 	status := SourceStatus{Enabled: kialiInterface.Conf.ExternalServices.Prometheus.Enabled, Included: false}
+	response.Metrics = nil
 	if !args.IncludeMetrics {
 		status.Reason = "disabled by request"
-	} else if !status.Enabled {
+		response.Sources["metrics"] = status
+		return
+	}
+	if !status.Enabled {
 		status.Reason = "Prometheus is disabled"
-	} else {
-		query := models.IstioMetricsQuery{
-			Cluster:   args.ClusterName,
-			Direction: args.Direction,
-			Namespace: args.Namespace,
-			Reporter:  args.Reporter,
-		}
-		if args.ServiceName != "" {
-			query.Service = args.ServiceName
-		} else {
-			query.Workload = args.WorkloadName
-		}
-		query.FillDefaults()
-		query.Start = args.SinceTime
-		query.End = args.ToTime
-		query.Step = time.Duration(defaultStepSeconds(args)) * time.Second
-		query.RateInterval = defaultRateInterval(args)
-		query.Quantiles = []string{"0.5", "0.95", "0.99", "0.999"}
-		query.Avg = true
+		response.Sources["metrics"] = status
+		return
+	}
 
-		metrics, err := business.NewMetricsService(kialiInterface.Prom, kialiInterface.Conf).GetMetrics(kialiInterface.Request.Context(), query, nil)
-		if err != nil {
-			setError(response, "metrics", err)
-			status.Reason = "metrics request failed"
-		} else {
-			resourceType := "workload"
-			resourceName := args.WorkloadName
-			if args.ServiceName != "" {
-				resourceType = "service"
-				resourceName = args.ServiceName
-			}
-			summary := get_metrics.SummarizeMetricsForLLM(metrics, resourceType, args.Namespace, resourceName, &query)
-			response.Metrics = &summary
-			status.Included = true
+	query := models.IstioMetricsQuery{
+		Cluster:   args.ClusterName,
+		Direction: args.Direction,
+		Namespace: args.Namespace,
+		Reporter:  args.Reporter,
+	}
+	if args.ServiceName != "" {
+		query.Service = args.ServiceName
+	} else {
+		query.Workload = args.WorkloadName
+	}
+	query.FillDefaults()
+	query.Start = args.SinceTime
+	query.End = args.ToTime
+	query.Step = time.Duration(defaultStepSeconds(args)) * time.Second
+	query.RateInterval = defaultRateInterval(args)
+	query.Quantiles = []string{"0.5", "0.95", "0.99", "0.999"}
+	query.Avg = true
+
+	metrics, err := business.NewMetricsService(kialiInterface.Prom, kialiInterface.Conf).GetMetrics(kialiInterface.Request.Context(), query, nil)
+	if err != nil {
+		setError(response, "metrics", err)
+		status.Reason = "metrics request failed"
+	} else {
+		resourceType := "workload"
+		resourceName := args.WorkloadName
+		if args.ServiceName != "" {
+			resourceType = "service"
+			resourceName = args.ServiceName
 		}
+		summary := get_metrics.SummarizeMetricsForLLM(metrics, resourceType, args.Namespace, resourceName, &query)
+		response.Metrics = &summary
+		status.Included = true
 	}
 	response.Sources["metrics"] = status
 }
 
 func collectGraph(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs, response *TroubleshootingSnapshotResponse) {
 	status := SourceStatus{Enabled: kialiInterface.Conf.ExternalServices.Prometheus.Enabled, Included: false}
+	response.Graph = nil
 	if !args.IncludeGraph {
 		status.Reason = "disabled by request"
-	} else if !status.Enabled {
+		response.Sources["graph"] = status
+		return
+	}
+	if !status.Enabled {
 		status.Reason = "Prometheus is disabled"
-	} else {
-		graphRequest, _ := http.NewRequestWithContext(kialiInterface.Request.Context(), http.MethodGet, "/internal/troubleshooting/graph", nil)
-		query := graphRequest.URL.Query()
-		query.Set("clusterName", args.ClusterName)
-		query.Set("duration", args.ToTime.Sub(args.SinceTime).String())
-		query.Set("graphType", args.GraphType)
-		query.Set("namespaces", args.Namespace)
-		query.Set("queryTime", strconv.FormatInt(args.ToTime.Unix(), 10))
-		graphRequest.URL.RawQuery = query.Encode()
+		response.Sources["graph"] = status
+		return
+	}
 
-		code, payload, _ := graphApi.GraphNamespaces(
-			kialiInterface.Request.Context(),
-			kialiInterface.BusinessLayer,
-			kialiInterface.Prom,
-			graph.NewOptions(graphRequest, kialiInterface.BusinessLayer, kialiInterface.Conf),
-		)
-		if code != http.StatusOK {
-			setError(response, "graph", fmt.Errorf("%v", payload))
-			status.Reason = "graph request failed"
+	graphRequest, _ := http.NewRequestWithContext(kialiInterface.Request.Context(), http.MethodGet, "/internal/troubleshooting/graph", nil)
+	query := graphRequest.URL.Query()
+	query.Set("clusterName", args.ClusterName)
+	query.Set("duration", args.ToTime.Sub(args.SinceTime).String())
+	query.Set("graphType", args.GraphType)
+	query.Set("namespaces", args.Namespace)
+	query.Set("queryTime", strconv.FormatInt(args.ToTime.Unix(), 10))
+	graphRequest.URL.RawQuery = query.Encode()
+
+	code, payload, _ := graphApi.GraphNamespaces(
+		kialiInterface.Request.Context(),
+		kialiInterface.BusinessLayer,
+		kialiInterface.Prom,
+		graph.NewOptions(graphRequest, kialiInterface.BusinessLayer, kialiInterface.Conf),
+	)
+	if code != http.StatusOK {
+		setError(response, "graph", fmt.Errorf("%v", payload))
+		status.Reason = "graph request failed"
+	} else {
+		raw, err := json.Marshal(payload)
+		if err != nil {
+			setError(response, "graph", err)
+			status.Reason = "graph response encoding failed"
 		} else {
-			raw, err := json.Marshal(payload)
-			if err != nil {
-				setError(response, "graph", err)
-				status.Reason = "graph response encoding failed"
-			} else {
-				graph := get_mesh_traffic_graph.TransformGraph(raw, args.GraphType, []string{args.Namespace}, nil, nil)
-				response.Graph = &graph
-				status.Included = true
-			}
+			graph := get_mesh_traffic_graph.TransformGraph(raw, args.GraphType, []string{args.Namespace}, nil, nil)
+			response.Graph = &graph
+			status.Included = true
 		}
 	}
 	response.Sources["graph"] = status
@@ -351,77 +366,162 @@ func collectGraph(kialiInterface *mcputil.KialiInterface, args TroubleshootingSn
 
 func collectTraces(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs, workloads []*models.Workload, response *TroubleshootingSnapshotResponse) {
 	status := SourceStatus{Enabled: kialiInterface.Conf.ExternalServices.Tracing.Enabled, Included: false}
+	response.Traces = nil
 	if !args.IncludeTraces {
 		status.Reason = "disabled by request"
-	} else if !status.Enabled {
+		response.Sources["traces"] = status
+		return
+	}
+	if !status.Enabled {
 		status.Reason = "tracing is disabled"
-	} else {
-		traceQuery := models.TracingQuery{
-			Start:   args.SinceTime,
-			End:     args.ToTime,
-			Limit:   defaultTraceLimit,
-			Cluster: args.ClusterName,
-			Tags:    map[string]string{},
-		}
-		for key, value := range kialiInterface.Conf.ExternalServices.Tracing.QueryScope {
-			traceQuery.Tags[key] = value
-		}
-		traceQuery.Tags[models.IstioClusterTag] = args.ClusterName
+		response.Sources["traces"] = status
+		return
+	}
 
-		traces, err := fetchSnapshotTraces(kialiInterface.Request.Context(), &kialiInterface.BusinessLayer.Tracing, args, traceQuery)
-		if err != nil {
-			setError(response, "traces", err)
-			status.Reason = "trace request failed"
-		} else {
-			response.Traces = &traces
-			status.Included = true
-		}
+	traceQuery := models.TracingQuery{
+		Start:   args.SinceTime,
+		End:     args.ToTime,
+		Limit:   defaultTraceLimit,
+		Cluster: args.ClusterName,
+		Tags:    map[string]string{},
+	}
+	for key, value := range kialiInterface.Conf.ExternalServices.Tracing.QueryScope {
+		traceQuery.Tags[key] = value
+	}
+	traceQuery.Tags[models.IstioClusterTag] = args.ClusterName
+
+	traces, err := fetchSnapshotTraces(kialiInterface.Request.Context(), &kialiInterface.BusinessLayer.Tracing, args, traceQuery)
+	if err != nil {
+		setError(response, "traces", err)
+		status.Reason = "trace request failed"
+	} else if len(traces.Traces) > 0 {
+		response.Traces = &traces
+		status.Included = true
+	} else {
+		status.Reason = "no traces found"
 	}
 	response.Sources["traces"] = status
+}
+
+func collectPodPerformance(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs, workloads []*models.Workload, response *TroubleshootingSnapshotResponse) {
+	status := SourceStatus{Enabled: kialiInterface.Conf.ExternalServices.Prometheus.Enabled, Included: false}
+	if !args.IncludePodPerformance {
+		status.Reason = "disabled by request"
+		response.Sources["podPerformance"] = status
+		return
+	}
+	if !status.Enabled {
+		status.Reason = "Prometheus is disabled"
+		response.Sources["podPerformance"] = status
+		return
+	}
+
+	timeRange := snapshotPerformanceTimeRange(args)
+	podCount := 0
+	for _, workload := range workloads {
+		if workload == nil {
+			continue
+		}
+		for _, pod := range workload.Pods {
+			if pod == nil || pod.Name == "" || podCount >= args.MaxLogPods {
+				continue
+			}
+			item := PodPerformanceSource{
+				Cluster:   args.ClusterName,
+				Kind:      "pod",
+				Name:      pod.Name,
+				Namespace: args.Namespace,
+				Workload:  workload.Name,
+			}
+			perf, err := get_pod_performance.BuildPodPerformanceForPod(
+				kialiInterface,
+				args.ClusterName,
+				args.Namespace,
+				workload.Name,
+				pod.Name,
+				timeRange,
+				args.ToTime,
+			)
+			if err != nil {
+				item.Error = err.Error()
+			} else {
+				item.Data = perf
+				podCount++
+				status.Included = true
+			}
+			response.PodPerformance = append(response.PodPerformance, item)
+		}
+	}
+	if !status.Included && len(response.PodPerformance) == 0 {
+		status.Reason = "no pod performance was collected"
+	} else if !status.Included {
+		status.Reason = "all pod performance requests failed"
+	}
+	response.Sources["podPerformance"] = status
+}
+
+func snapshotPerformanceTimeRange(args TroubleshootingSnapshotArgs) string {
+	window := args.ToTime.Sub(args.SinceTime)
+	if window < time.Minute {
+		window = time.Minute
+	}
+	if window > 10*time.Minute {
+		window = 10 * time.Minute
+	}
+	seconds := int(window.Round(time.Second).Seconds())
+	if seconds < 1 {
+		seconds = 1
+	}
+	return fmt.Sprintf("%ds", seconds)
 }
 
 func collectLogs(kialiInterface *mcputil.KialiInterface, args TroubleshootingSnapshotArgs, workloads []*models.Workload, response *TroubleshootingSnapshotResponse) {
 	status := SourceStatus{Enabled: !config.IsFeatureDisabled(config.FeatureLogView), Included: false}
 	if !args.IncludeLogs {
 		status.Reason = "disabled by request"
-	} else if !status.Enabled {
+		response.Sources["logs"] = status
+		return
+	}
+	if !status.Enabled {
 		status.Reason = "Pod Logs access is disabled"
-	} else {
-		podCount := 0
-		for _, workload := range workloads {
-			if workload == nil {
+		response.Sources["logs"] = status
+		return
+	}
+
+	podCount := 0
+	for _, workload := range workloads {
+		if workload == nil {
+			continue
+		}
+		for _, pod := range workload.Pods {
+			if pod == nil || pod.Name == "" || podCount >= args.MaxLogPods {
 				continue
 			}
-			for _, pod := range workload.Pods {
-				if pod == nil || pod.Name == "" || podCount >= args.MaxLogPods {
-					continue
-				}
-				item := PodLogSource{
-					Cluster:   args.ClusterName,
-					Kind:      "pod",
-					Name:      pod.Name,
-					Namespace: args.Namespace,
-				}
-				logs, err := fetchPodLogs(kialiInterface.Request.Context(), kialiInterface, args, workload.Name, pod)
-				if err != nil {
-					item.Error = err.Error()
-				} else {
-					item.Data = logs
-					podCount++
-					status.Included = true
-				}
-				response.Logs = append(response.Logs, item)
+			item := PodLogSource{
+				Cluster:   args.ClusterName,
+				Kind:      "pod",
+				Name:      pod.Name,
+				Namespace: args.Namespace,
 			}
+			logs, err := fetchPodLogs(kialiInterface.Request.Context(), kialiInterface, args, workload.Name, pod)
+			if err != nil {
+				item.Error = err.Error()
+			} else {
+				item.Data = logs
+				podCount++
+				status.Included = true
+			}
+			response.Logs = append(response.Logs, item)
 		}
-		eligiblePods := countPods(workloads)
-		if eligiblePods > args.MaxLogPods {
-			response.Warnings = append(response.Warnings, fmt.Sprintf("logs were limited to %d of %d pods", args.MaxLogPods, eligiblePods))
-		}
-		if !status.Included && len(response.Logs) == 0 {
-			status.Reason = "no logs were collected"
-		} else if !status.Included {
-			status.Reason = "all log requests failed"
-		}
+	}
+	eligiblePods := countPods(workloads)
+	if eligiblePods > args.MaxLogPods {
+		response.Warnings = append(response.Warnings, fmt.Sprintf("logs were limited to %d of %d pods", args.MaxLogPods, eligiblePods))
+	}
+	if !status.Included && len(response.Logs) == 0 {
+		status.Reason = "no logs were collected"
+	} else if !status.Included {
+		status.Reason = "all log requests failed"
 	}
 	response.Sources["logs"] = status
 }

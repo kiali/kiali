@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
+	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/models"
 )
 
@@ -17,6 +18,7 @@ type TroubleshootingSnapshotArgs struct {
 	IncludeGraph           bool      `json:"includeGraph"`
 	IncludeLogs            bool      `json:"includeLogs"`
 	IncludeMetrics         bool      `json:"includeMetrics"`
+	IncludePodPerformance  bool      `json:"includePodPerformance"`
 	IncludeTraces          bool      `json:"includeTraces"`
 	MaxEnvoyConfigDumps    int       `json:"maxEnvoyConfigDumps"`
 	MaxLogPods             int       `json:"maxLogPods"`
@@ -34,6 +36,16 @@ type SourceStatus struct {
 	Enabled  bool   `json:"enabled"`
 	Included bool   `json:"included"`
 	Reason   string `json:"reason,omitempty"`
+}
+
+type PodPerformanceSource struct {
+	Cluster   string                                     `json:"cluster"`
+	Data      get_pod_performance.PodPerformanceResponse `json:"data,omitempty"`
+	Error     string                                     `json:"error,omitempty"`
+	Kind      string                                     `json:"kind"`
+	Name      string                                     `json:"name"`
+	Namespace string                                     `json:"namespace"`
+	Workload  string                                     `json:"workload,omitempty"`
 }
 
 type PodLogSource struct {
@@ -93,6 +105,7 @@ type TroubleshootingSnapshotResponse struct {
 	Graph            *get_mesh_traffic_graph.CompactGraphResponse `json:"graph,omitempty"`
 	Logs             []PodLogSource                               `json:"logs,omitempty"`
 	Metrics          *get_metrics.LLMMetricsSummary               `json:"metrics,omitempty"`
+	PodPerformance   []PodPerformanceSource                       `json:"podPerformance,omitempty"`
 	Query            TroubleshootingSnapshotArgs                  `json:"query"`
 	Sources          map[string]SourceStatus                      `json:"sources"`
 	Target           TargetSummary                                `json:"target"`

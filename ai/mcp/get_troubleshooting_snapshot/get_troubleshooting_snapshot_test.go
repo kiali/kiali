@@ -32,7 +32,10 @@ func (s *stubSnapshotTracing) GetWorkloadTraces(_ context.Context, _, _ string, 
 }
 
 func testKialiInterface() *mcputil.KialiInterface {
-	return &mcputil.KialiInterface{Conf: &config.Config{}}
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.Enabled = true
+	conf.ExternalServices.Tracing.Enabled = true
+	return &mcputil.KialiInterface{Conf: conf}
 }
 
 func TestParseArgs_ValidWorkload(t *testing.T) {
@@ -239,6 +242,33 @@ func mergeArgs(base, extra map[string]any) map[string]any {
 		merged[key] = value
 	}
 	return merged
+}
+
+func TestParseArgs_KeepsIncludeFlagsWhenBackendsDisabled(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = false
+	conf.ExternalServices.Prometheus.Enabled = false
+
+	args, errMsg, code := parseArgs(map[string]interface{}{
+		"namespace":    "bookinfo",
+		"workloadName": "details-v1",
+	}, &mcputil.KialiInterface{Conf: conf})
+
+	require.Empty(t, errMsg)
+	assert.Equal(t, http.StatusOK, code)
+	assert.True(t, args.IncludeTraces)
+	assert.True(t, args.IncludeMetrics)
+	assert.True(t, args.IncludeGraph)
+	assert.True(t, args.IncludePodPerformance)
+	assert.True(t, args.IncludeLogs)
+}
+
+func TestSnapshotPerformanceTimeRange(t *testing.T) {
+	args := TroubleshootingSnapshotArgs{
+		SinceTime: time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC),
+		ToTime:    time.Date(2026, 1, 1, 10, 5, 0, 0, time.UTC),
+	}
+	assert.Equal(t, "300s", snapshotPerformanceTimeRange(args))
 }
 
 func TestDefaultWindowHelpers(t *testing.T) {
