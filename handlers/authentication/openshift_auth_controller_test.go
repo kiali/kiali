@@ -524,6 +524,55 @@ func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
 	require.Equal(int32(2), westUserProbes.Load(), "probing must resume once the mark is cleared")
 }
 
+// TestValidateSessionMulticlusterRemoteUserDenialKeepsSignalClear verifies that a
+// user-specific API-level denial on the remote (an HTTP 403 from the user-info
+// endpoint - the cluster answered, the answer is about this user) does not set the
+// shared unreachable signal: the signal is reserved for transport-level failures,
+// the same predicate the background prober uses to clear it. A per-user denial
+// setting it would flap a healthy spoke for every other user on this user's
+// refreshes - the prober clears the mark, the denied user's next request sets it
+// again. The session is still skipped gracefully for the denied user.
+func TestValidateSessionMulticlusterRemoteUserDenialKeepsSignalClear(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// west denies this user's token at the API level: the cluster is healthy and
+	// answered - the denial is about the user, not the cluster.
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, k8serrors.NewForbidden(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~", fmt.Errorf("denied for this user"))
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	_, err := authController.ValidateSession(r, w)
+	require.NoError(err, "a user-specific denial must not fail the request")
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-west" {
+			require.False(c.MaxAge < 0, "the denied session must be skipped, not dropped: the denial is about the user, and the session is retried on the next request")
+		}
+	}
+	require.False(kialiCache.IsClusterUnreachable("west"), "an API-level denial must not set the shared unreachable signal")
+}
+
 func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()

@@ -439,12 +439,18 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					return nil
 				}
 				if session.Cluster != o.conf.KubernetesConfig.ClusterName {
-					// An indeterminate remote (unreachable, stalled) must not fail the whole
-					// request - that would make even home-only pages unusable for any session
-					// that includes the remote, which is exactly the outage blast radius
-					// #10545 exists to bound. Skip the session for this request and preserve
-					// its cookie; it is retried on the next request once the cluster recovers.
-					o.kialiCache.MarkClusterUnreachable(session.Cluster)
+					// An indeterminate remote must not fail the whole request - that would make
+					// even home-only pages unusable for any session that includes the remote,
+					// which is exactly the outage blast radius #10545 exists to bound. Skip the
+					// session for this request and preserve its cookie; it is retried on the
+					// next request once the cluster recovers. The shared unreachable signal is
+					// reserved for transport-level failures - the same predicate the
+					// background prober uses to clear it: an API-level answer such as this
+					// user's denial proves the cluster is reachable, and marking on it would
+					// flap a healthy spoke for every other user on this user's refreshes.
+					if kubernetes.IsConnectionError(err) {
+						o.kialiCache.MarkClusterUnreachable(session.Cluster)
+					}
 					log.Warningf("Skipping session for cluster [%s]: user info could not be determined: %s", session.Cluster, err)
 					return nil
 				}
