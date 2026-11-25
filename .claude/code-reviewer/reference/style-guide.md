@@ -10,7 +10,7 @@ The project has comprehensive style documentation. Reviewers must enforce these 
 
 - **`STYLE_GUIDE.adoc`** — canonical style reference for Go and TypeScript
 - **`AGENTS.md`** — AI assistant and developer guide with code quality standards
-- **`.golangci.yml`** (`.github/workflows/config/.golangci.yml`) — enforced Go linting rules including goimports
+- **`.golangci.yml`** — enforced Go linting rules including goimports
 - **`.prettierrc.json`** — TypeScript formatting: `printWidth: 120`, `singleQuote: true`, `trailingComma: none`, `arrowParens: avoid`
 - **`.eslintrc`** — TypeScript linting: extends react-app, forbids default exports, disables jsx-a11y
 
