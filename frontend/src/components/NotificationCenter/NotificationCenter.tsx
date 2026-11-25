@@ -39,7 +39,7 @@ import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
-import { formatFromNow, formatNotificationTimestamp } from 'utils/DateTimeUtils';
+import { formatFrom, formatNotificationTimestamp } from 'utils/DateTimeUtils';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -286,7 +286,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                             <span>{formatNotificationTimestamp(message.created)}</span>
                             {message.count > 1 && (
                               <span>
-                                {message.count} {formatFromNow(message.firstTriggered ?? message.created)}
+                                {message.count} {formatFrom(message.firstTriggered ?? message.created)}
                               </span>
                             )}
                           </div>

@@ -3,8 +3,10 @@ import {
   addDaysFromNowIso,
   diffMs,
   format12HourClockTime,
+  formatFrom,
   formatFromNow,
   formatLocalDateTime,
+  formatLocalDateTimeFromMs,
   formatLocaleDateTime,
   formatNotificationTimestamp,
   formatRelativeDate,
@@ -27,6 +29,16 @@ describe('DateTimeUtils', () => {
     const iso = '2024-06-01T12:30:45.123Z';
     const expected = formatLocalDateTime(iso);
     expect(expected).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}$/);
+  });
+
+  it('formats local wall clock from epoch milliseconds', () => {
+    const local = new Date(2021, 1, 1, 21, 34, 35, 533);
+    expect(formatLocalDateTimeFromMs(local.getTime())).toBe('2021-02-01 21:34:35.533');
+    expect(formatLocalDateTimeFromMs(1612215275533)).toBe(formatLocalDateTime('2021-02-01T21:34:35.533Z'));
+  });
+
+  it('returns empty string for invalid local datetime from ms', () => {
+    expect(formatLocalDateTimeFromMs(Number.NaN)).toBe('');
   });
 
   it('returns empty string for unparseable local datetime input', () => {
@@ -84,6 +96,14 @@ describe('DateTimeUtils', () => {
     expect(formatFromNow(fiveMinAgo, now)).toMatch(/minute/i);
     const twoHoursAgo = new Date('2024-06-01T10:00:00Z');
     expect(formatFromNow(twoHoursAgo, now)).toMatch(/hour/i);
+  });
+
+  it('formatFrom mirrors moment().from for notification count windows', () => {
+    const now = new Date('2024-06-01T12:00:00Z');
+    const fiveMinAgo = new Date('2024-06-01T11:55:00Z');
+    expect(formatFrom(fiveMinAgo, now)).toMatch(/^in /i);
+    expect(formatFrom(fiveMinAgo, now)).toMatch(/minute/i);
+    expect(formatFromNow(fiveMinAgo, now)).toMatch(/\d+ minutes? ago$/i);
   });
 
   it('formatRelativeDate uses month label for other years', () => {

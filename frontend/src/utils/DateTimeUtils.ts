@@ -32,13 +32,28 @@ export const formatUtcDateTime = (timeMs: number): string => {
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}.${pad3(d.getUTCMilliseconds())}`;
 };
 
+const formatLocalWallClock = (d: Date): string =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${pad3(d.getMilliseconds())}`;
+
+/** Local `YYYY-MM-DD HH:mm:ss.SSS` from epoch milliseconds (pod log display). */
+export const formatLocalDateTimeFromMs = (timeMs: number): string => {
+  if (Number.isNaN(timeMs)) {
+    return '';
+  }
+  const d = new Date(timeMs);
+  if (!isValidDate(d)) {
+    return '';
+  }
+  return formatLocalWallClock(d);
+};
+
 /** Local `YYYY-MM-DD HH:mm:ss.SSS` from a parseable timestamp string. */
 export const formatLocalDateTime = (timestamp: string): string => {
   const d = new Date(timestamp);
   if (!isValidDate(d)) {
     return '';
   }
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${pad3(d.getMilliseconds())}`;
+  return formatLocalWallClock(d);
 };
 
 export const formatLocaleDateTime = (date: Date): string =>
@@ -67,11 +82,7 @@ export const diffMs = (expiresOn: string | Date, from: Date = new Date()): numbe
 
 export const isSameOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 
-export const formatFromNow = (date: Date, now: Date = new Date()): string => {
-  if (!isValidDate(date) || !isValidDate(now)) {
-    return '';
-  }
-  const diffSec = Math.round((date.getTime() - now.getTime()) / 1000);
+const formatRelativeTime = (diffSec: number): string => {
   const formatter = getRelativeTimeFormatter();
   const absSec = Math.abs(diffSec);
 
@@ -96,6 +107,24 @@ export const formatFromNow = (date: Date, now: Date = new Date()): string => {
   }
   const diffYear = Math.round(diffSec / (86400 * 365));
   return formatter.format(diffYear, 'year');
+};
+
+/** Relative to now, e.g. “5 minutes ago” (`moment(date).fromNow()`). */
+export const formatFromNow = (date: Date, now: Date = new Date()): string => {
+  if (!isValidDate(date) || !isValidDate(now)) {
+    return '';
+  }
+  const diffSec = Math.round((date.getTime() - now.getTime()) / 1000);
+  return formatRelativeTime(diffSec);
+};
+
+/** From `anchor` toward `reference`, e.g. “in 5 minutes” (`moment(reference).from(anchor)`). */
+export const formatFrom = (anchor: Date, reference: Date = new Date()): string => {
+  if (!isValidDate(anchor) || !isValidDate(reference)) {
+    return '';
+  }
+  const diffSec = Math.round((reference.getTime() - anchor.getTime()) / 1000);
+  return formatRelativeTime(diffSec);
 };
 
 /** Locale-aware 12-hour clock for trace list headers. */
