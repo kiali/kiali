@@ -1,4 +1,3 @@
-// Assisted-by: Claude Code
 import { Message, type SourcesCardProps } from '@patternfly/chatbot';
 import React from 'react';
 import { useSelector } from 'react-redux';
