@@ -120,15 +120,15 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 		return nil, err
 	}
 
-	// obtain details on all known remote clusters
-	inventory, err := GetRemoteClusterInfos()
-	if err != nil {
-		return nil, err
-	}
+	// obtain details on all known remote clusters. The inventory never fails to load:
+	// an unreadable secrets root or secret directory is recorded as inventory-incomplete
+	// (UnreadableSecrets) rather than an error, so a broken remote mount does not take
+	// the healthy home cluster down with it.
+	inventory := GetRemoteClusterInfos()
 	cf.remoteClusterInfos = inventory.Clusters
 	cf.unreadableRemoteSecrets = inventory.UnreadableSecrets
 	for _, secret := range inventory.UnreadableSecrets {
-		log.Errorf("The remote cluster secret [%s] could not be read, so the remote cluster inventory is incomplete. Kiali serves its readable registrations, but cross-cluster queries that cannot enumerate the full inventory are denied until Kiali is restarted with a readable secret.", secret)
+		log.Errorf("[%s] could not be read, so the remote cluster inventory is incomplete. Kiali serves its readable registrations, but cross-cluster queries that cannot enumerate the full inventory are denied until Kiali is restarted with a readable secret.", secret)
 	}
 
 	// A cluster whose secret data was found but could not be processed (a malformed

@@ -33,8 +33,7 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	check.Contains(clusterNames, conf.KubernetesConfig.ClusterName)
 	check.Contains(clusterNames, testClusterName)
 
-	inventory, err := GetRemoteClusterInfos()
-	check.NoError(err)
+	inventory := GetRemoteClusterInfos()
 	rciConfig := inventory.Clusters[testClusterName].ClientConfig
 	check.NotNil(rciConfig)
 
@@ -91,8 +90,7 @@ func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
 				}
 			}
 
-			inventory, err := GetRemoteClusterInfos()
-			check.NoError(err)
+			inventory := GetRemoteClusterInfos()
 			unprocessable := inventory.UnprocessableClusters
 
 			// Whichever file the loader met first owns the name: the outcome is one of
@@ -114,11 +112,26 @@ func TestRemoteInventoryRecordsUnreadableSecret(t *testing.T) {
 	require.NoError(t, os.Mkdir(root+"/a-valid", 0700))
 	require.NoError(t, os.WriteFile(root+"/a-valid/west", []byte(remoteClusterYAML), 0600))
 	require.NoError(t, os.Symlink(root+"/missing", root+"/z-broken"))
-	inventory, err := getRemoteClusterInfosFromDir(root)
-	require.NoError(t, err)
+	inventory := getRemoteClusterInfosFromDir(root)
 	require.Contains(t, inventory.Clusters, "west", "the readable registration must be retained")
 	require.Empty(t, inventory.UnprocessableClusters)
 	require.Equal(t, []string{"z-broken"}, inventory.UnreadableSecrets)
+}
+
+// TestRemoteInventoryUnreadableRootKeepsServing pins the root-directory contract: a
+// present-but-unreadable secrets root (modeled by a file where the directory belongs,
+// so ReadDir fails with ENOTDIR rather than ErrNotExist) must come back as an
+// incomplete inventory - the unreadable-secrets registry that fails unscoped
+// authorization closed - rather than an error that would abort startup and take the
+// healthy home cluster down with the broken remote mount.
+func TestRemoteInventoryUnreadableRootKeepsServing(t *testing.T) {
+	root := t.TempDir() + "/not-a-dir"
+	require.NoError(t, os.WriteFile(root, []byte("not a directory"), 0o600))
+
+	inventory := getRemoteClusterInfosFromDir(root)
+	require.Empty(t, inventory.Clusters, "no remote registration can be verified")
+	require.Empty(t, inventory.UnprocessableClusters)
+	require.Equal(t, []string{root}, inventory.UnreadableSecrets, "the unreadable root must fail unscoped authorization closed")
 }
 
 // An unreadable secret must not be recorded in the cluster-keyed skip registry: a

@@ -78,13 +78,13 @@ type RemoteClusterInventory struct {
 }
 
 // GetRemoteClusterInfos loads remote cluster secrets that contain information about other remote mesh clusters.
-func GetRemoteClusterInfos() (RemoteClusterInventory, error) {
+func GetRemoteClusterInfos() RemoteClusterInventory {
 	return getRemoteClusterInfosFromDir(RemoteClusterSecretsDir)
 }
 
 // getRemoteClusterInfosFromDir loads remote cluster secrets mounted to the file system that contain information about other remote mesh clusters.
 // The secrets should be mounted on the directory specified.
-func getRemoteClusterInfosFromDir(rootSecretsDir string) (RemoteClusterInventory, error) {
+func getRemoteClusterInfosFromDir(rootSecretsDir string) RemoteClusterInventory {
 	// For the ControlPlane to be able to "see" remote clusters, some "remote secrets" need to be in
 	// place. These remote secrets contain <kubeconfig files> that the ControlPlane uses to
 	// query the remote clusters. Without them, the control plane is not capable of pushing traffic
@@ -103,12 +103,15 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (RemoteClusterInventory
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			// An absent root means no remote clusters are configured: optional, not an error.
-			return RemoteClusterInventory{Clusters: map[string]RemoteClusterInfo{}}, nil
+			return RemoteClusterInventory{Clusters: map[string]RemoteClusterInfo{}}
 		}
-		// A present-but-unreadable root means Kiali cannot establish the remote inventory:
-		// returning an empty inventory with no error would let unscoped authorization
-		// proceed on the belief that no remotes exist.
-		return RemoteClusterInventory{}, fmt.Errorf("failed to read remote cluster secrets directory [%s]: %w", rootSecretsDir, err)
+		// A present-but-unreadable root means no remote registration can be verified, but
+		// the home cluster is healthy and must keep serving: record the inventory as
+		// incomplete - the same contract as an unreadable secret directory below - rather
+		// than abort startup. Unscoped cross-cluster authorization fails closed on the
+		// unreadable-secrets registry until a restart with a readable mount.
+		log.Errorf("Failed to read the remote cluster secrets directory [%s]: %v. No remote registration can be verified; Kiali serves the home cluster, and cross-cluster queries that cannot enumerate the full inventory are denied until Kiali is restarted with a readable mount.", rootSecretsDir, err)
+		return RemoteClusterInventory{UnreadableSecrets: []string{rootSecretsDir}}
 	}
 
 	// Keyed on cluster name - we use this to make sure we don't get asked to load in multiple clusters with the same name
@@ -187,5 +190,5 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (RemoteClusterInventory
 		Clusters:              meshClusters,
 		UnprocessableClusters: unprocessableClusters,
 		UnreadableSecrets:     unreadableSecrets,
-	}, nil
+	}
 }
