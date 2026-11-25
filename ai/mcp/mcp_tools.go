@@ -86,6 +86,12 @@ func IsAmbientTool(name string) bool {
 	return ok
 }
 
+// IsExternalMCPTool reports whether name is registered for POST /api/chat/mcp without the Kiali-UI header.
+func IsExternalMCPTool(name string) bool {
+	_, ok := MCPToolHandlers[name]
+	return ok
+}
+
 var (
 	loadToolsOnce sync.Once
 	loadToolsErr  error

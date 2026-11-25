@@ -78,6 +78,7 @@ func tracingEnabledFromKialiAPI(t *testing.T) bool {
 // returns something other than 404 for every registered tool.
 // Trace MCP tools (list_traces, get_trace_details) return 404 when tracing is disabled in Kiali config.
 func TestAllMCPEndpointsExist(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
 	tracingOn := tracingEnabledFromKialiAPI(t)
 
 	toolsDir := filepath.Join("..", "..", "..", "ai", "mcp", "tools")
@@ -95,7 +96,14 @@ func TestAllMCPEndpointsExist(t *testing.T) {
 		toolName := strings.TrimSuffix(strings.TrimSuffix(name, ".yaml"), ".yml")
 
 		t.Run(toolName, func(t *testing.T) {
-			resp, err := CallMCPToolEmptyBody(toolName)
+			kialiUIOnly := !mcp.IsExternalMCPTool(toolName)
+			var resp *MCPResponse
+			var err error
+			if kialiUIOnly {
+				resp, err = CallKialiUITool(toolName, map[string]interface{}{})
+			} else {
+				resp, err = CallMCPToolEmptyBody(toolName)
+			}
 			require.NoError(t, err, "Failed to call tool %s", toolName)
 			if mcp.IsTraceTool(toolName) {
 				if tracingOn {
