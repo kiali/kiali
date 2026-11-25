@@ -73,3 +73,31 @@ func TestPortForwardStreamOutlivesHandshakeDeadline(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "ping", string(buf))
 }
+
+// TestPortForwardZeroTimeoutDisablesBound pins the "0 disables" semantics on the dial
+// path: with the bound disabled, a slow non-upgrade response must still be received and
+// fail at the upgrade check. time.AfterFunc(0) fires immediately, which would cancel
+// every upgrade request - and, through the timer.Stop check, fail even fast ones with
+// DeadlineExceeded.
+func TestPortForwardZeroTimeoutDisablesBound(t *testing.T) {
+	responded := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Longer than an armed zero timer needs to fire: the request must outlive it.
+		time.Sleep(150 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+		close(responded)
+	}))
+	defer server.Close()
+	endpoint, err := url.Parse(server.URL)
+	require.NoError(t, err)
+	dialer := portForwardDialer{client: server.Client(), timeout: 0, url: endpoint}
+	_, _, err = dialer.Dial("portforward.k8s.io")
+	require.Error(t, err, "a plain 200 response is not an SPDY upgrade")
+	require.Contains(t, err.Error(), "port-forward upgrade failed",
+		"the request must complete and fail at the upgrade check, not be canceled by the disabled bound")
+	select {
+	case <-responded:
+	case <-time.After(time.Second):
+		t.Fatal("server never saw the completed request")
+	}
+}

@@ -60,12 +60,23 @@ func (c *upgradedConn) Close() error {
 
 func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	timer := time.AfterFunc(d.timeout, cancel)
+	// A zero or negative timeout disables the bound (waits forever) - the same
+	// interpretation Start() gives the setting. time.AfterFunc(0) would fire
+	// immediately and cancel every upgrade.
+	var timer *time.Timer
+	if d.timeout > 0 {
+		timer = time.AfterFunc(d.timeout, cancel)
+	}
+	stopTimer := func() {
+		if timer != nil {
+			timer.Stop()
+		}
+	}
 	var socket net.Conn
 	trace := &httptrace.ClientTrace{GotConn: func(info httptrace.GotConnInfo) { socket = info.Conn }}
 	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), http.MethodPost, d.url.String(), nil)
 	if err != nil {
-		timer.Stop()
+		stopTimer()
 		cancel()
 		return nil, "", err
 	}
@@ -74,7 +85,7 @@ func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, st
 	req.Header[httpstream.HeaderProtocolVersion] = protocols
 	resp, err := d.client.Do(req)
 	if err != nil {
-		timer.Stop()
+		stopTimer()
 		cancel()
 		return nil, "", err
 	}
@@ -82,11 +93,11 @@ func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, st
 	if !ok || socket == nil || resp.StatusCode != http.StatusSwitchingProtocols || !strings.EqualFold(resp.Header.Get(httpstream.HeaderUpgrade), spdy.HeaderSpdy31) {
 		defer resp.Body.Close()
 		defer cancel()
-		defer timer.Stop()
+		defer stopTimer()
 		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return nil, "", fmt.Errorf("port-forward upgrade failed (%s): %s", resp.Status, detail)
 	}
-	if !timer.Stop() {
+	if timer != nil && !timer.Stop() {
 		cancel()
 		stream.Close()
 		return nil, "", context.DeadlineExceeded
