@@ -5,7 +5,6 @@ import { useKialiTranslation } from '../../utils/I18nUtils';
 
 type TracingDiagnoseProps = {
   cluster: string;
-  configData: unknown;
 };
 
 export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDiagnoseProps) => {
@@ -16,14 +15,9 @@ export const TracingDiagnose: React.FC<TracingDiagnoseProps> = (props: TracingDi
     <>
       <div style={{ marginLeft: 'auto' }}>
         <Button style={{ marginLeft: '5px' }} onClick={() => setIsModalOpen(true)} variant={ButtonVariant.secondary}>
-          {t('Configuration Tester')}
+          {t('Configuration Discovery')}
         </Button>
-        <TraceConfigurationModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          cluster={props.cluster}
-          configData={props.configData}
-        />
+        <TraceConfigurationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} cluster={props.cluster} />
       </div>
     </>
   );
