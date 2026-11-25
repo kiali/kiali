@@ -7,6 +7,7 @@ import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import type { AppListItem } from '../../types/AppList';
 import type { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import type { Namespace } from '../../types/Namespace';
+import { MessageType } from '../../types/NotificationCenter';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import type { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
@@ -166,7 +167,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         if (err?.isCanceled) {
           throw err;
         }
-        addError(`Could not fetch apps list for cluster [${cluster}]`, err);
+        addError(`Could not fetch apps list for cluster [${cluster}]`, err, true, MessageType.WARNING);
         return null;
       });
     });

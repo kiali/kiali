@@ -26,7 +26,7 @@ import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
-import { addDanger } from '../../utils/AlertUtils';
+import { addDanger, addWarning } from '../../utils/AlertUtils';
 import type { TLSStatus } from '../../types/TLSStatus';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import type { ValidationStatus } from '../../types/IstioObjects';
@@ -261,7 +261,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         nsInfo.worstStatus = nsHealth.worstStatus;
       });
     } catch (err) {
-      this.handleApiError('Could not fetch health', err as ApiError);
+      this.handleApiWarning('Could not fetch health', err as ApiError);
     }
   };
 
@@ -330,7 +330,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           }
         });
       })
-      .catch(err => this.handleApiError('Could not fetch TLS status', err));
+      .catch(err => this.handleApiWarning('Could not fetch TLS status', err));
   };
 
   fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
@@ -436,11 +436,17 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           }
         });
       })
-      .catch(err => this.handleApiError('Could not fetch validations status', err));
+      .catch(err => this.handleApiWarning('Could not fetch validations status', err));
   };
 
   handleApiError = (message: string, error: ApiError): void => {
     addDanger(message, API.getErrorString(error));
+  };
+
+  // The per-cluster column fetches (health, TLS, validations) degrade only that
+  // cluster's columns while the page keeps rendering: a warning, not an error.
+  handleApiWarning = (message: string, error: ApiError): void => {
+    addWarning(message, API.getErrorString(error));
   };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {

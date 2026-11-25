@@ -1,14 +1,15 @@
 import { fetchClusterNamespacesHealth } from '../NamespaceHealth';
 import * as API from 'services/Api';
-import { addDanger } from 'utils/AlertUtils';
+import { addWarning } from 'utils/AlertUtils';
 import type { Mock } from '@rstest/core';
 
 rstest.mock('services/Api', () => ({
-  getClustersHealth: rstest.fn()
+  getClustersHealth: rstest.fn(),
+  getErrorString: rstest.fn(() => '')
 }));
 
 rstest.mock('utils/AlertUtils', () => ({
-  addDanger: rstest.fn()
+  addWarning: rstest.fn()
 }));
 
 describe('NamespaceHealth service', () => {
@@ -63,7 +64,7 @@ describe('NamespaceHealth service', () => {
 
     const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60);
 
-    expect(addDanger).toHaveBeenCalledWith(
+    expect(addWarning).toHaveBeenCalledWith(
       'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
     );
     expect(result.size).toBe(0);
@@ -74,8 +75,23 @@ describe('NamespaceHealth service', () => {
 
     const result = await fetchClusterNamespacesHealth(['bookinfo'], 'east', 60);
 
-    expect(addDanger).toHaveBeenCalledWith(
+    expect(addWarning).toHaveBeenCalledWith(
       'Failed to fetch namespace health for cluster east (namespace bookinfo): request timed out'
+    );
+    expect(result.size).toBe(0);
+  });
+
+  it('prefers the API error body over the HTTP client message', async () => {
+    (API.getClustersHealth as Mock).mockRejectedValueOnce(new Error('Request failed with status code 503'));
+    (API.getErrorString as Mock).mockReturnValueOnce(
+      'namespace [team-b] in cluster [spoke-two]: namespace access is revoked'
+    );
+
+    const result = await fetchClusterNamespacesHealth(['team-b'], 'spoke-two', 60);
+
+    expect(addWarning).toHaveBeenCalledWith(
+      'Failed to fetch namespace health for cluster spoke-two (namespace team-b): ' +
+        'namespace [team-b] in cluster [spoke-two]: namespace access is revoked'
     );
     expect(result.size).toBe(0);
   });
@@ -103,7 +119,7 @@ describe('NamespaceHealth service', () => {
 
     const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60);
 
-    expect(addDanger).toHaveBeenCalledWith(
+    expect(addWarning).toHaveBeenCalledWith(
       'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
     );
     expect(Array.from(result.keys())).toEqual(['ns0']);
@@ -122,12 +138,12 @@ describe('NamespaceHealth service', () => {
 
     await fetchClusterNamespacesHealth(namespaces, 'east', 60);
 
-    expect(addDanger).toHaveBeenCalledTimes(2);
-    expect(addDanger).toHaveBeenNthCalledWith(
+    expect(addWarning).toHaveBeenCalledTimes(2);
+    expect(addWarning).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('Failed to fetch namespace health chunk 1/3 for cluster east')
     );
-    expect(addDanger).toHaveBeenNthCalledWith(
+    expect(addWarning).toHaveBeenNthCalledWith(
       2,
       'Failed to fetch namespace health chunk 3/3 for cluster east (1 namespaces: ns200): request timed out'
     );

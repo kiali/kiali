@@ -43,7 +43,8 @@ rstest.mock('../../../services/Api', () => ({
 
 rstest.mock('../../../utils/AlertUtils', () => ({
   addDanger: rstest.fn(),
-  addError: rstest.fn()
+  addError: rstest.fn(),
+  addWarning: rstest.fn()
 }));
 
 rstest.mock('../../../app/History', () => ({

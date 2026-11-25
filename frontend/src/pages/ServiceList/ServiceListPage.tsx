@@ -7,6 +7,7 @@ import type { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import type { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { InstanceType } from '../../types/Common';
 import type { Namespace } from '../../types/Namespace';
+import { MessageType } from '../../types/NotificationCenter';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import type { SortField } from '../../types/SortFilters';
@@ -202,7 +203,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         if (err?.isCanceled) {
           throw err;
         }
-        addError(`Could not fetch services list for cluster [${cluster}]`, err);
+        addError(`Could not fetch services list for cluster [${cluster}]`, err, true, MessageType.WARNING);
         return null;
       });
     });

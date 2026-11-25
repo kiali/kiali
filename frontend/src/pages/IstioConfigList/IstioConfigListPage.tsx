@@ -3,31 +3,33 @@ import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { RenderContent } from '../../components/Nav/Page';
 import * as IstioConfigListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
 import {
   filterByConfigValidation,
   filterByName,
   filterByNamespaces,
   gvkType,
-  IstioConfigItem,
   toIstioItems
 } from '../../types/IstioConfigList';
-import { Namespace } from '../../types/Namespace';
+import type { Namespace } from '../../types/Namespace';
+import { MessageType } from '../../types/NotificationCenter';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
-import { SortField } from '../../types/SortFilters';
-import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
+import type { SortField } from '../../types/SortFilters';
+import type { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
 import { FilterSelected, StatefulFilters, Toggles } from '../../components/Filters/StatefulFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
-import { ObjectValidation } from '../../types/IstioObjects';
+import type { ObjectValidation } from '../../types/IstioObjects';
 import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { IstioActionsNamespaceDropdown } from '../../components/IstioActions/IstioActionsNamespaceDropdown';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
-import { connect, DispatchProp } from 'react-redux';
+import type { DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
@@ -121,7 +123,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       this.setState({ listItems: [] });
 
       if (isMultiCluster) {
-        for (let cluster in serverConfig.clusters) {
+        for (const cluster in serverConfig.clusters) {
           this.fetchConfigs(
             namespacesSelected,
             istioTypeFilters,
@@ -179,7 +181,10 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       })
       .catch(istioError => {
         if (!istioError.isCanceled) {
-          addError('Could not fetch Istio objects list', istioError);
+          // One cluster's failure (e.g. a partially-revoked namespace) degrades the
+          // list to that cluster's objects, not the page.
+          const scope = cluster ? ` for cluster [${cluster}]` : '';
+          addError(`Could not fetch Istio objects list${scope}`, istioError, true, MessageType.WARNING);
         }
       });
   }
