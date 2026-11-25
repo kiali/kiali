@@ -108,7 +108,6 @@ var exemptRoutes = map[string]string{
 	"MeshGraph":                 "mesh-access gate + filterAccessibleControlPlanes",
 	"IstioStatus":               "control-plane entries kept for all users; autodiscovered gateway entries filtered by the accessible set (filterStatusForUser); body-checked in business tests",
 	"Diagnose":                  "gated by HasMeshAccess (accessible-set based)",
-	"Tracing check":             "gated by HasMeshAccess (accessible-set based)",
 	"GraphNamespaces":           "graph engine filters namespaces by the accessible set",
 	"GraphAggregate":            "graph engine filters namespaces by the accessible set",
 	"GraphAggregateByService":   "graph engine filters namespaces by the accessible set",
@@ -203,6 +202,11 @@ func TestRouteInventoryComplete(t *testing.T) {
 
 	require.Empty(unclassified,
 		"every registered route must be classified in routes_enforcement_test.go (gatedRoutes, exemptRoutes or noNamespaceDataRoutes); unclassified: %v", unclassified)
+
+	// The API must not accept user-provided tracing configuration for live probes.
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/tracing/check", nil))
+	require.Equal(http.StatusNotFound, response.Code)
 
 	// A route listed in more than one map is a classification error even
 	// though classifyRoute returns the first match.

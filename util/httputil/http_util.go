@@ -157,6 +157,16 @@ func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTrippe
 // The timeout parameter controls dial timeout only. IdleConnTimeout will use Go's
 // default (90 seconds) when transportConfig.IdleConnTimeout is 0.
 func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string) (http.RoundTripper, error) {
+	return createTransport(conf, auth, transportConfig, timeout, customHeaders, nil)
+}
+
+// NewProbeHTTPClient applies the same redirect policy to the backend and any OAuth token endpoint.
+func NewProbeHTTPClient(conf *config.Config, auth *config.Auth, timeout time.Duration, customHeaders map[string]string, checkRedirect RedirectPolicy) (http.Client, error) {
+	transport, err := createTransport(conf, auth, &http.Transport{DisableKeepAlives: true}, timeout, customHeaders, checkRedirect)
+	return http.Client{Transport: transport, Timeout: timeout, CheckRedirect: checkRedirect}, err
+}
+
+func createTransport(conf *config.Config, auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string, checkRedirect RedirectPolicy) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed. If DialContext is not set, Dial is used, we only create a new one
 	// if neither is defined.
@@ -196,7 +206,11 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 	// Part 2: Wrap with auth RoundTripper only if auth credentials are provided.
 	// This is separate from TLS configuration because auth and TLS are orthogonal concerns.
 	if auth != nil {
-		outerRoundTripper = newAuthRoundTripper(conf, auth, outerRoundTripper)
+		if checkRedirect != nil && auth.Type == config.AuthTypeOAuth2 {
+			outerRoundTripper = newOAuth2RoundTripperWithRedirectPolicy(conf, auth, outerRoundTripper, checkRedirect)
+		} else {
+			outerRoundTripper = newAuthRoundTripper(conf, auth, outerRoundTripper)
+		}
 	}
 
 	return outerRoundTripper, nil

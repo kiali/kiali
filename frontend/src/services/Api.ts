@@ -47,13 +47,7 @@ import type {
 } from '../types/IstioObjects';
 import { DestinationRuleC } from '../types/IstioObjects';
 import type { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import type {
-  ConfigurationValidation,
-  TracingCheck,
-  TracingInfo,
-  TracingResponse,
-  TracingSingleResponse
-} from '../types/TracingInfo';
+import type { TracingCheck, TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import type {
   DashboardQuery,
@@ -1577,14 +1571,6 @@ export const getDiagnoseStatus = (cluster?: string): Promise<ApiResponse<Tracing
   }
 
   return newRequest<TracingCheck>(HTTP_VERBS.GET, urls.tracingDiagnose, queryParams, {});
-};
-
-export const checkTracingConfig = (config: string, cluster?: string): Promise<ApiResponse<ConfigurationValidation>> => {
-  const queryParams: ClusterParam = {};
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
-  return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
 };
 
 export const getChatPrompts = (category?: string): Promise<ApiResponse<Prompt[]>> => {
