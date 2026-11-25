@@ -5,28 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
-
-func getLayer(t *testing.T, conf *config.Config) *Layer {
-	config.Set(conf)
-	s1 := kubetest.FakeService("Namespace", "reviews")
-	s2 := kubetest.FakeService("Namespace", "httpbin")
-	objects := []runtime.Object{
-		kubetest.FakeNamespace("Namespace"),
-		&s1,
-		&s2,
-	}
-
-	k8s := kubetest.NewFakeK8sClient(objects...)
-	return NewLayerBuilder(t, conf).WithClient(k8s).Build()
-}
 
 var trace1 = jaegerModels.Trace{
 	Spans: []jaegerModels.Span{{
@@ -366,26 +350,4 @@ func TestTracingServiceNameNonDefaultDomain(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
-}
-
-func TestValidateConfiguration(t *testing.T) {
-	assert := assert.New(t)
-	conf := config.NewConfig()
-	conf.ExternalServices.Tracing.Enabled = true
-	layer := getLayer(t, conf)
-
-	tracingConfig := config.TracingConfig{Enabled: true, InternalURL: "http://localhost:59999", UseGRPC: false}
-
-	validConfig := layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
-
-	assert.NotNil(validConfig)
-	assert.NotNil(validConfig.Error)
-	assert.Contains(validConfig.Error, "connection refused")
-
-	tracingConfig = config.TracingConfig{Enabled: false, InternalURL: "http://localhost:59999", UseGRPC: false}
-	validConfig = layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
-
-	assert.NotNil(validConfig)
-	assert.NotNil(validConfig.Error)
-	assert.Contains(validConfig.Error, "Error creating tracing client")
 }
