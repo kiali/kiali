@@ -520,11 +520,15 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			}(session)
 		}
 		sessionsWg.Wait()
-		if validateErr != nil {
-			return nil, validateErr
-		}
+		// Apply the collected terminations even when a worker failed: a revoked or
+		// zero-access token must not keep its cookie because an unrelated session's
+		// error short-circuited the return. The verdicts are per-cluster and
+		// definitive; they do not depend on the failed validation.
 		for _, cluster := range terminated {
 			o.sessionStore.TerminateSession(r, w, cluster)
+		}
+		if validateErr != nil {
+			return nil, validateErr
 		}
 	}
 

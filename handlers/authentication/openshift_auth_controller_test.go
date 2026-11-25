@@ -376,6 +376,91 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	require.True(sessionCookieWest.MaxAge < 0, "west session should be dropped")
 }
 
+// TestTerminationSurvivesConcurrentValidationError pins the ordering of the deferred
+// session terminations: a remote token that was positively rejected (unauthorized)
+// must lose its cookie even when another session's validation failed the request.
+// The verdicts are independent; dropping the termination on the error return let the
+// dead session ride until a later request happened to succeed.
+func TestTerminationSurvivesConcurrentValidationError(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	// The home cluster's validation fails with an indeterminate error (not an
+	// authorization verdict): the request must fail, but that must not drop the
+	// west session's queued termination.
+	eastClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, fmt.Errorf("apiserver unavailable")
+	})
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	westClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, k8serrors.NewUnauthorized("unauthorized")
+	})
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	// This is a global var that is accessed in inside of the auth controller.
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err, "the home cluster's failed validation must fail the request")
+
+	cookies := w.Result().Cookies()
+	sessionCookieWest = slicetest.FindOrFail(t, cookies, func(c *http.Cookie) bool {
+		return c.Name == authentication.SessionCookieName+"-west"
+	})
+
+	require.True(sessionCookieWest.MaxAge < 0, "the rejected west session must still be dropped")
+}
+
 // TestUnreachableRemoteSessionValidationIsCached verifies that an indeterminate remote
 // validation (an unreachable or stalled cluster) marks the cluster through the shared
 // unreachable signal rather than re-probing on every request: the first request pays
