@@ -460,22 +460,17 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
 		// The cluster's own effective scope (override-aware), matching the user path and the
-		// informer scoping - see fetchNamespacesForCluster.
+		// informer scoping - see fetchNamespacesForCluster. The same concurrent
+		// per-namespace fetch the user path uses: skip what the SA cannot see
+		// (NotFound/Forbidden), fail on anything else.
 		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
-		k8sNamespaces := make([]core_v1.Namespace, 0)
-		for _, ans := range accessibleNamespaces {
-			k8sNs, err := saClient.GetNamespace(ctx, ans)
-			if err != nil {
-				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
-					continue
-				}
-				// Transport failures only, like the user-path computation above.
-				if kubernetes.IsConnectionError(err) {
-					in.kialiCache.MarkClusterUnreachable(cluster)
-				}
-				return nil, err
+		k8sNamespaces, err := getNamespacesByName(ctx, saClient, accessibleNamespaces)
+		if err != nil {
+			// Transport failures only, like the user-path computation above.
+			if kubernetes.IsConnectionError(err) {
+				in.kialiCache.MarkClusterUnreachable(cluster)
 			}
-			k8sNamespaces = append(k8sNamespaces, *k8sNs)
+			return nil, err
 		}
 		namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
 	}
