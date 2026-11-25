@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,14 @@ import (
 
 	"github.com/kiali/kiali/config"
 )
+
+// remoteClusterKubeconfig returns the standard remote-cluster kubeconfig fixture
+// renamed for the given cluster. The loader requires the kubeconfig's cluster
+// entry to be named for the file it lives in, so tests registering a cluster
+// under any other name must rename the fixture's contents to match.
+func remoteClusterKubeconfig(cluster string) string {
+	return strings.ReplaceAll(remoteClusterYAML, "TestRemoteCluster", cluster)
+}
 
 func TestReloadRemoteClusterSecret(t *testing.T) {
 	check := assert.New(t)
@@ -74,7 +83,7 @@ func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
 
 			const clusterName = "TestDuplicateCluster"
 			broken := "this is not a kubeconfig"
-			valid := remoteClusterYAML
+			valid := remoteClusterKubeconfig(clusterName)
 			if tc.first == "zzz-valid" {
 				broken, valid = valid, broken
 			}
@@ -110,7 +119,7 @@ func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
 func TestRemoteInventoryRecordsUnreadableSecret(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.Mkdir(root+"/a-valid", 0700))
-	require.NoError(t, os.WriteFile(root+"/a-valid/west", []byte(remoteClusterYAML), 0600))
+	require.NoError(t, os.WriteFile(root+"/a-valid/west", []byte(remoteClusterKubeconfig("west")), 0600))
 	require.NoError(t, os.Symlink(root+"/missing", root+"/z-broken"))
 	inventory := getRemoteClusterInfosFromDir(root)
 	require.Contains(t, inventory.Clusters, "west", "the readable registration must be retained")
@@ -167,11 +176,32 @@ func TestNonFileSecretEntriesDoNotReserveClusterNames(t *testing.T) {
 	// ahead of the valid secret alphabetically.
 	require.NoError(t, os.Mkdir(root+"/aaa-stray/west", 0o700))
 
-	kubeletSecretDir("zzz-valid", map[string]string{"west": remoteClusterYAML})
+	kubeletSecretDir("zzz-valid", map[string]string{"west": remoteClusterKubeconfig("west")})
 
 	inventory := getRemoteClusterInfosFromDir(root)
 	require.Contains(t, inventory.Clusters, "west", "the valid secret's symlinked registration must load despite the earlier stray directory with the same name")
 	require.Empty(t, inventory.UnprocessableClusters, "a directory entry is not a registration")
+	require.Empty(t, inventory.UnreadableSecrets)
+}
+
+// TestRemoteSecretKubeconfigNameMismatchFailsClosed pins the registration's name
+// contract: a kubeconfig whose cluster entry name differs from the secret file name
+// (the file name is the cluster's registered identity - the factory's registry key,
+// the cache's namespace scoping) must fail closed as an unprocessable registration.
+// Before the check, such a secret registered the cluster under the file name while
+// ClusterInfo.Name (and with it the informer cache's namespace scope) came from the
+// kubeconfig entry - the cluster watched the wrong namespaces with no retry able to
+// fix it.
+func TestRemoteSecretKubeconfigNameMismatchFailsClosed(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.Mkdir(root+"/a-secret", 0o700))
+	// The file - and with it the cluster's registered name - is "west"; the kubeconfig
+	// names its single cluster entry "default".
+	require.NoError(t, os.WriteFile(root+"/a-secret/west", []byte(remoteClusterKubeconfig("default")), 0o600))
+
+	inventory := getRemoteClusterInfosFromDir(root)
+	require.Empty(t, inventory.Clusters, "a name-divergent kubeconfig must not register")
+	require.Equal(t, []string{"west"}, inventory.UnprocessableClusters, "the mismatched registration must fail closed under the file's cluster name")
 	require.Empty(t, inventory.UnreadableSecrets)
 }
 
@@ -192,7 +222,7 @@ func TestUnreadableSecretDoesNotEnterSkipRegistry(t *testing.T) {
 
 	// A readable registration for the healthy spoke "west" (the helper names the
 	// kubeconfig file after the secret, so rename it to the cluster's name)...
-	createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, "west-secret", remoteClusterYAML)
+	createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, "west-secret", remoteClusterKubeconfig("west"))
 	require.NoError(t, os.Rename(RemoteClusterSecretsDir+"/west-secret/west-secret", RemoteClusterSecretsDir+"/west-secret/west"))
 	// ...an unreadable secret named like the home cluster, and one named like the
 	// healthy spoke (a cluster name registered through a different, readable secret).

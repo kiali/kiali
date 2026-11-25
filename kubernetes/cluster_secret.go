@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"path/filepath"
 	"slices"
 
 	"k8s.io/client-go/tools/clientcmd"
@@ -33,6 +34,17 @@ func newRemoteClusterInfo(secretName string, secretFile string) (RemoteClusterIn
 		return RemoteClusterInfo{}, fmt.Errorf("bytes for remote cluster secret [%s](%s) has [%v] clusters associated with it", secretName, secretFile, len(cfg.Clusters))
 	}
 
+	clusterEntryName := slices.Collect(maps.Keys(cfg.Clusters))[0]
+	// The kubeconfig's single cluster entry must be named for the file it lives in: the
+	// file name is the cluster's identity everywhere else (the client factory's registry,
+	// the cache's namespace scoping, the skipped-cluster registry), while
+	// ClusterInfo.Name comes from the entry. A divergence would register the cluster
+	// under one name and scope its informer cache under another - watching the wrong
+	// namespaces, with no retry able to fix it - so fail the registration closed instead.
+	if clusterEntryName != filepath.Base(secretFile) {
+		return RemoteClusterInfo{}, fmt.Errorf("kubeconfig for remote cluster secret [%s](%s) names its cluster [%s]; the name must match the secret file name [%s], which is the cluster's registered name", secretName, secretFile, clusterEntryName, filepath.Base(secretFile))
+	}
+
 	if len(cfg.AuthInfos) == 0 {
 		return RemoteClusterInfo{}, fmt.Errorf("bytes for remote cluster secret [%s](%s) has 0 users associated with it", secretName, secretFile)
 	}
@@ -48,7 +60,7 @@ func newRemoteClusterInfo(secretName string, secretFile string) (RemoteClusterIn
 
 	return RemoteClusterInfo{
 		ClusterInfo: ClusterInfo{
-			Name:         slices.Collect(maps.Keys(cfg.Clusters))[0],
+			Name:         clusterEntryName,
 			ClientConfig: restConf,
 			SecretName:   secretName,
 		},
