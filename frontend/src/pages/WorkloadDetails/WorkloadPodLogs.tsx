@@ -52,7 +52,7 @@ import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { location, router, URLParam } from 'app/History';
 import type { Span, TracingQuery } from 'types/Tracing';
-import { formatLocalDateTimeFromMs, formatUtcDateTime } from 'utils/DateTimeUtils';
+import { formatUtcDateTime } from 'utils/DateTimeUtils';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { download, isValid } from 'utils/Common';
@@ -885,7 +885,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       <div key={`al-${index}`} className={logLineStyle} style={{ ...style }}>
         {this.state.showTimestamps && (
           <span key={`al-s-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
-            {formatDate(e.timestampUnix)}
+            {formatUtcDateTime(e.timestampUnix)}
           </span>
         )}
 
@@ -1599,7 +1599,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private entryToString = (entry: Entry): string => {
     if (entry.logEntry) {
       const le = entry.logEntry;
-      return this.state.showTimestamps ? `${formatDate(entry.timestampUnix)} ${le.message}` : le.message;
+      return this.state.showTimestamps ? `${formatUtcDateTime(entry.timestampUnix)} ${le.message}` : le.message;
     }
 
     const { duration, operationName } = entry.span!;
@@ -1661,8 +1661,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
   private hasEntries = (entries: Entry[]): boolean => !!entries && entries.length > 0;
 }
-
-const formatDate = (timestampUnix: number): string => formatLocalDateTimeFromMs(timestampUnix);
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {

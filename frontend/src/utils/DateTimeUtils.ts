@@ -7,8 +7,7 @@ const isValidDate = (date: Date): boolean => !Number.isNaN(date.getTime());
 
 const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
 
-/** Active Kiali UI locale for Intl date/time formatting. */
-export const getDateLocale = (): string => i18n.resolvedLanguage ?? i18n.language ?? 'en';
+const getDateLocale = (): string => i18n.resolvedLanguage ?? i18n.language ?? 'en';
 
 const getRelativeTimeFormatter = (): Intl.RelativeTimeFormat => {
   const locale = getDateLocale();
@@ -32,32 +31,7 @@ export const formatUtcDateTime = (timeMs: number): string => {
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}.${pad3(d.getUTCMilliseconds())}`;
 };
 
-const formatLocalWallClock = (d: Date): string =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${pad3(d.getMilliseconds())}`;
-
-/** Local `YYYY-MM-DD HH:mm:ss.SSS` from epoch milliseconds (pod log display). */
-export const formatLocalDateTimeFromMs = (timeMs: number): string => {
-  if (Number.isNaN(timeMs)) {
-    return '';
-  }
-  const d = new Date(timeMs);
-  if (!isValidDate(d)) {
-    return '';
-  }
-  return formatLocalWallClock(d);
-};
-
-/** Local `YYYY-MM-DD HH:mm:ss.SSS` from a parseable timestamp string. */
-export const formatLocalDateTime = (timestamp: string): string => {
-  const d = new Date(timestamp);
-  if (!isValidDate(d)) {
-    return '';
-  }
-  return formatLocalWallClock(d);
-};
-
-export const formatLocaleDateTime = (date: Date): string =>
-  isValidDate(date) ? date.toLocaleString(getDateLocale()) : '';
+const formatLocaleDateTime = (date: Date): string => (isValidDate(date) ? date.toLocaleString(getDateLocale()) : '');
 
 /** Notification list: relative under 60 minutes, otherwise locale datetime. */
 export const formatNotificationTimestamp = (date: Date, now: Date = new Date()): string => {
