@@ -82,4 +82,10 @@ infomsg "Extra args are passed to the Inspector: $*"
 
 # Inspector spawns: go run . (stdio MCP server in this directory).
 # Any extra CLI args (e.g. --cli --method tools/list) go to the Inspector.
-exec npx --yes @modelcontextprotocol/inspector go run . "$@"
+exec npx --yes @modelcontextprotocol/inspector \
+  -e "KIALI_URL=${KIALI_URL}" \
+  -e "KIALI_MCP_TOOLSET=${KIALI_MCP_TOOLSET}" \
+  -e "KIALI_INSECURE=${KIALI_INSECURE}" \
+  ${KIALI_TOKEN:+-e "KIALI_TOKEN=${KIALI_TOKEN}"} \
+  --cwd "${SCRIPT_DIR}" \
+  go run . "$@"
