@@ -18,7 +18,7 @@ The generated doc's Version field uses the Makefile VERSION variable (default in
 
 ### Version
 
-v2.34.0-SNAPSHOT
+v2.35.0-SNAPSHOT
 
 ## Content negotiation
 
@@ -83,7 +83,8 @@ v2.34.0-SNAPSHOT
 |---------|---------|--------|---------|
 | POST | /api/chat/mcp/{tool_name} | [m c p tools](#m-c-p-tools) |  |
 | POST | /api/chat/{provider}/{model}/ai | [ai chat a i](#ai-chat-a-i) |  |
-| GET | /api/chat/session/usage | [ai chat session usage](#ai-chat-session-usage) |  |
+| GET | /api/ai/usage | [ai chat usage](#ai-chat-usage) |  |
+| GET | /api/ai/usage/user | [ai user usage](#ai-user-usage) |  |
 | GET | /api/chat/prompts | [chat prompts](#chat-prompts) |  |
   
 
@@ -998,13 +999,13 @@ Status: Internal Server Error
 
 
 
-### <span id="ai-chat-session-usage"></span> ai chat session usage (*aiChatSessionUsage*)
+### <span id="ai-chat-usage"></span> ai chat usage (*aiChatUsage*)
 
 ```
-GET /api/chat/session/usage
+GET /api/ai/usage
 ```
 
-Endpoint to get token usage statistics for the current user session
+Endpoint to get token usage statistics for the current cluster
 
 #### URI Schemes
   * http
@@ -1016,43 +1017,43 @@ Endpoint to get token usage statistics for the current user session
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#ai-chat-session-usage-200) | OK | NoContent: the response is empty |  | [schema](#ai-chat-session-usage-200-schema) |
-| [400](#ai-chat-session-usage-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#ai-chat-session-usage-400-schema) |
-| [500](#ai-chat-session-usage-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#ai-chat-session-usage-500-schema) |
+| [400](#ai-chat-usage-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#ai-chat-usage-400-schema) |
+| [500](#ai-chat-usage-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#ai-chat-usage-500-schema) |
+| [503](#ai-chat-usage-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#ai-chat-usage-503-schema) |
 
 #### Responses
 
 
-##### <span id="ai-chat-session-usage-200"></span> 200 - NoContent: the response is empty
-Status: OK
-
-###### <span id="ai-chat-session-usage-200-schema"></span> Schema
-   
-  
-
-[AiChatSessionUsageOKBody](#ai-chat-session-usage-o-k-body)
-
-##### <span id="ai-chat-session-usage-400"></span> 400 - BadRequestError: the client request is incorrect
+##### <span id="ai-chat-usage-400"></span> 400 - BadRequestError: the client request is incorrect
 Status: Bad Request
 
-###### <span id="ai-chat-session-usage-400-schema"></span> Schema
+###### <span id="ai-chat-usage-400-schema"></span> Schema
    
   
 
-[AiChatSessionUsageBadRequestBody](#ai-chat-session-usage-bad-request-body)
+[AiChatUsageBadRequestBody](#ai-chat-usage-bad-request-body)
 
-##### <span id="ai-chat-session-usage-500"></span> 500 - A Internal is the error message that means something has gone wrong
+##### <span id="ai-chat-usage-500"></span> 500 - A Internal is the error message that means something has gone wrong
 Status: Internal Server Error
 
-###### <span id="ai-chat-session-usage-500-schema"></span> Schema
+###### <span id="ai-chat-usage-500-schema"></span> Schema
    
   
 
-[AiChatSessionUsageInternalServerErrorBody](#ai-chat-session-usage-internal-server-error-body)
+[AiChatUsageInternalServerErrorBody](#ai-chat-usage-internal-server-error-body)
+
+##### <span id="ai-chat-usage-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="ai-chat-usage-503-schema"></span> Schema
+   
+  
+
+[AiChatUsageServiceUnavailableBody](#ai-chat-usage-service-unavailable-body)
 
 ###### Inlined models
 
-**<span id="ai-chat-session-usage-bad-request-body"></span> AiChatSessionUsageBadRequestBody**
+**<span id="ai-chat-usage-bad-request-body"></span> AiChatUsageBadRequestBody**
 
 
   
@@ -1068,7 +1069,7 @@ Status: Internal Server Error
 
 
 
-**<span id="ai-chat-session-usage-internal-server-error-body"></span> AiChatSessionUsageInternalServerErrorBody**
+**<span id="ai-chat-usage-internal-server-error-body"></span> AiChatUsageInternalServerErrorBody**
 
 
   
@@ -1084,7 +1085,7 @@ Status: Internal Server Error
 
 
 
-**<span id="ai-chat-session-usage-o-k-body"></span> AiChatSessionUsageOKBody**
+**<span id="ai-chat-usage-service-unavailable-body"></span> AiChatUsageServiceUnavailableBody**
 
 
   
@@ -1095,7 +1096,109 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| Code | int32 (formatted integer)| `int32` |  | `204`| HTTP status code | `204` |
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
+| Message | string| `string` |  | |  |  |
+
+
+
+### <span id="ai-user-usage"></span> ai user usage (*aiUserUsage*)
+
+```
+GET /api/ai/usage/user
+```
+
+Endpoint to get current-session token usage, user-scoped historical metrics, and budget status
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [400](#ai-user-usage-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#ai-user-usage-400-schema) |
+| [500](#ai-user-usage-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#ai-user-usage-500-schema) |
+| [503](#ai-user-usage-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#ai-user-usage-503-schema) |
+
+#### Responses
+
+
+##### <span id="ai-user-usage-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="ai-user-usage-400-schema"></span> Schema
+   
+  
+
+[AiUserUsageBadRequestBody](#ai-user-usage-bad-request-body)
+
+##### <span id="ai-user-usage-500"></span> 500 - A Internal is the error message that means something has gone wrong
+Status: Internal Server Error
+
+###### <span id="ai-user-usage-500-schema"></span> Schema
+   
+  
+
+[AiUserUsageInternalServerErrorBody](#ai-user-usage-internal-server-error-body)
+
+##### <span id="ai-user-usage-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="ai-user-usage-503-schema"></span> Schema
+   
+  
+
+[AiUserUsageServiceUnavailableBody](#ai-user-usage-service-unavailable-body)
+
+###### Inlined models
+
+**<span id="ai-user-usage-bad-request-body"></span> AiUserUsageBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="ai-user-usage-internal-server-error-body"></span> AiUserUsageInternalServerErrorBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `500`| HTTP status code | `500` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="ai-user-usage-service-unavailable-body"></span> AiUserUsageServiceUnavailableBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
 | Message | string| `string` |  | |  |  |
 
 
@@ -4888,6 +4991,7 @@ Produces metrics statistics
 |------|--------|-------------|:-----------:|--------|
 | [200](#metrics-stats-200) | OK | Response of the metrics stats query |  | [schema](#metrics-stats-200-schema) |
 | [400](#metrics-stats-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#metrics-stats-400-schema) |
+| [403](#metrics-stats-403) | Forbidden | ForbiddenError: the client is not allowed to access the requested namespace |  | [schema](#metrics-stats-403-schema) |
 | [500](#metrics-stats-500) | Internal Server Error | A Internal is the error message that means something has gone wrong |  | [schema](#metrics-stats-500-schema) |
 | [503](#metrics-stats-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#metrics-stats-503-schema) |
 
@@ -4911,6 +5015,15 @@ Status: Bad Request
   
 
 [MetricsStatsBadRequestBody](#metrics-stats-bad-request-body)
+
+##### <span id="metrics-stats-403"></span> 403 - ForbiddenError: the client is not allowed to access the requested namespace
+Status: Forbidden
+
+###### <span id="metrics-stats-403-schema"></span> Schema
+   
+  
+
+[MetricsStatsForbiddenBody](#metrics-stats-forbidden-body)
 
 ##### <span id="metrics-stats-500"></span> 500 - A Internal is the error message that means something has gone wrong
 Status: Internal Server Error
@@ -4944,6 +5057,22 @@ Status: Service Unavailable
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="metrics-stats-forbidden-body"></span> MetricsStatsForbiddenBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `403`| HTTP status code | `403` |
 | Message | string| `string` |  | |  |  |
 
 
@@ -10771,7 +10900,24 @@ interval: 75s
 | MaxRetries | int32 (formatted integer)| `int32` |  | | Maximum number of retries that can be outstanding to all hosts in a</br>cluster at a given time. Defaults to 2^32-1. |  |
 | UseClientProtocol | boolean| `bool` |  | | If set to true, client protocol will be preserved while initiating connection to backend.</br>Note that when this is set to true, `h2UpgradePolicy` will be ineffective i.e. the client</br>connections will not be upgraded to http2. |  |
 | h2_upgrade_policy | [ConnectionPoolSettingsHTTPSettingsH2UpgradePolicy](#connection-pool-settings-http-settings-h2-upgrade-policy)| `ConnectionPoolSettingsHTTPSettingsH2UpgradePolicy` |  | |  |  |
+| http2_keep_alive | [ConnectionPoolSettingsHTTPSettingsConnectionKeepalive](#connection-pool-settings-http-settings-connection-keepalive)| `ConnectionPoolSettingsHTTPSettingsConnectionKeepalive` |  | |  |  |
 | idle_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+
+
+
+### <span id="connection-pool-settings-http-settings-connection-keepalive"></span> ConnectionPoolSettings_HTTPSettings_ConnectionKeepalive
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| interval | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 
 
 
@@ -11509,6 +11655,17 @@ associated configuration.
 
 
 
+### <span id="envoy-memory-metric"></span> EnvoyMemoryMetric
+
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| EnvoyMemoryMetric | string| string | |  |  |
+
+
+
 ### <span id="envoy-memory-summary"></span> EnvoyMemorySummary
 
 
@@ -11522,10 +11679,15 @@ associated configuration.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ActiveClustersMax | int64 (formatted integer)| `int64` |  | |  |  |
 | ActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| ActiveConnectionsObserved | boolean| `bool` |  | |  |  |
+| BusyActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| BusyRequestRatePerSecond | double (formatted number)| `float64` |  | |  |  |
+| BusyTCPBytesPerSecond | double (formatted number)| `float64` |  | |  |  |
 | ConfigCountsPod | string| `string` |  | |  |  |
 | LargeConfigClustersThreshold | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryLimitBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryMaxBytes | int64 (formatted integer)| `int64` |  | |  |  |
+| MemoryMetric | [EnvoyMemoryMetric](#envoy-memory-metric)| `EnvoyMemoryMetric` |  | |  |  |
 | MemoryThresholdBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryUsedPercent | double (formatted number)| `float64` |  | |  |  |
 | RequestRate | double (formatted number)| `float64` |  | |  |  |
@@ -12804,6 +12966,32 @@ authority: newratings.default.svc.cluster.local
 ...
 
 ```
+
+The following rule redirects requests with a path prefix of /foo to the
+authority foo.example.com, stripping the /foo prefix from the path:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+
+
+spec:
+
+hosts:
+- example.com
+http:
+- match:
+- uri:
+prefix: /foo/
+redirect:
+authority: foo.example.com
+prefix_rewrite: /
+
+```
+
+With this rule, a request to example.com/foo/bar is redirected to
+foo.example.com/bar.
   
 
 
@@ -12815,10 +13003,11 @@ authority: newratings.default.svc.cluster.local
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Authority | string| `string` |  | | On a redirect, overwrite the Authority/Host portion of the URL with</br>this value. |  |
+| PrefixRewrite | string| `string` |  | | On a redirect, replace the matched prefix with this value. The route match</br>must use a prefix match type. The matched prefix is stripped from the path</br>and this value is prepended.</br></br>Examples (route prefix match: /foo):</br>- prefix_rewrite: /bar → /foo/baz becomes /bar/baz</br>- prefix_rewrite: /   → /foo/baz becomes //baz (use /foo/ match to get /baz)</br></br>Mutually exclusive with uri. |  |
 | RedirectCode | uint32 (formatted integer)| `uint32` |  | | On a redirect, Specifies the HTTP status code to use in the redirect</br>response. The default response code is MOVED_PERMANENTLY (301). |  |
 | RedirectPort | [IsHTTPRedirectRedirectPort](#is-http-redirect-redirect-port)| `IsHTTPRedirectRedirectPort` |  | |  |  |
 | Scheme | string| `string` |  | | On a redirect, overwrite the scheme portion of the URL with this value.</br>For example, `http` or `https`.</br>If unset, the original scheme will be used.</br>If `derivePort` is set to `FROM_PROTOCOL_DEFAULT`, this will impact the port used as well |  |
-| Uri | string| `string` |  | | On a redirect, overwrite the Path portion of the URL with this</br>value. Note that the entire path will be replaced, irrespective of the</br>request URI being matched as an exact path or prefix. |  |
+| Uri | string| `string` |  | | On a redirect, overwrite the Path portion of the URL with this</br>value. Note that the entire path will be replaced, irrespective of the</br>request URI being matched as an exact path or prefix.</br></br>Mutually exclusive with prefix_rewrite. |  |
 
 
 
@@ -13653,7 +13842,13 @@ This type is used for returning a response of IstioConfigList
 ### <span id="istio-validation-key"></span> IstioValidationKey
 
 
+> Its field order (ObjectGVK, Name, Namespace, Cluster) predates the project's
+alphabetical struct-field ordering rule and is a deliberate, accepted
+exception: literals across the checkers follow this order, and reordering
+the fields would churn every checker for no functional gain.
   
+
+
 
 
 
@@ -14097,6 +14292,7 @@ ttl: 0s
 | locality_lb_setting | [LocalityLoadBalancerSetting](#locality-load-balancer-setting)| `LocalityLoadBalancerSetting` |  | |  |  |
 | warmup | [WarmupConfiguration](#warmup-configuration)| `WarmupConfiguration` |  | |  |  |
 | warmup_duration_secs | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| zone_aware_lb_setting | [ZoneAwareLoadBalancerSetting](#zone-aware-load-balancer-setting)| `ZoneAwareLoadBalancerSetting` |  | |  |  |
 
 
 
@@ -14349,8 +14545,8 @@ primary can also manage multiple clusters (primary-remote deployment).
 ### <span id="mesh-config"></span> MeshConfig
 
 
-> MeshConfig wraps the istio.MeshConfig solely to override json Marshaling
-for some fields. See MarshalJSON for more details.
+> MeshConfig wraps Istio configuration with custom JSON marshaling and prepared
+ServiceEntry visibility rules for the cached mesh snapshot.
   
 
 
@@ -14393,6 +14589,7 @@ for some fields. See MarshalJSON for more details.
 | default_config | [ProxyConfig](#proxy-config)| `ProxyConfig` |  | |  |  |
 | default_http_retry_policy | [HTTPRetry](#http-retry)| `HTTPRetry` |  | |  |  |
 | default_providers | [MeshConfigDefaultProviders](#mesh-config-default-providers)| `MeshConfigDefaultProviders` |  | |  |  |
+| default_traffic_policy | [MeshConfigDefaultTrafficPolicy](#mesh-config-default-traffic-policy)| `MeshConfigDefaultTrafficPolicy` |  | |  |  |
 | dns_refresh_rate | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 | enable_auto_mtls | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
 | enable_prometheus_merge | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
@@ -14405,9 +14602,11 @@ for some fields. See MarshalJSON for more details.
 | outbound_traffic_policy | [MeshConfigOutboundTrafficPolicy](#mesh-config-outbound-traffic-policy)| `MeshConfigOutboundTrafficPolicy` |  | |  |  |
 | path_normalization | [MeshConfigProxyPathNormalization](#mesh-config-proxy-path-normalization)| `MeshConfigProxyPathNormalization` |  | |  |  |
 | protocol_detection_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| service_entry_visibility | [ServiceEntryVisibility](#service-entry-visibility)| `ServiceEntryVisibility` |  | |  |  |
 | tcp_keepalive | [ConnectionPoolSettingsTCPSettingsTCPKeepalive](#connection-pool-settings-tcp-settings-tcp-keepalive)| `ConnectionPoolSettingsTCPSettingsTCPKeepalive` |  | |  |  |
 | tls_defaults | [MeshConfigTLSConfig](#mesh-config-tls-config)| `MeshConfigTLSConfig` |  | |  |  |
 | verify_certificate_at_client | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
+| zone_aware_lb_setting | [ZoneAwareLoadBalancerSetting](#zone-aware-load-balancer-setting)| `ZoneAwareLoadBalancerSetting` |  | |  |  |
 
 
 
@@ -14510,6 +14709,28 @@ one of the supported tracing providers.
 | AccessLogging | []string| `[]string` |  | | Name of the default provider(s) for access logging. |  |
 | Metrics | []string| `[]string` |  | | Name of the default provider(s) for metrics. |  |
 | Tracing | []string| `[]string` |  | | Name of the default provider(s) for tracing. |  |
+
+
+
+### <span id="mesh-config-default-traffic-policy"></span> MeshConfig_DefaultTrafficPolicy
+
+
+> DefaultTrafficPolicy defines mesh-wide baseline traffic settings for outbound
+clusters. Only connection pool and outlier detection are configurable here, the
+two settings that benefit from a mesh-wide baseline. A DestinationRule overrides a
+baseline block when it sets the corresponding policy, and inherits it otherwise.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| connection_pool | [ConnectionPoolSettings](#connection-pool-settings)| `ConnectionPoolSettings` |  | |  |  |
+| outlier_detection | [OutlierDetection](#outlier-detection)| `OutlierDetection` |  | |  |  |
 
 
 
@@ -15433,7 +15654,16 @@ users must create.
 ### <span id="outlier-detection"></span> OutlierDetection
 
 
-> The following rule sets a connection pool size of 100 HTTP1 connections
+> **Note:** Istio's default mesh configuration enables locality load balancing
+(`localityLbSetting.enabled: true`). As a result, configuring
+`OutlierDetection` in a `DestinationRule` will automatically activate
+locality-aware failover behavior — Envoy uses the outlier detection state to
+determine when endpoints are unhealthy and should be failed over to the next
+locality. To suppress this implicit failover, explicitly set
+`localityLbSetting.enabled: false` in the `DestinationRule`'s load balancer
+settings.
+
+The following rule sets a connection pool size of 100 HTTP1 connections
 with no more than 10 req/connection to the "reviews" service. In addition,
 it sets a limit of 1000 concurrent HTTP/2 requests and configures upstream
 hosts to be scanned every 5 mins so that any host that fails 7 consecutive
@@ -15473,6 +15703,7 @@ baseEjectionTime: 15m
 | ConsecutiveErrors | int32 (formatted integer)| `int32` |  | | Number of errors before a host is ejected from the connection</br>pool. Defaults to 5. When the upstream host is accessed over HTTP, a</br>502, 503, or 504 return code qualifies as an error. When the upstream host</br>is accessed over an opaque TCP connection, connect timeouts and</br>connection error/failure events qualify as an error.</br>$hide_from_docs</br></br>Deprecated: Marked as deprecated in networking/v1alpha3/destination_rule.proto. |  |
 | MaxEjectionPercent | int32 (formatted integer)| `int32` |  | | Maximum % of hosts in the load balancing pool for the upstream</br>service that can be ejected. Defaults to 10%. |  |
 | MinHealthPercent | int32 (formatted integer)| `int32` |  | | Outlier detection will be enabled as long as the associated load balancing</br>pool has at least `minHealthPercent` hosts in healthy mode. When the</br>percentage of healthy hosts in the load balancing pool drops below this</br>threshold, outlier detection will be disabled and the proxy will load balance</br>across all hosts in the pool (healthy and unhealthy). The threshold can be</br>disabled by setting it to 0%. The default is 0% as it's not typically</br>applicable in k8s environments with few pods per service. |  |
+| OutlierDetectionHttpErrorCodes | []uint32 (formatted integer)| `[]uint32` |  | | Specifies the HTTP response status codes that are treated as outlier</br>detection errors. If specified, only responses with one of these status</br>codes will be treated as errors by outlier detection. If not specified,</br>only 5xx responses are treated as errors.</br></br>Note: Host ejection is still driven by the `consecutive5xxErrors` and</br>`consecutiveGatewayErrors` thresholds; this field only redefines which</br>HTTP status codes are counted as errors toward those thresholds.</br></br>Values must be in the range [100, 599]. |  |
 | SplitExternalLocalOriginErrors | boolean| `bool` |  | | Determines whether to distinguish local origin failures from external errors. If set to true</br>`consecutiveLocalOriginFailures` is taken into account for outlier detection calculations.</br>This should be used when you want to derive the outlier detection status based on the errors</br>seen locally such as failure to connect, timeout while connecting etc. rather than the status code</br>returned by upstream service. This is especially useful when the upstream service explicitly returns</br>a 5xx for some requests and you want to ignore those responses from upstream service while determining</br>the outlier detection status of a host.</br>Defaults to false. |  |
 | base_ejection_time | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 | consecutive_5xx_errors | [UInt32Value](#u-int32-value)| `UInt32Value` |  | |  |  |
@@ -15809,6 +16040,7 @@ Note: fields in ProxyConfig are not dynamically configured; changes will require
 | StatusPort | int32 (formatted integer)| `int32` |  | | Port on which the agent should listen for administrative commands such as readiness probe.</br>Default is set to port `15020`. |  |
 | ZipkinAddress | string| `string` |  | | Address of the Zipkin service (e.g. _zipkin:9411_).</br>DEPRECATED: Use [tracing][istio.mesh.v1alpha1.ProxyConfig.tracing] instead.</br></br>Deprecated: Marked as deprecated in mesh/v1alpha1/proxy.proto. |  |
 | concurrency | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| connection_settings | [ProxyConfigConnectionSettings](#proxy-config-connection-settings)| `ProxyConfigConnectionSettings` |  | |  |  |
 | control_plane_auth_policy | [AuthenticationPolicy](#authentication-policy)| `AuthenticationPolicy` |  | |  |  |
 | discovery_refresh_delay | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 | drain_duration | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
@@ -15827,6 +16059,91 @@ Note: fields in ProxyConfig are not dynamically configured; changes will require
 | stats_compression | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
 | termination_drain_duration | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 | tracing | [Tracing](#tracing)| `Tracing` |  | |  |  |
+
+
+
+### <span id="proxy-config-connection-settings"></span> ProxyConfig_ConnectionSettings
+
+
+> The `profile` field selects a set of recommended defaults for these settings.
+Any field explicitly set always takes precedence over profile defaults.
+
+These settings primarily configure the downstream side of the proxy —
+listeners and the HTTP Connection Manager. The exception is
+`cluster_per_connection_buffer_limit_bytes`, which applies at the
+cluster level.
+
+Where DestinationRule configures behavior at the upstream cluster level
+(notably `connectionPoolSettings.tcp.idleTimeout`), both apply
+independently at different hops rather than one overriding the other:
+DestinationRule governs Envoy → upstream connections, while these
+settings govern downstream → Envoy connections. For per-destination
+connection pool configuration, use DestinationRule's
+`connectionPoolSettings`.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| cluster_per_connection_buffer_limit_bytes | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| global_downstream_connection_limit | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| http2_initial_connection_window_size | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| http2_initial_stream_window_size | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| http_drain_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_headers_with_underscores_action | [ProxyConfigConnectionSettingsHeadersWithUnderscoresAction](#proxy-config-connection-settings-headers-with-underscores-action)| `ProxyConfigConnectionSettingsHeadersWithUnderscoresAction` |  | |  |  |
+| http_idle_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_max_concurrent_streams | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| http_max_connection_duration | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_max_stream_duration | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_merge_slashes | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
+| http_path_with_escaped_slashes_action | [ProxyConfigConnectionSettingsPathWithEscapedSlashesAction](#proxy-config-connection-settings-path-with-escaped-slashes-action)| `ProxyConfigConnectionSettingsPathWithEscapedSlashesAction` |  | |  |  |
+| http_request_headers_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_request_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| http_stream_idle_timeout | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
+| listener_connection_limit | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| listener_per_connection_buffer_limit_bytes | [Int32Value](#int32-value)| `Int32Value` |  | |  |  |
+| profile | [ProxyConfigConnectionSettingsProfile](#proxy-config-connection-settings-profile)| `ProxyConfigConnectionSettingsProfile` |  | |  |  |
+
+
+
+### <span id="proxy-config-connection-settings-headers-with-underscores-action"></span> ProxyConfig_ConnectionSettings_HeadersWithUnderscoresAction
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ProxyConfig_ConnectionSettings_HeadersWithUnderscoresAction | int32 (formatted integer)| int32 | |  |  |
+
+
+
+### <span id="proxy-config-connection-settings-path-with-escaped-slashes-action"></span> ProxyConfig_ConnectionSettings_PathWithEscapedSlashesAction
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ProxyConfig_ConnectionSettings_PathWithEscapedSlashesAction | int32 (formatted integer)| int32 | |  |  |
+
+
+
+### <span id="proxy-config-connection-settings-profile"></span> ProxyConfig_ConnectionSettings_Profile
+
+
+> Explicitly setting any field always takes precedence over profile defaults.
+  
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ProxyConfig_ConnectionSettings_Profile | int32 (formatted integer)| int32 | | Explicitly setting any field always takes precedence over profile defaults. |  |
 
 
 
@@ -16645,6 +16962,71 @@ Invalid values include:
 | Conditions | [][IstioCondition](#istio-condition)| `[]*IstioCondition` |  | | Current service state of ServiceEntry. |  |
 | ObservedGeneration | int64 (formatted integer)| `int64` |  | | Resource Generation to which the Reconciled Condition refers.</br>When this value is not equal to the object's metadata generation, reconciled condition  calculation for the current</br>generation is still in progress. |  |
 | ValidationMessages | [][AnalysisMessageBase](#analysis-message-base)| `[]*AnalysisMessageBase` |  | | Includes any errors or warnings detected by Istio's analyzers. |  |
+
+
+
+### <span id="service-entry-visibility"></span> ServiceEntryVisibility
+
+
+> Policies are evaluated in order; the first policy whose rules all match sets
+the ServiceEntry's visibility. If no policy matches, `defaultVisibility`
+applies. When this entire message is absent from `MeshConfig`, every
+ServiceEntry is visible `PUBLIC`, preserving current Istio behavior.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| ApplyToSidecars | boolean| `bool` |  | | Whether sidecars honor these visibility semantics. When false (default),</br>only ambient proxies (ztunnel and waypoints) apply them and sidecars</br>continue to use `exportTo`. This enables incremental adoption during an</br>ambient migration without affecting a working sidecar environment. |  |
+| Policies | [][ServiceEntryVisibilityPolicy](#service-entry-visibility-policy)| `[]*ServiceEntryVisibilityPolicy` |  | | An ordered list of policies. Each policy is evaluated in turn; the first</br>policy whose rules all match determines the ServiceEntry's visibility. |  |
+| default_visibility | [ServiceEntryVisibilityVisibility](#service-entry-visibility-visibility)| `ServiceEntryVisibilityVisibility` |  | |  |  |
+
+
+
+### <span id="service-entry-visibility-match-rule"></span> ServiceEntryVisibility_MatchRule
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Matcher | [IsServiceEntryVisibilityMatchRuleMatcher](#is-service-entry-visibility-match-rule-matcher)| `IsServiceEntryVisibilityMatchRuleMatcher` |  | |  |  |
+
+
+
+### <span id="service-entry-visibility-policy"></span> ServiceEntryVisibility_Policy
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| MatchingRules | [][ServiceEntryVisibilityMatchRule](#service-entry-visibility-match-rule)| `[]*ServiceEntryVisibilityMatchRule` |  | | The rules to evaluate. All rules must match (AND semantics) for this</br>policy to apply. |  |
+| visibility | [ServiceEntryVisibilityVisibility](#service-entry-visibility-visibility)| `ServiceEntryVisibilityVisibility` |  | |  |  |
+
+
+
+### <span id="service-entry-visibility-visibility"></span> ServiceEntryVisibility_Visibility
+
+
+  
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| ServiceEntryVisibility_Visibility | int32 (formatted integer)| int32 | |  |  |
 
 
 
@@ -17586,6 +17968,7 @@ destination ports. See DestinationRule for examples.
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | MinRetryConcurrency | uint32 (formatted integer)| `uint32` |  | | Specifies the minimum retry concurrency allowed for the retry budget.</br>For example, a budget of 20% with a minimum retry concurrency of 3</br>will allow 5 active retries while there are 25 active requests.</br>If there are 2 active requests, there are still 3 active retries</br>allowed because of the minimum retry concurrency.</br></br>Defaults to 3. |  |
+| budget_interval | [DurationpbDuration](#durationpb-duration)| `DurationpbDuration` |  | |  |  |
 | percent | [DoubleValue](#double-value)| `DoubleValue` |  | |  |  |
 
 
@@ -18366,7 +18749,6 @@ associated with a workload node.
 | ValidationKey | string| `string` |  | | ValidationKey is a pre-calculated key string: "cluster:namespace:name" |  |
 | ValidationVersion | string| `string` |  | | ValidationVersion is a pre-calculated string representing the workload "version", basically</br>the workload information that, if changed, requires re-validation (including per-object ignore</br>rules and resolved waypoint references used by ambient checkers such as KIA1313). |  |
 | VersionLabel | boolean| `bool` | ✓ | | Define if Pods related to this Workload has the label Version | `true` |
-| WaypointWorkloads | []string| `[]string` |  | | Names of the waypoint proxy workloads, if any |  |
 | additionalDetailSample | [AdditionalItem](#additional-item)| `AdditionalItem` |  | |  |  |
 | gvk | [GroupVersionKind](#group-version-kind)| `GroupVersionKind` | ✓ | |  |  |
 | health | [WorkloadHealth](#workload-health)| `WorkloadHealth` |  | |  |  |
@@ -18431,6 +18813,126 @@ i.e.
 | DesiredReplicas | int32 (formatted integer)| `int32` |  | |  |  |
 | Name | string| `string` |  | |  |  |
 | SyncedProxies | int32 (formatted integer)| `int32` |  | |  |  |
+
+
+
+### <span id="zone-aware-load-balancer-setting"></span> ZoneAwareLoadBalancerSetting
+
+
+> When the local zone has proportionally fewer endpoints than the share of
+traffic it would need to absorb, Envoy automatically overflows the excess to
+other zones rather than overloading local endpoints.
+
+Additionally Zone Aware Load Balancer always partitions endpoints by region: the proxy's own region
+forms the highest-priority tier and Envoy's automatic zone balancing operates
+only among the endpoints within that region. Endpoints in other regions form
+lower-priority failover tiers that receive traffic only when the local region is
+unhealthy or runs out of capacity. The `failover` and `failoverPriority` fields
+only influence how those lower tiers are ordered; the regional partitioning
+itself is always applied whenever zone-aware load balancing is enabled.
+
+For proxies to activate Zone Aware Load Balancer all of the following conditions are needed:
+
+- The downstream proxy is configured with  `ISTIO_META_ENABLE_SELF_DISCOVERY=true`
+(set via `proxyMetadata`).
+- The upstream cluster spans more than one zone.
+- The upstream cluster has at least `minClusterSize` hosts (default 6) in the local region.
+- There is at least one healthy endpoint in the local zone.
+
+If any of these conditions are not met, Envoy falls back to the configured load balancing policy
+(e.g. round-robin or least-request) across all endpoints in the local region.
+
+For additional details on the algorithm, refer to Envoy's
+[Zone Aware Routing](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/zone_aware)
+documentation.
+
+Note: Zone Aware Load Balancer is not supported on Ambient mode.
+
+The following example enables zone-aware load balancing for the ratings service:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+
+
+spec:
+
+trafficPolicy:
+loadBalancer:
+simple: ROUND_ROBIN
+zoneAwareLbSetting:
+enabled: true
+
+```
+
+The following example adds a cross-region failover policy so that when all
+endpoints in `us-east` become unhealthy, traffic fails over to `eu-west`
+instead of any region globally:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+
+
+spec:
+
+trafficPolicy:
+loadBalancer:
+simple: LEAST_REQUEST
+zoneAwareLbSetting:
+enabled: true
+failover:
+- from: us-east
+to: eu-west
+- from: us-west
+to: us-east
+outlierDetection:
+consecutive5xxErrors: 5
+interval: 30s
+baseEjectionTime: 30s
+
+```
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Failover | [][ZoneAwareLoadBalancerSettingFailover](#zone-aware-load-balancer-setting-failover)| `[]*ZoneAwareLoadBalancerSettingFailover` |  | | Optional. Explicitly specifies the region traffic will land on when the endpoints</br>in the local region become unhealthy. Regional partitioning is always</br>applied; this field only customizes the ordering of the cross-region tiers.</br>It may be used on its own, or together with `failoverPriority`, in which case</br>it orders the regional tiers applied on top of the label-based priorities.</br>For this to be effective consider one of the following:</br>- Use together with `OutlierDetection` to detect unhealthy endpoints in the local zone so that traffic fails over to other zones according to the specified priority.</br>- Enable `PILOT_SEND_UNHEALTHY_ENDPOINTS` to allow Envoy to know when endpoints in the local zone are unhealthy and failover according to the specified priority. |  |
+| FailoverPriority | []string| `[]string` |  | | failoverPriority is an ordered list of labels used to sort endpoints for</br>priority-based load balancing. This supports traffic failover across</br>different groups of endpoints and complements the automatic zone-level</br>routing by allowing label-based priority tiers on top of it.</br></br>Regional partitioning is always applied in addition to these labels: within</br>each tier produced by `failoverPriority`, endpoints in the proxy's own region</br>are preferred over endpoints in other regions (ordered by `failover` when it</br>is also set). Because region-, zone-, and subzone-level routing are all handled</br>automatically, `failoverPriority` must not include the</br>`topology.kubernetes.io/region`, `topology.kubernetes.io/zone`, or</br>`topology.istio.io/subzone` labels.</br></br>Two kinds of labels can be specified:</br></br>- Specify only label keys `[key1, key2, key3]`, istio would compare the label values of client with endpoints.</br>Suppose there are total N label keys `[key1, key2, key3, ...keyN]` specified:</br></br>1. Endpoints matching all N labels with the client proxy have priority P(0) i.e. the highest priority.</br>2. Endpoints matching the first N-1 labels with the client proxy have priority P(1) i.e. second highest priority.</br>3. By extension of this logic, endpoints matching only the first label with the client proxy has priority P(N-1) i.e. second lowest priority.</br>4. All the other endpoints have priority P(N) i.e. lowest priority.</br></br>- Specify labels with key and value `[key1=value1, key2=value2, key3=value3]`, istio would compare the labels with endpoints.</br>Suppose there are total N labels `[key1=value1, key2=value2, key3=value3, ...keyN=valueN]` specified:</br></br>1. Endpoints matching all N labels have priority P(0) i.e. the highest priority.</br>2. Endpoints matching the first N-1 labels have priority P(1) i.e. second highest priority.</br>3. By extension of this logic, endpoints matching only the first label has priority P(N-1) i.e. second lowest priority.</br>4. All the other endpoints have priority P(N) i.e. lowest priority.</br></br>Note: For a label to be considered for match, the previous labels must match, i.e. nth label would be considered matched only if first n-1 labels match.</br></br>It can be any label specified on both client and server workloads.</br>The following labels which have special semantic meaning are also supported:</br></br>- `topology.istio.io/network` is used to match the network metadata of an endpoint, which can be specified by pod/namespace label `topology.istio.io/network`, sidecar env `ISTIO_META_NETWORK` or MeshNetworks.</br>- `topology.istio.io/cluster` is used to match the clusterID of an endpoint, which can be specified by pod label `topology.istio.io/cluster` or pod env `ISTIO_META_CLUSTER_ID`.</br>- `topology.kubernetes.io/region` is used to match the region metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/region` or the deprecated label `failure-domain.beta.kubernetes.io/region`.</br>- `topology.kubernetes.io/zone` is used to match the zone metadata of an endpoint, which maps to Kubernetes node label `topology.kubernetes.io/zone` or the deprecated label `failure-domain.beta.kubernetes.io/zone`.</br>- `kubernetes.io/hostname` is used to match the current node of an endpoint, which maps to Kubernetes node label `kubernetes.io/hostname`.</br></br>The below topology config indicates the following priority levels:</br></br>```yaml</br>failoverPriority:</br>- "topology.istio.io/network"</br>- "topology.kubernetes.io/region"</br>- "topology.kubernetes.io/zone"</br>```</br></br>1. endpoints match same [network, region, zone] label with the client proxy have the highest priority.</br>2. endpoints have same [network, region] label but different [zone] label with the client proxy have the second highest priority.</br>3. endpoints have same [network] but different [region] labels with the client proxy have the third highest priority.</br>4. all the other endpoints have the same lowest priority.</br></br>Suppose a service associated endpoints reside in multi clusters, the below example represents:</br>1. endpoints in `clusterA` and has `version=v1` label have P(0) priority.</br>2. endpoints not in `clusterA` but has `version=v1` label have P(1) priority.</br>3. all the other endpoints have P(2) priority.</br></br>```yaml</br>failoverPriority:</br>- "version=v1"</br>- "topology.istio.io/cluster=clusterA"</br>```</br></br>Optional. May be combined with `failover` (which then orders the regional</br>tiers applied on top of these label-based priorities).</br>For this to be effective consider one of the following:</br>- Use together with `OutlierDetection` to detect unhealthy endpoints in the local zone so that traffic fails over to other zones according to the specified priority.</br>- Enable `PILOT_SEND_UNHEALTHY_ENDPOINTS` to allow Envoy to know when endpoints in the local zone are unhealthy and failover according to the specified priority. |  |
+| enabled | [BoolValue](#bool-value)| `BoolValue` |  | |  |  |
+| min_cluster_size | [UInt32Value](#u-int32-value)| `UInt32Value` |  | |  |  |
+
+
+
+### <span id="zone-aware-load-balancer-setting-failover"></span> ZoneAwareLoadBalancerSetting_Failover
+
+
+> Specify the traffic failover policy across regions. Since zone and sub-zone
+failover is supported by default this only needs to be specified for
+regions when the operator needs to constrain traffic failover so that
+the default behavior of failing over to any endpoint globally does not
+apply. This is useful when failing over traffic across regions would not
+improve service health or may need to be restricted for other reasons
+like regulatory controls.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| From | string| `string` |  | | Originating region. |  |
+| To | string| `string` |  | | Destination region the traffic will fail over to when endpoints in</br>the 'from' region becomes unhealthy. |  |
 
 
 
@@ -18531,6 +19033,13 @@ i.e.
 [any](#any)
 
 ### <span id="is-readiness-probe-health-check-method"></span> isReadinessProbe_HealthCheckMethod
+
+
+  
+
+[any](#any)
+
+### <span id="is-service-entry-visibility-match-rule-matcher"></span> isServiceEntryVisibility_MatchRule_Matcher
 
 
   

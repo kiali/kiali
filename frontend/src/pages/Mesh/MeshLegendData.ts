@@ -64,7 +64,7 @@ export const legendData: MeshLegendItem[] = [
     isLogo: true,
     data: [
       { label: t('Data Plane'), icon: dataplane },
-      { label: t('Gateway'), icon: gateway },
+      { label: 'Gateway', icon: gateway },
       { label: 'Grafana', icon: grafanaLogo },
       { label: 'Jaeger', icon: jaegerLogo },
       { label: 'Kiali', icon: kialiLogo },
@@ -72,7 +72,7 @@ export const legendData: MeshLegendItem[] = [
       { label: 'Perses', icon: persesLogo },
       { label: 'Prometheus', icon: prometheusLogo },
       { label: 'Tempo', icon: tempoLogo },
-      { label: t('Waypoint'), icon: waypoint }
+      { label: 'Waypoint', icon: waypoint }
     ]
   }
 ];

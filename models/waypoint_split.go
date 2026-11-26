@@ -1,0 +1,320 @@
+package models
+
+import (
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/kiali/kiali/config"
+)
+
+const (
+	WaypointRoleCanary  = "canary"
+	WaypointRolePrimary = "primary"
+)
+
+// WaypointCanaryMultipleSplitsLabel is used on waypoint graph nodes when enrollments disagree on canary weight.
+const WaypointCanaryMultipleSplitsLabel = "Multiple traffic splits"
+
+// GatewayWaypointTrafficSplitConfig is one enrollment namespace or service that references a shared gateway.
+type GatewayWaypointTrafficSplitConfig struct {
+	ConfigLevel string                `json:"configLevel"`
+	Namespace   string                `json:"namespace"`
+	ServiceName string                `json:"serviceName,omitempty"`
+	Split       *WaypointTrafficSplit `json:"split,omitempty"`
+}
+
+// WaypointTrafficSplit describes primary and optional canary waypoint gateways for a resource.
+type WaypointTrafficSplit struct {
+	Canary *WaypointBinding `json:"canary,omitempty"`
+	// CanaryWeight is the canary share of new mesh connections (0-100).
+	CanaryWeight int `json:"canaryWeight"`
+	// ConfigLevel is namespace or service (where the canary labels apply).
+	ConfigLevel string          `json:"configLevel,omitempty"`
+	Primary     WaypointBinding `json:"primary"`
+	// PrimaryWeight is the primary share of new mesh connections (0-100); remainder goes to canary when set.
+	PrimaryWeight int `json:"primaryWeight"`
+}
+
+// WaypointBinding references a waypoint gateway workload.
+type WaypointBinding struct {
+	Cluster   string `json:"cluster"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Role      string `json:"role"`
+}
+
+// ParseWaypointCanaryWeight parses istio.io/use-waypoint-canary-weight (0-100). Invalid values return -1.
+func ParseWaypointCanaryWeight(annotations map[string]string) int {
+	if annotations == nil {
+		return 0
+	}
+	raw := strings.TrimSpace(annotations[config.WaypointCanaryWeightAnnotation])
+	if raw == "" {
+		return 0
+	}
+	weight, err := strconv.Atoi(raw)
+	if err != nil || weight < 0 || weight > 100 {
+		return -1
+	}
+	return weight
+}
+
+// ResolveWaypointTrafficSplit builds split config from labels and annotations at a single config level.
+func ResolveWaypointTrafficSplit(cluster, defaultNamespace string, labels, annotations map[string]string, configLevel string) *WaypointTrafficSplit {
+	if labels == nil {
+		return nil
+	}
+	primaryName := labels[config.WaypointUseLabel]
+	if primaryName == "" || primaryName == config.WaypointNone {
+		return nil
+	}
+	primaryNs := labels[config.WaypointUseNamespaceLabel]
+	if primaryNs == "" {
+		primaryNs = defaultNamespace
+	}
+
+	split := &WaypointTrafficSplit{
+		CanaryWeight: 0,
+		ConfigLevel:  configLevel,
+		Primary: WaypointBinding{
+			Cluster:   cluster,
+			Name:      primaryName,
+			Namespace: primaryNs,
+			Role:      WaypointRolePrimary,
+		},
+		PrimaryWeight: 100,
+	}
+
+	canaryName := labels[config.WaypointCanaryUseLabel]
+	if canaryName == "" || canaryName == config.WaypointNone {
+		return split
+	}
+	canaryNs := labels[config.WaypointCanaryNamespaceLabel]
+	if canaryNs == "" {
+		canaryNs = defaultNamespace
+	}
+	weight := ParseWaypointCanaryWeight(annotations)
+	if weight < 0 {
+		return split
+	}
+	split.CanaryWeight = weight
+	split.PrimaryWeight = 100 - weight
+	split.Canary = &WaypointBinding{
+		Cluster:   cluster,
+		Name:      canaryName,
+		Namespace: canaryNs,
+		Role:      WaypointRoleCanary,
+	}
+	return split
+}
+
+// ResolveServiceWaypointTrafficSplit keeps a Service's canary overrides independent of
+// its inherited primary. An explicit primary prevents all namespace canary inheritance.
+func ResolveServiceWaypointTrafficSplit(cluster, namespace string, serviceLabels, serviceAnnotations, namespaceLabels, namespaceAnnotations map[string]string) *WaypointTrafficSplit {
+	if serviceLabels[config.WaypointUseLabel] != "" {
+		return ResolveWaypointTrafficSplit(cluster, namespace, serviceLabels, serviceAnnotations, "service")
+	}
+	_, canaryOverride := serviceLabels[config.WaypointCanaryUseLabel]
+	_, weightOverride := serviceAnnotations[config.WaypointCanaryWeightAnnotation]
+	if !canaryOverride && !weightOverride {
+		return ResolveWaypointTrafficSplit(cluster, namespace, namespaceLabels, namespaceAnnotations, "namespace")
+	}
+
+	// The canary name and namespace come from the same level; its weight can
+	// independently override or inherit. Never mutate cached resource metadata.
+	canaryLabels := namespaceLabels
+	if canaryOverride {
+		canaryLabels = serviceLabels
+	}
+	annotations := namespaceAnnotations
+	if weightOverride {
+		annotations = serviceAnnotations
+	}
+	labels := map[string]string{
+		config.WaypointCanaryNamespaceLabel: canaryLabels[config.WaypointCanaryNamespaceLabel],
+		config.WaypointCanaryUseLabel:       canaryLabels[config.WaypointCanaryUseLabel],
+		config.WaypointUseLabel:             namespaceLabels[config.WaypointUseLabel],
+		config.WaypointUseNamespaceLabel:    namespaceLabels[config.WaypointUseNamespaceLabel],
+	}
+	return ResolveWaypointTrafficSplit(cluster, namespace, labels, annotations, "service")
+}
+
+// GatewayBindingMatches reports whether a gateway workload identity matches a binding.
+func GatewayBindingMatches(binding WaypointBinding, gatewayName, gatewayNamespace string) bool {
+	return binding.Name == gatewayName && binding.Namespace == gatewayNamespace
+}
+
+// GatewaySplitReferencesGateway is true when the split names the gateway as primary or canary.
+func GatewaySplitReferencesGateway(split *WaypointTrafficSplit, gatewayName, gatewayNamespace string) bool {
+	if split == nil {
+		return false
+	}
+	if GatewayBindingMatches(split.Primary, gatewayName, gatewayNamespace) {
+		return true
+	}
+	if split.Canary != nil && GatewayBindingMatches(*split.Canary, gatewayName, gatewayNamespace) {
+		return true
+	}
+	return false
+}
+
+func gatewaySplitScore(split *WaypointTrafficSplit) int {
+	if split == nil {
+		return 0
+	}
+	if split.Canary != nil && split.CanaryWeight > 0 {
+		return 3
+	}
+	if split.Canary != nil {
+		return 2
+	}
+	return 1
+}
+
+// waypointConfigLevelRank orders config sources for tie-breaking: service overrides namespace.
+func waypointConfigLevelRank(level string) int {
+	switch level {
+	case "service":
+		return 2
+	case "namespace":
+		return 1
+	default:
+		return 0
+	}
+}
+
+// PickGatewayWaypointTrafficSplit selects the richest split (deterministic). Same score prefers service-level over namespace-level.
+func PickGatewayWaypointTrafficSplit(candidates []*WaypointTrafficSplit) *WaypointTrafficSplit {
+	if len(candidates) == 0 {
+		return nil
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		si, sj := gatewaySplitScore(candidates[i]), gatewaySplitScore(candidates[j])
+		if si != sj {
+			return si > sj
+		}
+		return waypointConfigLevelRank(candidates[i].ConfigLevel) > waypointConfigLevelRank(candidates[j].ConfigLevel)
+	})
+	return candidates[0]
+}
+
+// SortGatewayWaypointTrafficSplitConfigs returns a stable, user-facing order.
+func SortGatewayWaypointTrafficSplitConfigs(configs []GatewayWaypointTrafficSplitConfig) []GatewayWaypointTrafficSplitConfig {
+	sort.SliceStable(configs, func(i, j int) bool {
+		if configs[i].Namespace != configs[j].Namespace {
+			return configs[i].Namespace < configs[j].Namespace
+		}
+		if configs[i].ServiceName != configs[j].ServiceName {
+			return configs[i].ServiceName < configs[j].ServiceName
+		}
+		return waypointConfigLevelRank(configs[i].ConfigLevel) > waypointConfigLevelRank(configs[j].ConfigLevel)
+	})
+	return configs
+}
+
+// AppendNamespaceGatewaySplitConfig adds a namespace-level split when it references the gateway.
+func AppendNamespaceGatewaySplitConfig(cluster, gatewayNamespace, gatewayName, nsName string, labels, annotations map[string]string, configs *[]GatewayWaypointTrafficSplitConfig) {
+	split := GatewayWaypointTrafficSplit(cluster, nsName, gatewayName, labels, annotations)
+	if split == nil || split.Canary == nil || !GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
+		return
+	}
+	*configs = append(*configs, GatewayWaypointTrafficSplitConfig{
+		ConfigLevel: "namespace",
+		Namespace:   nsName,
+		Split:       split,
+	})
+}
+
+// GatewayWaypointCanaryGraphLabel resolves the secondary label for a waypoint node from all enrollments.
+func GatewayWaypointCanaryGraphLabel(configs []GatewayWaypointTrafficSplitConfig, workload, workloadNamespace string) string {
+	if workload == "" {
+		return ""
+	}
+	commonLabel := ""
+	for _, cfg := range configs {
+		label := WaypointCanaryNodeLabel(workload, workloadNamespace, cfg.Split)
+		if label == "" {
+			continue
+		}
+		if commonLabel != "" && commonLabel != label {
+			role, _, _ := strings.Cut(commonLabel, " ")
+			otherRole, _, _ := strings.Cut(label, " ")
+			if role == otherRole {
+				return role + " " + WaypointCanaryMultipleSplitsLabel
+			}
+			return WaypointCanaryMultipleSplitsLabel
+		}
+		commonLabel = label
+	}
+	return commonLabel
+}
+
+// WaypointCanaryNodeLabel returns graph label text for a waypoint gateway workload.
+func WaypointCanaryNodeLabel(workload, workloadNamespace string, split *WaypointTrafficSplit) string {
+	if split == nil || split.Canary == nil || workload == "" {
+		return ""
+	}
+	if split.Canary.Name == workload && split.Canary.Namespace == workloadNamespace {
+		return fmt.Sprintf("Canary %d%%", split.CanaryWeight)
+	}
+	if split.Primary.Name == workload && split.Primary.Namespace == workloadNamespace {
+		return fmt.Sprintf("Primary %d%%", split.PrimaryWeight)
+	}
+	return ""
+}
+
+// GatewayWaypointTrafficSplit returns split info when viewing a waypoint gateway workload named gatewayName.
+func GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName string, nsLabels, nsAnnotations map[string]string) *WaypointTrafficSplit {
+	if nsLabels == nil {
+		return nil
+	}
+	primary := nsLabels[config.WaypointUseLabel]
+	canary := nsLabels[config.WaypointCanaryUseLabel]
+	if primary != gatewayName && canary != gatewayName {
+		return nil
+	}
+	split := ResolveWaypointTrafficSplit(cluster, gatewayNamespace, nsLabels, nsAnnotations, "namespace")
+	if split == nil {
+		return nil
+	}
+	if primary == gatewayName && canary == gatewayName {
+		return split
+	}
+	if canary == gatewayName && split.Canary != nil {
+		return split
+	}
+	if primary == gatewayName {
+		return split
+	}
+	// This gateway is only the canary; rebuild with primary from namespace labels.
+	if primary == "" || primary == config.WaypointNone {
+		return nil
+	}
+	primaryNs := nsLabels[config.WaypointUseNamespaceLabel]
+	if primaryNs == "" {
+		primaryNs = gatewayNamespace
+	}
+	weight := ParseWaypointCanaryWeight(nsAnnotations)
+	if weight < 0 {
+		weight = 0
+	}
+	return &WaypointTrafficSplit{
+		Canary: &WaypointBinding{
+			Cluster:   cluster,
+			Name:      gatewayName,
+			Namespace: gatewayNamespace,
+			Role:      WaypointRoleCanary,
+		},
+		CanaryWeight: weight,
+		ConfigLevel:  "namespace",
+		Primary: WaypointBinding{
+			Cluster:   cluster,
+			Name:      primary,
+			Namespace: primaryNs,
+			Role:      WaypointRolePrimary,
+		},
+		PrimaryWeight: 100 - weight,
+	}
+}

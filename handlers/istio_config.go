@@ -55,6 +55,10 @@ func IstioConfigList(
 			return
 		}
 
+		if skipUnavailableCluster(w, r, business, cluster, &models.IstioConfigList{}) {
+			return
+		}
+
 		var istioConfig *models.IstioConfigList
 		if namespace != "" {
 			istioConfig, err = business.IstioConfig.GetIstioConfigListForNamespace(r.Context(), cluster, namespace, criteria)
@@ -69,6 +73,12 @@ func IstioConfigList(
 				return
 			}
 		}
+
+		// This is the user-facing boundary of the config list: prune the
+		// types the user cannot list so the list matches what a detail
+		// request lets them read (#10515). Internal consumers of the
+		// business list keep the SA-wide view.
+		business.IstioConfig.FilterByUserListRBAC(r.Context(), cluster, istioConfig)
 
 		if includeValidations {
 			// Namespace-scoped list should only return validations for that namespace.
@@ -454,7 +464,7 @@ func IstioConfigValidationSummary(
 			// rather than return an empty (200) result set.
 			loadedNamespaces, errNs := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 			if errNs != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+errNs.Error())
+				handleErrorResponse(w, errNs, "Error fetching namespaces: "+errNs.Error())
 				return
 			}
 			for _, ns := range loadedNamespaces {

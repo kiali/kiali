@@ -1,0 +1,531 @@
+# Cars Envoy memory warning demo overlay (travel-agency).
+#
+# Creates 7 DestinationRules with 20 subsets each (140 subsets
+# total) so the cars-v1 sidecar exceeds Kiali's large-config cluster threshold (100).
+# A tight istio-proxy memory limit on cars-v1 makes memory status exceed the 70% limit threshold.
+#
+# Prerequisites: travel-agency demo installed (install-travel-agency-demo.sh).
+#
+# Apply Istio config:
+#   kubectl apply -f hack/istio/samples/cars-envoy-mem-bloat-destinationrule.yaml
+#
+# Tighten proxy memory on cars-v1 only (does not affect other travel-agency workloads):
+#   kubectl patch deploy cars-v1 -n travel-agency --type=merge -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/proxyMemory":"32Mi","sidecar.istio.io/proxyMemoryLimit":"88Mi","demo.kiali.io/envoy-memory-bloat":"true"}}}}}'
+#   kubectl rollout status deploy/cars-v1 -n travel-agency
+#
+# Remove:
+#   kubectl delete -f hack/istio/samples/cars-envoy-mem-bloat-destinationrule.yaml
+#   kubectl patch deploy cars-v1 -n travel-agency --type=merge -p '{"spec":{"template":{"metadata":{"annotations":{"sidecar.istio.io/proxyMemory":"128Mi","sidecar.istio.io/proxyMemoryLimit":"512Mi"}}}}}'
+#
+
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-cars
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: cars
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-hotels
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: hotels
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-flights
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: flights
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-travels
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: travels
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-discounts
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: discounts
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-insurances
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: insurances
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: cars-envoy-mem-bloat-mysqldb
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  host: mysqldb
+  subsets:
+  - name: mem-bloat-000
+    labels:
+      version: v1
+  - name: mem-bloat-001
+    labels:
+      version: v1
+  - name: mem-bloat-002
+    labels:
+      version: v1
+  - name: mem-bloat-003
+    labels:
+      version: v1
+  - name: mem-bloat-004
+    labels:
+      version: v1
+  - name: mem-bloat-005
+    labels:
+      version: v1
+  - name: mem-bloat-006
+    labels:
+      version: v1
+  - name: mem-bloat-007
+    labels:
+      version: v1
+  - name: mem-bloat-008
+    labels:
+      version: v1
+  - name: mem-bloat-009
+    labels:
+      version: v1
+  - name: mem-bloat-010
+    labels:
+      version: v1
+  - name: mem-bloat-011
+    labels:
+      version: v1
+  - name: mem-bloat-012
+    labels:
+      version: v1
+  - name: mem-bloat-013
+    labels:
+      version: v1
+  - name: mem-bloat-014
+    labels:
+      version: v1
+  - name: mem-bloat-015
+    labels:
+      version: v1
+  - name: mem-bloat-016
+    labels:
+      version: v1
+  - name: mem-bloat-017
+    labels:
+      version: v1
+  - name: mem-bloat-018
+    labels:
+      version: v1
+  - name: mem-bloat-019
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: cars-envoy-mem-bloat-sidecar
+  namespace: travel-agency
+  labels:
+    demo.kiali.io/envoy-memory-bloat: "true"
+spec:
+  workloadSelector:
+    labels:
+      app: cars
+  egress:
+  - hosts:
+    - "travel-agency/*"

@@ -75,7 +75,10 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async expectErrorMessage(message: string): Promise<void> {
-    await expect(this.page.locator('h4')).toContainText(message);
+    // The wizard error is announced as a toast notification. PF6 alerts carry no
+    // role="alert" (isLiveRegion only adds aria-live), so locate the toast title
+    // heading by its text; the error message appears nowhere else on the page.
+    await expect(this.page.getByRole('heading', { name: message })).toBeVisible();
   }
 
   async expectInputEmpty(id: string): Promise<void> {
@@ -101,10 +104,17 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async editLabels(key: string, value: string): Promise<void> {
-    await this.getBySel('edit-labels').click();
-    await this.page.locator('input[id="labelInputForKey_0"]').fill(key);
-    await this.page.locator('input[id="labelInputForValue_0"]').fill(value);
-    await this.getBySel('save-button').click();
+    const card = this.getBySel('istio-config-labels-card');
+    await card.getByRole('button', { name: 'Edit labels' }).click();
+    await card.getByRole('button', { name: 'Add label' }).click();
+    // The new entry renders as an editable label showing the "key=value" placeholder; click it
+    // to swap in the text input, then commit with Enter before saving the card. The label's
+    // close button is also named "Close key=value", so match the placeholder exactly.
+    await card.getByRole('button', { name: 'key=value', exact: true }).click();
+    const input = card.getByRole('textbox');
+    await input.fill(`${key}=${value}`);
+    await input.press('Enter');
+    await card.getByRole('button', { name: 'Save' }).click();
   }
 
   async editAnnotations(key: string, value: string): Promise<void> {

@@ -308,13 +308,20 @@ export const clickMiniGraphNode = async (
     expect(node).toBeTruthy();
     nodeId = node!.id;
   }).toPass({ intervals: [3_000], timeout: 60_000 });
+  // A dispatched click only reaches React handlers when the dispatch target is the handler's
+  // element or one of its (fiber-tree) descendants — React re-dispatches synthetic events along
+  // the component tree, not the DOM path of the [data-id] wrapper, which is an ancestor of the
+  // interactive <g>. Target a descendant of the interactive <g> instead, so the click fires
+  // regardless of what covers the node's bounding-box center (edge paths, the pan surface).
+  // Group nodes (app boxes) portal their interactive content into the groups layer, where the
+  // LayerContainer <g data-id> is a React descendant of the onClick <g>. Plain nodes carry the
+  // badge shape (.pf-topology__node__background) inside the onClick <g>; PF exposes no test
+  // hook on it, a sanctioned last-resort class use (see e2e/AGENTS.md sanctioned exceptions).
   if (type === 'app') {
-    // App boxes render as group nodes whose bounding-box center is routinely crossed by an
-    // edge path, so a real pointer click there hits the edge instead of the group. Dispatch
-    // the click on the group element itself.
     const group = page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`);
     await group.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
   } else {
-    await page.locator(`[data-id="${nodeId}"]`).click();
+    const shape = page.locator(`[data-id="${nodeId}"] .pf-topology__node__background`).first();
+    await shape.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
   }
 };

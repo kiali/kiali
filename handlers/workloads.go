@@ -105,6 +105,10 @@ func ClusterWorkloads(
 			Validations: models.IstioValidations{},
 		}
 
+		if skipUnavailableCluster(w, r, businessLayer, p.ClusterName, clusterWorkloadsList) {
+			return
+		}
+
 		for _, ns := range nss {
 			criteria := business.WorkloadCriteria{
 				Cluster: p.ClusterName, Namespace: ns, IncludeHealth: p.IncludeHealth,
@@ -517,7 +521,7 @@ func ConfigDumpZtunnel(
 
 		dump, err := business.Workload.GetZtunnelConfig(r.Context(), cluster, pod)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error fetching ztunnel config: "+err.Error())
+			handleErrorResponse(w, err, "Error fetching ztunnel config: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, dump)

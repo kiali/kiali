@@ -99,11 +99,12 @@ type ServiceDetails struct {
 	VirtualServices    []*networking_v1.VirtualService          `json:"virtualServices"`
 	Workloads          WorkloadOverviews                        `json:"workloads"`
 	// Services with same app labels (different versions or a single version)
-	Health            ServiceHealth           `json:"health"`
-	NamespaceMTLS     MTLSStatus              `json:"namespaceMTLS"`
-	SubServices       []*ServiceOverview      `json:"subServices"`
-	Validations       IstioValidations        `json:"validations"`
-	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
+	Health               ServiceHealth           `json:"health"`
+	NamespaceMTLS        MTLSStatus              `json:"namespaceMTLS"`
+	SubServices          []*ServiceOverview      `json:"subServices"`
+	Validations          IstioValidations        `json:"validations"`
+	WaypointTrafficSplit *WaypointTrafficSplit   `json:"waypointTrafficSplit,omitempty"`
+	WaypointWorkloads    []WorkloadReferenceInfo `json:"waypointWorkloads"`
 }
 
 type (
@@ -131,6 +132,9 @@ type (
 // ServiceReferenceInfo holds the service information needed to create links to another service.
 // Used, for example, to link services to Ambient waypoint proxies
 type ServiceReferenceInfo struct {
+	// CanaryWeight is set when WaypointRole is canary (0-100).
+	CanaryWeight int `json:"canaryWeight,omitempty"`
+
 	// Cluster
 	Cluster string `json:"cluster"`
 
@@ -148,6 +152,12 @@ type ServiceReferenceInfo struct {
 	// required: true
 	// example: bookinfo
 	Namespace string `json:"namespace"`
+
+	// RoleWeight is nil without a canary split; zero is a valid configured share.
+	RoleWeight *int `json:"roleWeight,omitempty"`
+
+	// WaypointRole is primary or canary when this reference is waypoint enrollment.
+	WaypointRole string `json:"waypointRole,omitempty"`
 }
 
 func (so *ServiceOverview) ParseToService() *Service {

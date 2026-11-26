@@ -69,11 +69,9 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
         </StackItem>
       )}
 
-      {istioObject?.metadata.labels && (
-        <StackItem>
-          <Labels tooltipMessage="Labels defined on this resource" labels={istioObject?.metadata.labels}></Labels>
-        </StackItem>
-      )}
+      <StackItem>
+        <Labels tooltipMessage="Labels defined on this resource" labels={istioObject?.metadata.labels} />
+      </StackItem>
 
       {props.istioValidations?.references && (
         <StackItem>

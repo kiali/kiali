@@ -65,3 +65,17 @@ export const buildPageContext = (
 
   return context;
 };
+
+/** Merges UI page context with optional supplemental context (e.g. health history investigation). */
+export const formatChatRequestQuery = (
+  userQuery: string,
+  pageContext?: string,
+  supplementalContext?: string
+): string => {
+  const contextParts = [pageContext, supplementalContext].filter(part => part && part.trim().length > 0);
+  if (contextParts.length === 0) {
+    return userQuery;
+  }
+
+  return `Context: ${contextParts.join('\n')}\n\n${userQuery}`;
+};

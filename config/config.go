@@ -125,6 +125,9 @@ const (
 	WaypointForWorkload             = "workload"
 	WaypointLabel                   = "gateway.istio.io/managed" // only identifies istio waypoint
 	WaypointLabelValue              = "istio.io-mesh-controller" // only identifies istio waypoint
+	WaypointCanaryNamespaceLabel    = "istio.io/use-waypoint-canary-namespace"
+	WaypointCanaryUseLabel          = "istio.io/use-waypoint-canary"
+	WaypointCanaryWeightAnnotation  = "istio.io/use-waypoint-canary-weight"
 	WaypointUseLabel                = "istio.io/use-waypoint"
 	WaypointNone                    = "none"
 	WaypointUseNamespaceLabel       = "istio.io/use-waypoint-namespace"
@@ -549,10 +552,13 @@ type CacheExpirationConfig struct {
 // KialiInternalConfig holds configuration that is not typically touched by users, but could be in the event of
 // unusual circumstances. It may be undocumented and is subject to change. It is unstructured in the CRD schema.
 type KialiInternalConfig struct {
-	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
-	GraphCache             GraphCacheConfig      `yaml:"graph_cache,omitempty"`
-	HealthCache            HealthCacheConfig     `yaml:"health_cache,omitempty"`
-	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
+	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	// CacheReadTimeout bounds each read of a cluster's kube cache. It must cover the first sync of a large cluster's
+	// informers. Set to 0 to disable.
+	CacheReadTimeout       time.Duration     `yaml:"cache_read_timeout,omitempty"`
+	GraphCache             GraphCacheConfig  `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig `yaml:"health_cache,omitempty"`
+	MetricLogDurationLimit time.Duration     `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
 	UrlServiceVersion string `yaml:"url_service_version" json:"urlServiceVersion"`
@@ -1204,6 +1210,7 @@ func NewConfig() (c *Config) {
 				Waypoint:      4 * time.Minute,
 				ZtunnelConfig: 2 * time.Minute,
 			},
+			CacheReadTimeout: 30 * time.Second,
 			GraphCache: GraphCacheConfig{
 				Enabled:           true,
 				InactivityTimeout: "10m",
@@ -1337,6 +1344,13 @@ func Get() (conf *Config) {
 	defer rwMutex.RUnlock()
 	copy := configuration
 	return &copy
+}
+
+// IsTracingEnabled reports whether server tracing is enabled without copying the global Config.
+func IsTracingEnabled() bool {
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	return configuration.Server.Observability.Tracing.Enabled
 }
 
 // Set the global Config
@@ -2033,7 +2047,31 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 }
 
 // extractAccessibleNamespaceList will take the default set of discovery selectors from the config and build a
-// list of namespace names by using all discovery selectors that look for matches of the label "kubernetes.io/metadata.name".
+// list of namespace names from them. See namespaceNamesFromDiscoverySelectors for the form the selectors
+// must take. This function is used to obtain the accessible namespaces from the default discovery
+// selectors when CWA=false.
+func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
+	return namespaceNamesFromDiscoverySelectors(config.Deployment.DiscoverySelectors.Default)
+}
+
+// AccessibleNamespacesForCluster returns the namespaces that scope Kiali's access to the named cluster when
+// the server is not in Cluster Wide Access mode. The list is built from the cluster's own discovery selector
+// override (discovery_selectors.overrides) when one is defined, and must be in the form described in
+// namespaceNamesFromDiscoverySelectors. A nil list with no error means the cluster has no override - the
+// caller should use the default accessible namespaces. In Cluster Wide Access mode there is no per-cluster
+// scope and a nil list is returned.
+func (config *Config) AccessibleNamespacesForCluster(cluster string) ([]string, error) {
+	if config.Deployment.ClusterWideAccess {
+		return nil, nil
+	}
+	if selectors, ok := config.Deployment.DiscoverySelectors.Overrides[cluster]; ok {
+		return namespaceNamesFromDiscoverySelectors(selectors)
+	}
+	return nil, nil
+}
+
+// namespaceNamesFromDiscoverySelectors will take a set of discovery selectors and build a list of namespace
+// names by using all discovery selectors that look for matches of the label "kubernetes.io/metadata.name".
 // This means if a matchLabels wants to match a value on the label "kubernetes.io/metadata.name" or a single matchExpressions
 // wants to match key="kubernetes.io/metadata.name" with operator="In" with a single value defined, the value is assumed
 // to be an accessible namespace that will be added to the list that is returned. Note you can have multiple values for
@@ -2053,12 +2091,12 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 //	    values: ["accessible-1", "accessible-2", "a-third-accessible-namespace"]
 //
 // When the Kiali Server is not in Cluster Wide Access mode, it is assumed (required, in fact) that all the
-// default discovery selectors only use match criteria as explained above.
-// This function therefore is used to obtain a list of accessible namespaces from the discovery selectors when CWA=false.
-func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
+// discovery selectors that define an access scope (the default selectors, and any per-cluster overrides used
+// for that purpose) only use match criteria as explained above.
+func namespaceNamesFromDiscoverySelectors(selectors DiscoverySelectorsType) ([]string, error) {
 	errs := make([]string, 0)
 	namespaceNames := make([]string, 0)
-	for _, selector := range config.Deployment.DiscoverySelectors.Default {
+	for _, selector := range selectors {
 		if len(selector.MatchLabels) > 0 && len(selector.MatchExpressions) > 0 {
 			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: one label selector cannot have both an equality-based and a set-based selector: %v", selector))
 		} else if len(selector.MatchLabels) > 1 {

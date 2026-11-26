@@ -5,6 +5,7 @@ import { ChatMessageMarkdown } from '../ChatMessageMarkdown';
 const writeTextMock = rstest.fn();
 
 beforeAll(() => {
+  Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
   Object.defineProperty(navigator, 'clipboard', {
     value: { writeText: writeTextMock },
     configurable: true,

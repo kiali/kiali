@@ -15,7 +15,7 @@ type Props = {
   version?: string;
 };
 
-const buildPersesLinks = (props: Props): [string, string][] => {
+export const buildPersesLinks = (props: Props): [string, string][] => {
   const links: [string, string][] = [];
   props.links.forEach(d => {
     try {

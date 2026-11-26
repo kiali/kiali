@@ -22,10 +22,12 @@ import {
   envoyMemoryThresholdHelp,
   estimateEnvoyConfigMemoryBytes,
   formatEnvoyMemoryBytes,
+  envoyMemoryStatusUsesWorkingSet,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
   sortedEnvoyPodName,
+  type EnvoyMemoryBusyThresholds,
   type EnvoyMemoryMetricHelpKey
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
@@ -42,7 +44,7 @@ type EnvoyMemoryProps = {
 };
 
 const summaryStyle = kialiStyle({
-  marginBottom: PFSpacer.md
+  marginBottom: PFSpacer.sm
 });
 
 const statusAlertStyle = kialiStyle({
@@ -57,7 +59,7 @@ const statusAlertStyle = kialiStyle({
 const statusCauseStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
-  fontWeight: PFFontWeight.BodyBold,
+  fontWeight: PFFontWeight.BodyDefault,
   gap: PFSpacer.sm
 });
 
@@ -114,7 +116,6 @@ const tileValueStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: PFSpacer.sm,
   maxWidth: '100%',
   minWidth: 0
 });
@@ -148,10 +149,14 @@ const statusTitleStyle = kialiStyle({
   gap: PFSpacer.xs
 });
 
-const MetricHelpIcon: React.FC<{ helpKey: EnvoyMemoryMetricHelpKey; label: string }> = ({ helpKey, label }) => (
+const MetricHelpIcon: React.FC<{
+  busy?: EnvoyMemoryBusyThresholds;
+  helpKey: EnvoyMemoryMetricHelpKey;
+  label: string;
+}> = ({ busy, helpKey, label }) => (
   <Popover
     aria-label={t('{{label}} information', { label })}
-    bodyContent={<div className={helpBodyStyle}>{envoyMemoryMetricHelp(helpKey)}</div>}
+    bodyContent={<div className={helpBodyStyle}>{envoyMemoryMetricHelp(helpKey, busy)}</div>}
     headerContent={<span>{label}</span>}
     position={PopoverPosition.top}
     triggerAction="hover"
@@ -161,6 +166,7 @@ const MetricHelpIcon: React.FC<{ helpKey: EnvoyMemoryMetricHelpKey; label: strin
 );
 
 type MetricTileProps = {
+  busy?: EnvoyMemoryBusyThresholds;
   helpKey: EnvoyMemoryMetricHelpKey;
   label: string;
   onSelect?: () => void;
@@ -168,11 +174,11 @@ type MetricTileProps = {
   value: React.ReactNode;
 };
 
-const MetricTile: React.FC<MetricTileProps> = ({ helpKey, label, onSelect, selectTestId, value }) => (
+const MetricTile: React.FC<MetricTileProps> = ({ busy, helpKey, label, onSelect, selectTestId, value }) => (
   <div className={tileStyle}>
     <span className={tileLabelRowStyle}>
       <span className={tileLabelStyle}>{label}</span>
-      <MetricHelpIcon helpKey={helpKey} label={label} />
+      <MetricHelpIcon busy={busy} helpKey={helpKey} label={label} />
     </span>
     {onSelect ? (
       <Button
@@ -244,7 +250,8 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   // Prefer config-dump cluster count so the estimate is not stuck at 0 when Prometheus lacks the metric.
   const roughConfigBytes =
     clusterCount !== undefined ? estimateEnvoyConfigMemoryBytes(clusterCount) : (summary?.roughConfigMemoryBytes ?? 0);
-  const allocatedMemoryLabel = t('Allocated memory');
+  const proxyMemoryLabel =
+    summary && envoyMemoryStatusUsesWorkingSet(summary) ? t('Working set') : t('Allocated memory');
   const roughConfigLabel = t('Est. config memory');
   const activeClustersLabel = t('Active clusters');
   const listenersLabel = t('Listeners');
@@ -313,15 +320,20 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                     >
                       <div className={statusCauseStyle}>
                         {createIcon(envoyMemoryCauseStatus(summary.cause, summary.memoryMaxBytes))}
-                        {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
+                        <span>
+                          {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
+                          {summary.cause === 'configuration' && (
+                            <>
+                              {' '}
+                              <IstioConfigurationScopingLink
+                                dataTest="envoy-memory-status-scoping-alert-link"
+                                externalLinkIconClassName={externalLinkIconStyle}
+                              />
+                            </>
+                          )}
+                        </span>
                       </div>
                     </Alert>
-
-                    {summary.cause === 'configuration' && (
-                      <div className={linkRowStyle}>
-                        <IstioConfigurationScopingLink externalLinkIconClassName={externalLinkIconStyle} />
-                      </div>
-                    )}
 
                     <div className={tilesRowStyle} data-test="envoy-memory-summary-metrics">
                       <MetricTile
@@ -355,14 +367,15 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                         </>
                       )}
                       <MetricTile
-                        helpKey="allocatedMemory"
-                        label={allocatedMemoryLabel}
+                        helpKey="proxyMemory"
+                        label={proxyMemoryLabel}
                         value={formatEnvoyMemoryUsage(summary)}
                       />
                       <MetricTile
+                        busy={summary}
                         helpKey="activeConnections"
                         label={activeConnectionsLabel}
-                        value={summary.activeConnections}
+                        value={summary.activeConnectionsObserved ? summary.activeConnections : NA.name}
                       />
                       <MetricTile
                         helpKey="requestRate"
@@ -378,9 +391,12 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
 
           <div className={isChartMaximized ? maximizedSectionStyle : sectionStyle}>
             <EnvoyMemoryOverlayChart
+              busyRequestRatePerSecond={summary?.busyRequestRatePerSecond}
+              isL4Proxy={summary?.trafficIsByteRate}
               isMaximized={isChartMaximized}
               lastRefreshAt={props.lastRefreshAt}
               memoryLimitBytes={summary?.memoryLimitBytes}
+              memoryThresholdBytes={summary?.memoryThresholdBytes}
               namespace={props.namespace}
               onToggleMaximized={() => setIsChartMaximized(prev => !prev)}
               timeRange={props.timeRange}

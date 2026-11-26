@@ -12,7 +12,7 @@ const contentStyle = kialiStyle({
   $nest: contrastContentNest()
 });
 
-export class RenderContent extends React.Component {
+export class RenderContent extends React.Component<{ children?: React.ReactNode }> {
   render(): React.ReactNode {
     return <div className={contentStyle}>{this.props.children}</div>;
   }

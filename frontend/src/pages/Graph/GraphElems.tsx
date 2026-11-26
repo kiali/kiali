@@ -1,26 +1,27 @@
 import * as React from 'react';
-import {
+import { List, ListItem } from '@patternfly/react-core';
+import type {
   BadgeLocation,
   EdgeModel,
-  EdgeTerminalType,
   GraphElement,
   LabelPosition,
   Node,
-  NodeModel,
-  NodeShape,
-  NodeStatus,
-  TopologyQuadrant
+  NodeModel
 } from '@patternfly/react-topology';
-import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
-import { homeCluster as kialiHomeCluster, icons } from 'config';
-import {
-  BoxByType,
-  CLUSTER_DEFAULT,
+import { EdgeTerminalType, NodeShape, NodeStatus, TopologyQuadrant } from '@patternfly/react-topology';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadges } from 'components/Pf/PfBadges';
+import { homeCluster as kialiHomeCluster, icons, serverConfig } from 'config';
+import type {
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
+  GraphLayout
+} from 'types/Graph';
+import {
+  BoxByType,
+  CLUSTER_DEFAULT,
   EdgeLabelMode,
-  GraphLayout,
   GraphType,
   NodeType,
   numLabels,
@@ -29,15 +30,21 @@ import {
   UNKNOWN
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { Namespace } from 'types/Namespace';
+import type { Namespace } from 'types/Namespace';
 import { keys } from 'lodash-es';
 import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/TracingInfo';
-import { IconType } from 'config/Icons';
-import { NodeDecorator } from './NodeDecorator';
+import type { Span } from 'types/TracingInfo';
+import type { IconType } from 'config/Icons';
+import { NodeDecorator, NodeDecoratorTooltip } from './NodeDecorator';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import { PFSpacer } from 'styles/PfSpacer';
+import { t } from 'utils/I18nUtils';
+import type { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import {
+  findGatewayWaypointSplitConfigsFromNamespaces,
+  withWaypointCanarySecondaryLabel
+} from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -154,7 +161,17 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   }
 };
 
-const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
+const vsTooltipFeaturesStyle = kialiStyle({
+  marginBlockStart: PFSpacer.sm,
+  marginInlineStart: PFSpacer.md
+});
+
+const getDecorator = (
+  element: Node,
+  quadrant: TopologyQuadrant,
+  icon: IconType,
+  tooltip?: React.ReactNode
+): React.ReactNode => {
   return <NodeDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
 };
 
@@ -165,7 +182,11 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
   const attachments = [] as React.ReactNode[];
 
   if (settings.showOutOfMesh && data.isOutOfMesh) {
-    attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
+    const icon = badgeMap.get('MS')!;
+    const tooltip = serverConfig.ambientEnabled ? (
+      <NodeDecoratorTooltip icon={icon} title={t('Out of Mesh')} />
+    ) : undefined;
+    attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, icon, tooltip));
   }
   // It is OK to use the same location for mutually exclusive options.
   if (data.hasWorkloadEntry) {
@@ -178,28 +199,49 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
     if (data.hasCB) {
       attachments.push(getDecorator(node, TopologyQuadrant.upperLeft, badgeMap.get('CB')!));
     }
-    // Because we have limited attachments, just show a single VS attachement and let the
-    // Tooltip list the active VS features
+    // Use the feature icon for a single VS feature and the VS icon for a group.
     if (data.hasVS) {
-      const vsFeatures: string[] = [];
+      const vsFeatures: IconType[] = [];
       if (data.hasFaultInjection) {
-        vsFeatures.push(badgeMap.get('FI')!.text);
+        vsFeatures.push(badgeMap.get('FI')!);
       }
       if (data.hasMirroring) {
-        vsFeatures.push(badgeMap.get('MI')!.text);
-      }
-      if (data.hasRequestRouting) {
-        vsFeatures.push(badgeMap.get('RR')!.text);
+        vsFeatures.push(badgeMap.get('MI')!);
       }
       if (data.hasRequestTimeout) {
-        vsFeatures.push(badgeMap.get('RT')!.text);
+        vsFeatures.push(badgeMap.get('RT')!);
       }
       if (data.hasTrafficShifting || data.hasTCPTrafficShifting) {
-        vsFeatures.push(badgeMap.get('TS')!.text);
+        vsFeatures.push(badgeMap.get('TS')!);
       }
-      const tooltip = vsFeatures.length === 0 ? undefined : `${badgeMap.get('VS')!.text}:\n ${vsFeatures.join(' ,')}`;
+      // Request Routing stays visible in the tooltip without displacing a
+      // single more specific feature as the primary icon.
+      const primaryIcon =
+        vsFeatures.length > 1
+          ? badgeMap.get('VS')!
+          : (vsFeatures[0] ?? (data.hasRequestRouting ? badgeMap.get('RR')! : undefined));
+      if (data.hasRequestRouting) {
+        vsFeatures.push(badgeMap.get('RR')!);
+      }
 
-      attachments.push(getDecorator(node, TopologyQuadrant.lowerLeft, badgeMap.get('VS')!, tooltip));
+      if (primaryIcon) {
+        const tooltipFeatures = vsFeatures.filter(feature => feature !== primaryIcon);
+        const tooltip = (
+          <NodeDecoratorTooltip icon={primaryIcon}>
+            {tooltipFeatures.length > 0 && (
+              <List className={vsTooltipFeaturesStyle} isPlain>
+                {tooltipFeatures.map(feature => (
+                  <ListItem key={feature.name} icon={React.createElement(feature.icon, { 'aria-hidden': true })}>
+                    {t(feature.text)}
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </NodeDecoratorTooltip>
+        );
+
+        attachments.push(getDecorator(node, TopologyQuadrant.lowerLeft, primaryIcon, tooltip));
+      }
     }
   }
 
@@ -242,11 +284,10 @@ export const setNodeLabel = (
   let box1Type: string | undefined, box2Type: string | undefined;
 
   if (isBoxed && supportsGroups(layoutName)) {
-    let box1: NodeModel | undefined, box2: NodeModel | undefined;
-    box1 = nodeMap.get(data.parent!);
+    const box1 = nodeMap.get(data.parent!);
     const box1Data = box1?.data as NodeData | undefined;
     box1Type = box1Data?.isBox;
-    box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
+    const box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
     box2Type = box2 ? (box2.data as NodeData).isBox : undefined;
   }
 
@@ -394,8 +435,25 @@ export const setNodeLabel = (
   }
 
   node.label = content.shift();
-  if (content.length > 0) {
-    data.secondaryLabel = content.join(':');
+  // Always reset secondaryLabel; otherwise leftover text (e.g. waypoint role) piles up
+  // each time setNodeLabel re-runs on the same node data (display option toggles).
+  data.secondaryLabel = content.length > 0 ? content.join(':') : undefined;
+
+  if (data.isWaypoint && !isBox && data.workload && data.namespace) {
+    // Weight % only when Traffic Distribution edge labels are enabled (same idea as edge %).
+    data.secondaryLabel = withWaypointCanarySecondaryLabel({
+      backendLabel: data.waypointCanaryLabel,
+      includeWeight: settings.edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+      secondaryLabel: data.secondaryLabel,
+      splitConfigs: findGatewayWaypointSplitConfigsFromNamespaces(
+        settings.activeNamespaces,
+        data.workload,
+        data.namespace,
+        data.cluster
+      ),
+      workload: data.workload,
+      workloadNamespace: data.namespace
+    });
   }
 
   data.hideContextMenuKebab = true;
@@ -409,7 +467,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   const isVerbose = data.isSelected;
   const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
 
-  let labels = [] as string[];
+  const labels = [] as string[];
   if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
     let rate = 0;
     let pErr = 0;
@@ -454,7 +512,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-    let responseTime = data.responseTime;
+    const responseTime = data.responseTime;
 
     if (responseTime > 0) {
       labels.push(toFixedDuration(responseTime));
@@ -462,7 +520,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
-    let rate = data.throughput;
+    const rate = data.throughput;
 
     if (rate > 0) {
       labels.push(toFixedByteRate(rate, includeUnits));
@@ -500,7 +558,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   if (data.hasTraffic && data.responses) {
     if (nodeMap.get(edge.target!)?.data?.hasCB) {
       const responses = data.responses;
-      for (let code of keys(responses)) {
+      for (const code of keys(responses)) {
         // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
         // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
         // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
@@ -524,7 +582,7 @@ const trimFixed = (fixed: string): string => {
   while (fixed.endsWith('0')) {
     fixed = fixed.slice(0, -1);
   }
-  return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+  return fixed.endsWith('.') ? fixed.slice(0, -1) : fixed;
 };
 
 const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {

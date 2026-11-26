@@ -322,7 +322,7 @@ func (in *K8SClient) IsIstioGateway() bool {
 		}
 		isIstioGateway := false
 		for _, r := range res.APIResources {
-			if r.Kind == GatewayType && r.Name == "gateways" {
+			if r.Kind == GatewayType && r.Name == PluralNames[GatewayType] {
 				isIstioGateway = true
 				break
 			}
@@ -499,7 +499,7 @@ func NewNotFound(name, group, resource string) error {
 
 // GetSelfSubjectAccessReview provides information on Kiali permissions
 func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
-	if config.Get().Server.Observability.Tracing.Enabled {
+	if config.IsTracingEnabled() {
 		var span trace.Span
 		ctx, span = otel.Tracer(observability.TracerName()).Start(ctx, "GetSelfSubjectAccessReview",
 			trace.WithAttributes(

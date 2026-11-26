@@ -81,10 +81,6 @@ type GraphToolbarProps = ReduxProps & {
 };
 
 class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
-  static contextTypes = {
-    router: () => null
-  };
-
   constructor(props: GraphToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL as needed.

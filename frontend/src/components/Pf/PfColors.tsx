@@ -51,10 +51,11 @@ export enum PFColors {
   // semantic kiali colors
   Active = 'var(--pf-t--color--blue--50)',
   Badge = 'var(--pf-t--color--blue--30)',
-  Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',
   LinkTooltipDarkTheme = 'var(--pf-t--global--text--color--link--100)',
   LinkTooltipLightTheme = 'var(--pf-t--global--text--color--link--100)',
+  Mirroring = 'var(--pf-t--color--purple--40)',
+  Replay = 'var(--pf-t--global--color--brand--100)',
 
   // status colors https://www.patternfly.org/design-foundations/colors/#status-and-state-colors
   Custom = 'var(--pf-t--global--color--status--custom--default)',

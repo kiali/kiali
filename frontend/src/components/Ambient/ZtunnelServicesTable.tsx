@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { IRow, ISortBy, OnSort, SortByDirection, TableVariant } from '@patternfly/react-table';
-import { ZtunnelEndpoint, ZtunnelService } from '../../types/IstioObjects';
+import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
+import type { ZtunnelEndpoint, ZtunnelService } from '../../types/IstioObjects';
 import { SimpleTable } from '../Table/SimpleTable';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
-import { SortableCompareTh } from './ZtunnelConfig';
+import type { SortableCompareTh } from './ZtunnelConfig';
 import { flexFillStyle } from 'styles/FlexStyles';
 
 type ZtunnelServicesProps = {
@@ -33,7 +34,7 @@ const columns: SortableCompareTh<ZtunnelService>[] = [
     sortable: false
   },
   {
-    title: t('Waypoint'),
+    title: 'Waypoint',
     sortable: true,
     compare: (a, b) => a.waypoint.destination.localeCompare(b.waypoint.destination)
   },

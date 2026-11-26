@@ -21,14 +21,14 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({ mode, isAmbient, istioSide
     case 'ambient':
       label = (
         <Label variant="outline" color="blue" isCompact>
-          {t('Ambient')}
+          Ambient
         </Label>
       );
       break;
     case 'sidecar':
       label = (
         <Label variant="outline" color="orange" isCompact>
-          {t('Sidecar')}
+          Sidecar
         </Label>
       );
       break;

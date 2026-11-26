@@ -21,7 +21,10 @@ env:
 jobs:
   integration_tests_frontend_ambient_multi_primary:
     name: Cypress tests (Ambient MC MP)
-    runs-on: ubuntu-latest
+    # ubuntu-latest moved to 26.04 (kernel 7.0) in early Nov 2026 and breaks
+    # cross-cluster ambient HBONE/ztunnel traffic between the kind clusters.
+    # Pin to 24.04 until kind/docker networking is investigated on kernel 7.0.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
       # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
@@ -45,7 +48,7 @@ jobs:
       continue-on-error: true
 
     - name: Install Helm
-      uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      uses: Azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
       with:
         version: 'v3.18.4'
 

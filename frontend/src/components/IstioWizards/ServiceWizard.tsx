@@ -11,7 +11,6 @@ import {
   Tab,
   Tabs
 } from '@patternfly/react-core';
-import type { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
@@ -78,7 +77,6 @@ import type { TimeoutRetryRoute } from './RequestTimeouts';
 import { RequestTimeouts } from './RequestTimeouts';
 import type { CircuitBreakerState } from './CircuitBreaker';
 import { CircuitBreaker } from './CircuitBreaker';
-import { isEqual } from 'lodash-es';
 import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import type { ApiResponse } from 'types/Api';
@@ -188,7 +186,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   }
 
   componentDidUpdate(prevProps: ServiceWizardProps): void {
-    if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+    // Only (re)initialize when the wizard opens/closes. Parent refreshes that change
+    // workload props while open must not wipe in-progress form or YAML preview state;
+    // React 18 makes those refreshes more likely to land mid-wizard.
+    if (prevProps.show !== this.props.show) {
       const isViewOnly = serverConfig.deployment.viewOnlyMode;
       let isMainWizardValid: boolean;
 
@@ -394,20 +395,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       this.setState(nextState);
     }
   }
-
-  compareWorkloads = (prev: WorkloadOverview[], current: WorkloadOverview[]): boolean => {
-    if (prev.length !== current.length) {
-      return false;
-    }
-
-    for (let i = 0; i < prev.length; i++) {
-      if (!current.some(w => isEqual(w, prev[i]))) {
-        return false;
-      }
-    }
-
-    return true;
-  };
 
   onClose = (changed: boolean): void => {
     this.setState(emptyServiceWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)));

@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	goerrors "errors"
 	"net/http"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/log"
 )
 
@@ -21,6 +23,14 @@ func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) 
 	log.Error(errorMsg)
 	if business.IsAccessibleError(err) {
 		RespondWithError(w, http.StatusForbidden, errorMsg)
+	} else if goerrors.Is(err, cache.ErrClusterNotCached) {
+		// The client named a cluster the server does not know: a configuration error on
+		// the server side, but "not found" is the correct answer for the request.
+		RespondWithError(w, http.StatusNotFound, errorMsg)
+	} else if goerrors.Is(err, cache.ErrClusterDegraded) {
+		// A degraded cluster recovers on its own (~30s probe): temporarily unavailable,
+		// not broken.
+		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
 	} else if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, errorMsg)
 	} else if errors.IsServiceUnavailable(err) {

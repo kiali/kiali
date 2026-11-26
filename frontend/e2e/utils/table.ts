@@ -38,10 +38,24 @@ export const getColWithRowText = (page: Page, rowSearchText: string, colName: st
     .locator(`td[data-label="${colName}"]`);
 };
 
+// ListLabels renders at most 2 labels and collapses the rest behind a "N more" toggle.
+// Expand the cell first so assertions can see every label of the row.
+export const expectLabelsInRow = async (page: Page, rowSearchText: string, ...labels: string[]): Promise<void> => {
+  const cell = getColWithRowText(page, rowSearchText, 'Labels');
+  const toggle = cell.getByTestId('toggle-labels');
+  if (await toggle.isVisible()) {
+    await toggle.click();
+  }
+  for (const label of labels) {
+    await expect(cell).toContainText(label);
+  }
+};
+
 export const ensureObjectsInTable = async (page: Page, ...names: string[]): Promise<void> => {
+  // Rows stream in after the loading spinner clears, so the count must poll —
+  // a one-shot count() races table population.
   const rows = page.locator('tbody tr');
-  const rowCount = await rows.count();
-  expect(rowCount).toBeGreaterThanOrEqual(names.length);
+  await expect.poll(async () => rows.count(), { timeout: 40_000 }).toBeGreaterThanOrEqual(names.length);
 
   for (const name of names) {
     await expect(page.locator('tbody').getByRole('row').filter({ hasText: name })).toBeVisible();

@@ -10,12 +10,15 @@ import {
 import type { IconType } from 'config/Icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   element: Node;
   icon: IconType;
   quadrant: TopologyQuadrant;
-  tooltip?: string;
+  tooltip?: React.ReactNode;
 }
 
 const decoratorStyle = kialiStyle({
@@ -35,12 +38,43 @@ const decoratorStyle = kialiStyle({
   }
 });
 
+const tooltipStyle = kialiStyle({
+  textAlign: 'left',
+  $nest: {
+    '& svg': {
+      color: PFColors.Purple40
+    }
+  }
+});
+
+const tooltipTitleStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: PFSpacer.sm,
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.HeadingBold
+});
+
+export const NodeDecoratorTooltip: React.FC<React.PropsWithChildren<{ icon: IconType; title?: string }>> = ({
+  icon,
+  title,
+  children
+}) => (
+  <div className={tooltipStyle}>
+    <div className={tooltipTitleStyle}>
+      {React.createElement(icon.icon, { 'aria-hidden': true })}
+      {title ?? t(icon.text)}
+    </div>
+    {children}
+  </div>
+);
+
 const NodeDecoratorInner: React.FC<Props> = ({ element, quadrant, icon, tooltip }) => {
   const { x, y } = getDefaultShapeDecoratorCenter(quadrant, element);
   const decoratorRef = React.useRef<SVGAElement | null>(null);
 
   return (
-    <Tooltip triggerRef={decoratorRef} content={tooltip ?? icon.text}>
+    <Tooltip triggerRef={decoratorRef} content={tooltip ?? <NodeDecoratorTooltip icon={icon} />}>
       <Decorator
         className={decoratorStyle}
         innerRef={decoratorRef}

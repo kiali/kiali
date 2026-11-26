@@ -70,28 +70,16 @@ Then('user sees workload outbound metrics information', () => {
   cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
 });
 
-Then('user sees Perses link in the Inbound Metrics tab', () => {
-  openTab('Inbound Metrics');
-  cy.waitForReact();
+Then('user sees Perses dashboards in the Dashboards dropdown', () => {
+  cy.getBySel('istio-dashboards-toggle').should('be.visible').click();
+  cy.get('[data-test^="istio-dashboard-link-perses-"]').should('have.length.greaterThan', 0);
 
-  // Check that the Perses link exists within the card body
-  cy.get('.pf-v6-c-card__body').within(() => {
-    cy.get('#perses_link_0')
-      .should('be.visible')
-      .and('have.attr', 'title', 'Istio Mesh Dashboard')
-      .and('have.attr', 'target', '_blank')
-      .and('have.attr', 'rel', 'noopener noreferrer')
-      .and('contain', 'View in Perses');
-
-    // Validate the href contains istio-mesh-dashboard
-    cy.get('#perses_link_0').should('have.attr', 'href').and('include', 'istio-mesh-dashboard');
-
-    // Validate the Perses dashboard URL is reachable (requires Perses port-forward on localhost:4000)
-    cy.get('#perses_link_0')
-      .invoke('attr', 'href')
-      .then(href => {
-        cy.request({ url: href, failOnStatusCode: false }).its('status').should('eq', 200);
-      });
+  cy.getBySel('istio-dashboard-link-perses-0').then($el => {
+    const href = $el.attr('href') || $el.closest('a').attr('href') || $el.find('a').attr('href');
+    expect(href, 'Perses dashboard href').to.be.a('string').and.not.be.empty;
+    cy.request({ url: href as string, failOnStatusCode: false })
+      .its('status')
+      .should('eq', 200);
   });
 });
 

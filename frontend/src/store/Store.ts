@@ -215,7 +215,9 @@ export interface AIRightView {
 export interface ChatAIState {
   allowed: boolean;
   alwaysNavigate: boolean;
+  chatContext: string;
   chatHistory: ImmutableList<ImmutableMap<string, unknown>>;
+  chatbotVisible: boolean;
   conversationID: string;
   defaultProvider: string;
   displayMode: ChatbotDisplayMode;

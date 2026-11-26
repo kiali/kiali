@@ -313,6 +313,9 @@ func newSweepSetup(t *testing.T) *sweepSetup {
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("victim-ns"),
 	)
+	// The validations read path filters entries by the user's per-type list
+	// RBAC; allow the reviews so the seeded bookinfo entries stay visible.
+	k8s.AllowAllSelfSubjectAccessReviews()
 	userClient := kubetest.NewNamespaceRestrictedClient(k8s, "restricted-user", []string{"bookinfo"}, "victim-ns")
 
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, userClient)

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { EnvoyDetails } from '../EnvoyDetails';
 import { EnvoyMemory } from '../EnvoyMemory';
 import { store } from '../../../store/ConfigStore';
@@ -25,10 +25,12 @@ describe('EnvoyMemory', () => {
       data: {
         activeClustersMax: 10,
         activeConnections: 5,
+        activeConnectionsObserved: true,
         cause: 'ok',
         largeConfigClustersThreshold: 100,
         memoryLimitBytes: 1073741824,
         memoryMaxBytes: 1024,
+        memoryMetric: 'working_set',
         memoryThresholdBytes: 751619277,
         memoryUsedPercent: 0.0001,
         proxyType: 'sidecar',
@@ -271,7 +273,7 @@ describe('EnvoyMemory', () => {
     expect(screen.getByText('Envoy allocated [details-v1-def456]')).toBeInTheDocument();
   });
 
-  it('shows Memory limit in the chart legend when summary has a limit', async () => {
+  it('shows Memory limit and Warning threshold in the chart legend when summary has a limit', async () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
@@ -286,6 +288,43 @@ describe('EnvoyMemory', () => {
     );
 
     expect(await screen.findByText('Memory limit')).toBeInTheDocument();
+    expect(screen.getByText('Warning threshold')).toBeInTheDocument();
+  });
+
+  it('shows Warning threshold without Memory limit when no proxy memory limit is set', async () => {
+    rstest.spyOn(API, 'getWorkloadEnvoyMemory').mockResolvedValue({
+      data: {
+        activeClustersMax: 10,
+        activeConnections: 5,
+        activeConnectionsObserved: true,
+        cause: 'ok',
+        largeConfigClustersThreshold: 100,
+        memoryLimitBytes: 0,
+        memoryMaxBytes: 1024,
+        memoryMetric: 'working_set',
+        memoryThresholdBytes: 128 * 1024 * 1024,
+        memoryUsedPercent: 0,
+        proxyType: 'sidecar',
+        requestRate: 1.5,
+        roughConfigMemoryBytes: 512000
+      }
+    } as any);
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 1720526400000, to: 1720526430000 }}
+            workload={{ ...workload, name: 'details-v2' }}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await screen.findByText('Warning threshold')).toBeInTheDocument();
+    expect(screen.queryByText('Memory limit')).not.toBeInTheDocument();
   });
 
   it('renders EnvoyDetails memory tab without invalid element type errors', () => {

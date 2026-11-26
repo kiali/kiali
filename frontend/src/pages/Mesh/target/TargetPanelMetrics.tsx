@@ -6,7 +6,8 @@ import {
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { MeshNodeData, NodeTarget, isExternal } from 'types/Mesh';
+import { MeshInfraType, MeshNodeData, NodeTarget, isExternal } from 'types/Mesh';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -89,6 +90,9 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
         {isPrometheusAvailable() && (
           <TargetPanelControlPlaneMetrics
             key={data.namespace}
+            dashboards={
+              data.infraType === MeshInfraType.ZTUNNEL ? <IstioDashboardsDropdownLoader kind="ztunnel" /> : undefined
+            }
             istiodContainerMemory={metrics?.memory_usage}
             istiodContainerCpu={metrics?.cpu_usage}
             type={data.infraName}

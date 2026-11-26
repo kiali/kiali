@@ -63,7 +63,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   MirroredWorkload: {
     badge: 'MI',
     tt: 'Mirrored Workload',
-    style: { backgroundColor: PFColors.Purple20 }
+    style: { backgroundColor: PFColors.Mirroring }
   } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
   NetworkTraffic: {

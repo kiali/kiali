@@ -47,7 +47,12 @@ func NamespaceTls(
 			return
 		}
 
-		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, queryparams.ClusterName(conf, query))
+		cluster := queryparams.ClusterName(conf, query)
+		if skipUnavailableCluster(w, r, business, cluster, models.MTLSStatus{}) {
+			return
+		}
+
+		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, cluster)
 		if err != nil {
 			log.Error(err)
 			// An inaccessible namespace is an authorization failure (403),
@@ -92,10 +97,13 @@ func ClustersTls(
 			return
 		}
 
+		if skipUnavailableCluster(w, r, business, cluster, []models.MTLSStatus{}) {
+			return
+		}
+
 		namespaceModels, err := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 		if err != nil {
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
 
@@ -108,8 +116,7 @@ func ClustersTls(
 		}
 		status, err := business.TLS.ClusterWideNSmTLSStatus(r.Context(), namespaceModels, cluster)
 		if err != nil {
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
 
@@ -152,8 +159,10 @@ func MeshTls(
 		// Get mtls status given the whole namespaces
 		globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(ctx, cluster, revision)
 		if err != nil {
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			// The mesh resolution fails with a wrapped ErrClusterDegraded/ErrClusterNotCached
+			// when a cluster's cache cannot serve reads; handleErrorResponse maps those (503/404)
+			// instead of a blanket 500.
+			handleErrorResponse(w, err)
 			return
 		}
 

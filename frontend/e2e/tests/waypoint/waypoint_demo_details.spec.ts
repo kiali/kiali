@@ -19,7 +19,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.expectWaypointSubtabAbsent('Services');
     await workloadDetailsPage.expectWaypointSubtabAbsent('Workloads');
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('none');
     await expect(page.getByTestId('waypointfor-title')).toBeVisible();
   });
@@ -38,7 +38,7 @@ test.describe('Waypoint demo-namespace details', () => {
       labeledBy: 'namespace',
       badgeId: 'pfbadge-S'
     });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
   });
 
@@ -56,7 +56,7 @@ test.describe('Waypoint demo-namespace details', () => {
       labeledBy: 'namespace',
       badgeId: 'pfbadge-S'
     });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
   });
 
@@ -82,7 +82,7 @@ test.describe('Waypoint demo-namespace details', () => {
       labeledBy: 'namespace',
       badgeId: 'pfbadge-W'
     });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('all');
   });
 
@@ -100,7 +100,7 @@ test.describe('Waypoint demo-namespace details', () => {
       labeledBy: 'workload',
       badgeId: 'pfbadge-W'
     });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('workload');
   });
 
@@ -111,14 +111,9 @@ test.describe('Waypoint demo-namespace details', () => {
     await expect(page).toHaveURL(workloadDetailUrlPattern('waypoint'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
-    await workloadDetailsPage.expectEnrolledWaypointTable({
-      rows: 1,
-      name: 'echo-service',
-      namespace: 'waypoint-override',
-      labeledBy: 'namespace',
-      badgeId: 'pfbadge-S'
-    });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    // echo-service overrides the namespace waypoint with use-this; it is not enrolled on the default gateway.
+    await workloadDetailsPage.expectNoEnrolledServices();
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
 
     await workloadDetailsPage.open('waypoint-override', 'echo-server');
@@ -134,7 +129,7 @@ test.describe('Waypoint demo-namespace details', () => {
       labeledBy: 'service',
       badgeId: 'pfbadge-S'
     });
-    await workloadDetailsPage.openWaypointSubtab('Info');
+    await workloadDetailsPage.openWaypointSubtab('Overview');
     await workloadDetailsPage.expectWaypointInfoFor('service');
   });
 });

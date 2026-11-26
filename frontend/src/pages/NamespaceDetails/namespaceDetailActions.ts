@@ -8,19 +8,15 @@ import {
 import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { ControlPlane } from 'types/Mesh';
-import { ExternalLink } from 'types/Dashboards';
 import { gvkType } from 'types/IstioConfigList';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
 import { t } from 'utils/I18nUtils';
 
 export type NamespaceRowActionsParams = {
   controlPlanes: ControlPlane[] | undefined;
-  grafanaLinks: ExternalLink[];
   istioAPIEnabled: boolean;
   nsInfo: NamespaceInfo;
   onOpenTrafficPoliciesModal: (p: { clusterTarget?: string; kind: string; nsTarget: string; opTarget: string }) => void;
-  onRefreshAfterExternalLink?: () => void;
-  persesLinks: ExternalLink[];
 };
 
 /**
@@ -242,43 +238,6 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       if (aps.length > 0) {
         namespaceActions.push(removeAuthorizationAction);
       }
-    }
-  } else {
-    if (p.grafanaLinks.length > 0) {
-      pushSeparator(namespaceActions);
-
-      p.grafanaLinks.forEach(link => {
-        const grafanaDashboard = {
-          isGroup: false,
-          isSeparator: false,
-          isExternal: true,
-          title: link.name,
-          action: (_ns: string) => {
-            window.open(link.url, '_blank', 'noopener,noreferrer');
-            p.onRefreshAfterExternalLink?.();
-          }
-        };
-
-        namespaceActions.push(grafanaDashboard);
-      });
-    }
-    if (p.persesLinks.length > 0) {
-      pushSeparator(namespaceActions);
-
-      p.persesLinks.forEach(link => {
-        const persesDashboard = {
-          isGroup: false,
-          isSeparator: false,
-          isExternal: true,
-          title: link.name,
-          action: (_ns: string) => {
-            window.open(link.url, '_blank', 'noopener,noreferrer');
-            p.onRefreshAfterExternalLink?.();
-          }
-        };
-
-        namespaceActions.push(persesDashboard);
-      });
     }
   }
 

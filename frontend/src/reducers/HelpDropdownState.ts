@@ -1,6 +1,6 @@
-import { getType } from 'typesafe-actions';
-import { StatusState } from '../types/StatusState';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { StatusState } from '../types/StatusState';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 
 export const INITIAL_STATUS_STATE: StatusState = {

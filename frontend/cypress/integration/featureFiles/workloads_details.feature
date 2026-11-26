@@ -42,8 +42,8 @@ Feature: Kiali Workload Details page
     Then user sees workload outbound metrics information
 
   @perses
-  Scenario: See workload Perses link
-    Then user sees Perses link in the Inbound Metrics tab
+  Scenario: See workload Perses dashboards
+    Then user sees Perses dashboards in the Dashboards dropdown
 
   @bookinfo-app
   @tracing

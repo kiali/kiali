@@ -21,6 +21,7 @@ rstest.mock('actions/TracingThunkActions', () => ({
 
 rstest.mock('app/History', () => ({
   HistoryManager: { getParam: () => undefined },
+  navigateApp: rstest.fn(),
   URLParam: { TRACING_TRACE_ID: 'traceId' }
 }));
 

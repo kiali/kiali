@@ -43,6 +43,8 @@ import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { hasIstioExternalDashboards } from 'utils/IstioDashboardUtils';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 import { t } from 'utils/I18nUtils';
 
@@ -148,12 +150,23 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         break;
     }
 
-    const actionsToolbar =
+    const workloadActions =
       this.state.currentTab === 'info' && this.state.workload ? (
         <WorkloadWizardDropdown
           namespace={this.props.workloadId.namespace}
           workload={this.state.workload}
           onChange={this.fetchWorkload}
+        />
+      ) : undefined;
+    const mayHaveDashboards = hasIstioExternalDashboards();
+    const actionsToolbar =
+      this.state.workload && (workloadActions || mayHaveDashboards) ? (
+        <IstioDashboardsDropdownLoader
+          extra={workloadActions}
+          kind={this.state.workload.isZtunnel ? 'ztunnel' : 'workload'}
+          namespace={this.props.workloadId.namespace}
+          object={this.state.workload.isZtunnel ? 'ztunnel' : this.props.workloadId.workload}
+          objectType={this.state.workload.isZtunnel ? MetricsObjectTypes.ZTUNNEL : MetricsObjectTypes.WORKLOAD}
         />
       ) : undefined;
 

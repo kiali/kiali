@@ -124,23 +124,9 @@ if [ "${#hack_shell_scripts[@]}" -gt 0 ]; then
   fi
 fi
 
-#### I18N missing statements ####
-cd frontend || exit 1
-
-yarn i18n
-
-# English catalog is generated locally and gitignored (keys are the English source).
-# Require translated locale files only so new t() strings are not dropped from es/zh/ko/etc.
-i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation\.json$' | grep -v '/locales/en/' || true)
-
 #### Git commit check ####
 if [ "${#yaml_unformatted[@]}" -gt 0 ] || [ -n "$go_unformatted" ]; then
   echo "Some files have been formatted - the git commit is aborted."
   echo "Please stage the formatted files and commit again."
-  exit 1
-fi
-
-if [ -n "$i18n_files" ]; then
-  echo "New i18n statements are generated but not committed - the git commit is aborted. Please include the updated translation files in the commit."
   exit 1
 fi

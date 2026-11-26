@@ -12,18 +12,6 @@
           "namespace": "bookinfo",
           "workload": "waypoint",
           "version": "latest",
-          "destServices": [
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "details"
-            },
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "reviews"
-            }
-          ],
           "traffic": [
             {
               "protocol": "tcp",
