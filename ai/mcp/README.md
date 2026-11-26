@@ -26,6 +26,7 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
 - [Response Format](#response-format)
 - [Usage in AI Conversations](#usage-in-ai-conversations)
 - [Adding New Tools](#adding-new-tools)
+- [Local MCP Inspector (dev)](#local-mcp-inspector-dev)
 - [Testing layers](#testing-layers)
 - [Release MCP and pin validation](#release-mcp-and-pin-validation)
   - [Validate pin without publishing](#validate-pin-without-publishing)
@@ -431,6 +432,17 @@ The AI model calls tools based on user queries:
 
 See existing tools for end-to-end examples.
 
+## Local MCP Inspector (dev)
+
+To exercise tools from this repo in [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) **without** kubernetes-mcp-server, use the stdio shim under [`__dev__/`](__dev__/):
+
+```bash
+cd ai/mcp/__dev__
+./run.sh   # KIALI_URL=http://localhost:20001, KIALI_TOKEN from `oc whoami -t`
+```
+
+See [`__dev__/README.md`](__dev__/README.md) for overrides, auth, and toolset filters.
+
 ## Testing layers
 
 MCP coverage uses several complementary layers:
@@ -441,6 +453,7 @@ MCP coverage uses several complementary layers:
 | Integration (`mcp_tools`) | `tests/integration/mcp_tools/` | Live HTTP `/api/chat/mcp/<tool>` against a Kind cluster | PR CI (`integration-tests-backend-mcp`), Release MCP validate |
 | Endpoint coverage | `hack/mcp/check-mcp-endpoint-coverage.sh` | Every MCP→Kiali path in kubernetes-mcp-server has a `*_test.go` | Release MCP validate job |
 | LLM evals (mcpchecker) | `tests/evals/` | Agent tool use with a real model | Manual / `/run-mcpchecker` — see [MCP evaluation (CI)](#mcp-evaluation-ci) |
+| MCP Inspector (dev) | `ai/mcp/__dev__/` | Manual tool calls via Inspector → live Kiali | Local only |
 
 `TestAllToolsHaveIntegrationTests` in `tools_coverage_test.go` also fails CI if a YAML tool under `ai/mcp/tools/` lacks a matching `tests/integration/mcp_tools/<name>_test.go`.
 
