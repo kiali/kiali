@@ -663,6 +663,11 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
       export CLUSTER2_CONTEXT=kind-dataplane
       "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG}
     elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
+      if [ "${SAIL}" = "false" ]; then
+        echo "ERROR: backend-external-controlplane on Minikube requires Sail (--sail true)."
+        echo "       Use CLUSTER_TYPE=kind with --sail false for the istioctl external control plane path."
+        exit 1
+      fi
       export CLUSTER1_CONTEXT=controlplane
       export CLUSTER2_CONTEXT=dataplane
       "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG}

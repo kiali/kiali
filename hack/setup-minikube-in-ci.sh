@@ -38,7 +38,7 @@ Options:
     Default: <none>
 -s|--sail <true|false>
     Install Istio with the Sail Operator (true) or istioctl (false).
-    Default: <false>
+    Default: <false> (single-cluster minikube only; external-controlplane requires true)
 HELP
 }
 
@@ -244,6 +244,10 @@ setup_minikube_multicluster() {
   local cluster2_name
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
+    if [ "${SAIL}" != "true" ]; then
+      echo "ERROR: external-controlplane on Minikube requires --sail true (istioctl is not supported for this topology)."
+      exit 1
+    fi
     "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg} --sail "${SAIL}"
     cluster1_context="controlplane"
     cluster2_context="dataplane"
