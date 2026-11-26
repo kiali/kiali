@@ -55,12 +55,8 @@ jobs:
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{matrix.branch}}
-        token: ${{ secrets.KIALI_BOT_TOKEN }}
         # We need to fetch the full history to determine the latest tag
         fetch-depth: 0
-
-    - name: Configure kiali-bot git
-      uses: ./.github/actions/configure-kiali-bot-git
 
     - name: Create Release Tag in kiali/kiali
       run: |
