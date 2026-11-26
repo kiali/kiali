@@ -373,20 +373,12 @@ Feature: Kiali AI Chatbot
     And the next chat message should be sent without a conversation ID
 
   # Troubleshooting page content / menu / Overview card: see troubleshooting.feature.
-  # Ask / Fix chatbot launch from a subproblem stays here (requires chat).
+  # Fix it with AI chatbot launch from a subproblem stays here (requires chat).
 
-  Scenario: Clicking Ask chatbot on a troubleshooting subproblem opens the chatbot in ask mode and sends the prompt
+  Scenario: Clicking Fix it with AI on a troubleshooting subproblem opens the chatbot in troubleshoot mode and sends the analysis
     Given the troubleshooting scan returns mesh problems
     And user visits the Troubleshooting page
-    When user clicks Ask chatbot on the first troubleshooting subproblem
-    Then the AI chatbot window should be open
-    And the interaction mode should be "ask"
-    And the AI chatbot should display the answer "Of course."
-
-  Scenario: Clicking Analyze on a troubleshooting subproblem opens the chatbot in troubleshoot mode and sends the analysis
-    Given the troubleshooting scan returns mesh problems
-    And user visits the Troubleshooting page
-    When user clicks Analyze on the first troubleshooting subproblem
+    When user clicks Fix it with AI on the first troubleshooting subproblem
     Then the AI chatbot window should be open
     And the interaction mode should be "troubleshoot"
     And the AI chatbot should contain the text "We are going to try to fix [sp-001] High HTTP 5xx error rate: Service: bookinfo/productpage."

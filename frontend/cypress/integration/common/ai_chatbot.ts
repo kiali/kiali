@@ -31,7 +31,9 @@ const CHATBOT_TOOL_MODAL = '[data-test="ai-tool-modal"]';
 const CHATBOT_SEND_BUTTON = '.pf-chatbot__button--send';
 const CHATBOT_DANGER_ALERT = '.pf-v6-c-alert.pf-m-danger';
 const CHATBOT_SOURCES = '.pf-chatbot__source';
-const CHATBOT_ALWAYS_NAVIGATE_SWITCH = '[data-testid="chatbot-always-navigate-switch"]';
+const CHATBOT_AI_SETTINGS = '[data-test="chatbot-ai-settings"]';
+const PREFERENCES_MODAL = '[data-test="preferences-modal"]';
+const PREFERENCES_ALWAYS_NAVIGATE = '[data-test="preferences-always-navigate"]';
 const CHATBOT_NAVIGATION_ACTION = '[data-testid="chatbot-navigation-action"]';
 const CHATBOT_NAVIGATION_ACTION_LINK = '[data-testid^="chatbot-navigation-action-link-"]';
 /** PF6 / chatbot: file chip is a clickable button; truncated text omits the extension (e.g. vs-ai-cypress.yaml → vs-ai-cypress). */
@@ -175,16 +177,36 @@ Then('the AI chatbot should display a sources card', () => {
   });
 });
 
+function openChatAISettings(): void {
+  cy.get('body').then($body => {
+    if ($body.find(PREFERENCES_MODAL).length > 0) {
+      cy.get(PREFERENCES_MODAL).should('be.visible');
+      return;
+    }
+    cy.get(CHATBOT_AI_SETTINGS).should('be.visible').click();
+    cy.get(PREFERENCES_MODAL).should('be.visible');
+  });
+}
+
+function closePreferences(): void {
+  cy.get('[data-test="preferences-close"]').click();
+  cy.get(PREFERENCES_MODAL).should('not.exist');
+}
+
 function toggleAlwaysNavigateSwitch(enable: boolean): void {
   const current = enable ? 'not.be.checked' : 'be.checked';
   const expected = enable ? 'be.checked' : 'not.be.checked';
 
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should('exist').and(current).click({ force: true });
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should(expected);
+  openChatAISettings();
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should('exist').and(current).click({ force: true });
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should(expected);
+  closePreferences();
 }
 
 Then('the always navigate switch should be unchecked', () => {
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should('exist').and('not.be.checked');
+  openChatAISettings();
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should('exist').and('not.be.checked');
+  closePreferences();
 });
 
 When('user enables the always navigate switch', () => {
@@ -861,28 +883,12 @@ Then('the AI chatbot should display a mode divider for {string}', (mode: string)
 });
 
 // ============================================================
-// Troubleshooting page → chatbot launch (Ask / Fix)
+// Troubleshooting page → chatbot launch (Fix it with AI)
 // Page / menu / Overview coverage lives in troubleshooting.ts
 // ============================================================
 
-When('user clicks Ask chatbot on the first troubleshooting subproblem', () => {
-  lastResponseAlias = 'troubleshootingAskResponse';
-  cy.intercept('POST', '**/api/chat/**/ai', req => {
-    expect(req.body?.interaction_mode).to.equal('ask');
-    expect(req.body?.query).to.include('Why is productpage failing?');
-    req.reply({
-      statusCode: 200,
-      headers: { 'Content-Type': 'text/event-stream' },
-      body: createMockStreamResponse(mockPayload)
-    });
-  }).as('troubleshootingAskResponse');
-
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]').first().click();
-  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]').should('be.visible').click();
-});
-
-When('user clicks Analyze on the first troubleshooting subproblem', () => {
-  lastResponseAlias = 'troubleshootingAnalyzeResponse';
+When('user clicks Fix it with AI on the first troubleshooting subproblem', () => {
+  lastResponseAlias = 'troubleshootingFixResponse';
   cy.intercept('POST', '**/api/chat/**/ai', req => {
     expect(req.body?.interaction_mode).to.equal('troubleshoot');
     expect(req.body?.query).to.include('Why is productpage returning 5xx errors?');
@@ -891,8 +897,7 @@ When('user clicks Analyze on the first troubleshooting subproblem', () => {
       headers: { 'Content-Type': 'text/event-stream' },
       body: createMockStreamResponse(mockPayload)
     });
-  }).as('troubleshootingAnalyzeResponse');
+  }).as('troubleshootingFixResponse');
 
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]').first().click();
-  cy.get('[data-test="ai-troubleshooting-analyze"]').should('be.visible').click();
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]').first().should('be.visible').and('not.be.disabled').click();
 });

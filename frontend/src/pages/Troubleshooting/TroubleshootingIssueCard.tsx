@@ -11,11 +11,11 @@ import {
 import { EyeIcon, EyeSlashIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
-import { PF_THEME_DARK, PF_THEME_FELT } from 'types/Common';
 import type { TroubleshootingIssue } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { summarizeTroubleshootingIssues } from './partitionTroubleshooting';
@@ -23,13 +23,9 @@ import { TroubleshootingLink } from './TroubleshootingLink';
 import { getTroubleshootingIssueLinks } from './troubleshootingResourceLink';
 import { TroubleshootingSubProblemCard } from './TroubleshootingSubProblemCard';
 
+// Semantic secondary surface — follows Console/Kiali light/dark like Overview cards.
 const issueCardStyle = kialiStyle({
-  backgroundColor: 'var(--pf-t--color--gray--10)',
-  $nest: {
-    [`.${PF_THEME_DARK} &, .${PF_THEME_FELT} &`]: {
-      backgroundColor: 'var(--pf-t--color--gray--60)'
-    }
-  }
+  backgroundColor: PFColors.BackgroundColor200
 });
 
 const headerStyle = kialiStyle({

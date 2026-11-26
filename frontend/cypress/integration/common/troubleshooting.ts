@@ -5,7 +5,7 @@ import { mockTroubleshootingIssues } from './troubleshooting_mocks';
  * Cypress steps for the standalone Troubleshooting page (/console/troubleshooting),
  * Overview Troubleshooting card, and left-nav entry.
  *
- * These do not require AI / chat to be enabled. Ask / Fix with AI gating is covered
+ * These do not require AI / chat to be enabled. Fix it with AI gating is covered
  * in ai_dashboard.feature; chatbot launch from a subproblem is covered in ai_chatbot.feature.
  */
 
@@ -63,9 +63,9 @@ Then('the Troubleshooting page should show a {string} link to {string}', (linkTe
 });
 
 Then('Istio object subproblems should not show inline Ask AI buttons', () => {
-  // Ask AI lives only in the header kebab menu, not beside validation checks.
+  // Fix it with AI lives only in the subproblem header, not beside validation checks.
   cy.get('[data-test="ai-troubleshooting-check"]').should('exist');
-  cy.get('[data-test="ai-troubleshooting-check"] [data-test="ai-troubleshooting-ask-chatbot"]').should('not.exist');
+  cy.get('[data-test="ai-troubleshooting-check"] [data-test="ai-troubleshooting-fix-with-ai"]').should('not.exist');
 });
 
 When('user hides the first troubleshooting subproblem', () => {
@@ -142,24 +142,23 @@ Then('the notification badge should not show the AI icon', () => {
   cy.get('[data-test="notifications-troubleshooting-icon"]').should('not.exist');
 });
 
-// AI actions kebab (Ask AI / Fix it with AI) on the Troubleshooting page
-Then('the AI actions menu on troubleshooting problems should be enabled', () => {
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]', { timeout: 10000 }).first().should('not.be.disabled');
+// Fix it with AI (InteractAI) on troubleshooting subproblem cards
+Then('the Fix it with AI button on troubleshooting problems should be enabled', () => {
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]', { timeout: 10000 }).first().should('not.be.disabled');
 });
 
-Then('the AI actions menu on troubleshooting problems should be disabled', () => {
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]', { timeout: 10000 }).first().should('be.disabled');
+Then('the Fix it with AI button on troubleshooting problems should be disabled', () => {
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]', { timeout: 10000 }).first().should('be.disabled');
 });
 
-Then('the AI actions menu on troubleshooting problems should not exist', () => {
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]').should('not.exist');
+Then('the Fix it with AI button on troubleshooting problems should not exist', () => {
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]').should('not.exist');
 });
 
-Then('the AI actions menu should include Ask AI and Fix it with AI', () => {
-  cy.get('[data-test="ai-troubleshooting-ai-actions"]', { timeout: 10000 }).first().should('not.be.disabled').click();
-  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]')
+Then('the Fix it with AI button should be available on troubleshooting problems', () => {
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]', { timeout: 10000 })
+    .first()
     .should('be.visible')
-    .and('not.have.attr', 'aria-disabled', 'true');
-  cy.get('[data-test="ai-troubleshooting-analyze"]').should('be.visible').and('not.have.attr', 'aria-disabled', 'true');
-  cy.get('body').type('{esc}');
+    .and('not.be.disabled')
+    .and('have.attr', 'aria-label', 'Fix it with AI');
 });

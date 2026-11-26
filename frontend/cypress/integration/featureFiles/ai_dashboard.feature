@@ -19,13 +19,13 @@ Feature: Kiali AI Dashboard configuration matrix
   #   ai.consumption.enabled=true         -> Consumption tab
   #   Troubleshooting lives on /console/troubleshooting (see troubleshooting.feature)
   #
-  # Troubleshooting AI actions menu (wrench kebab on /troubleshooting):
+  # Troubleshooting Fix it with AI button (InteractAI on /troubleshooting):
   #   ai.enabled=false OR chat.enabled=false
-  #     -> AI actions menu is hidden
+  #     -> Fix it with AI button is hidden
   #   chat.enabled=true, chat.allowed=false
-  #     -> AI actions menu stays visible but disabled (tooltip: not allowed)
+  #     -> Fix it with AI button stays visible but disabled (tooltip: not allowed)
   #   chat.enabled=true, chat.allowed=true
-  #     -> AI actions menu enabled with Ask AI / Fix it with AI items
+  #     -> Fix it with AI button enabled
   #
   # Allow-list (feature enabled but user not allowed):
   #   chat.enabled=true, chat.allowed=false
@@ -58,7 +58,7 @@ Feature: Kiali AI Dashboard configuration matrix
 
   Scenario: AI disabled redirects the AI dashboard deep link to overview
     # Deep links must not leave the user on a broken AI page when AI is off.
-    # Troubleshooting page stays reachable, but the AI actions menu is hidden.
+    # Troubleshooting page stays reachable, but Fix it with AI is hidden.
     Given AI dashboard features are configured with
       | feature      | enabled | allowed |
       | ai           | false   |         |
@@ -70,7 +70,7 @@ Feature: Kiali AI Dashboard configuration matrix
     And the Troubleshooting menu item should be visible
     And the notification badge should not show the AI icon
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should not exist
+    Then the Fix it with AI button on troubleshooting problems should not exist
 
   # ---------------------------------------------------------------------------
   # ai.enabled only (chat off, consumption off)
@@ -79,7 +79,7 @@ Feature: Kiali AI Dashboard configuration matrix
   Scenario: AI enabled alone with no chat or consumption redirects away from AI Dashboard
     # Troubleshooting is a separate page. With no User Usage / Consumption tabs left,
     # /console/ai has nothing to show and redirects to Overview.
-    # Chat off -> AI actions menu is hidden on the Troubleshooting page.
+    # Chat off -> Fix it with AI is hidden on the Troubleshooting page.
     Given AI dashboard features are configured with
       | feature      | enabled | allowed |
       | ai           | true    |         |
@@ -91,7 +91,7 @@ Feature: Kiali AI Dashboard configuration matrix
     And the AI dashboard Consumption tab should not exist
     And the AI chatbot toggle should not exist
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should not exist
+    Then the Fix it with AI button on troubleshooting problems should not exist
 
   # ---------------------------------------------------------------------------
   # consumption.enabled (chat off)
@@ -128,7 +128,7 @@ Feature: Kiali AI Dashboard configuration matrix
   # ---------------------------------------------------------------------------
 
   Scenario: Chat enabled and allowed shows User Usage with enabled problem AI actions
-    # Chat on -> User Usage tab + chatbot FAB + AI actions menu enabled on Troubleshooting page.
+    # Chat on -> User Usage tab + chatbot FAB + Fix it with AI enabled on Troubleshooting page.
     # Consumption off -> no Consumption tab and no historic metrics on User Usage.
     Given AI dashboard features are configured with
       | feature      | enabled | allowed |
@@ -140,8 +140,8 @@ Feature: Kiali AI Dashboard configuration matrix
     And the AI dashboard Consumption tab should not exist
     And the AI chatbot toggle should be visible
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should be enabled
-    And the AI actions menu should include Ask AI and Fix it with AI
+    Then the Fix it with AI button on troubleshooting problems should be enabled
+    And the Fix it with AI button should be available on troubleshooting problems
     When user visits the AI dashboard on the "session-usage" tab
     Then the AI User Usage page should show the current session area
     And the AI User Usage page should not show historic metrics
@@ -164,7 +164,7 @@ Feature: Kiali AI Dashboard configuration matrix
     Then the AI User Usage page should show chat disabled for the current session
     And the AI User Usage page should not show historic metrics
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should be disabled
+    Then the Fix it with AI button on troubleshooting problems should be disabled
 
   # ---------------------------------------------------------------------------
   # chat + consumption both enabled
@@ -182,8 +182,8 @@ Feature: Kiali AI Dashboard configuration matrix
     And the AI dashboard Consumption tab should be enabled
     And the AI chatbot toggle should be visible
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should be enabled
-    And the AI actions menu should include Ask AI and Fix it with AI
+    Then the Fix it with AI button on troubleshooting problems should be enabled
+    And the Fix it with AI button should be available on troubleshooting problems
     When user visits the AI dashboard on the "session-usage" tab
     Then the AI User Usage page should show the current session area
     And the AI User Usage page should show historic metrics
@@ -193,7 +193,7 @@ Feature: Kiali AI Dashboard configuration matrix
 
   Scenario: Chat not allowed still shows historic User Usage when consumption is enabled
     # Historic Prometheus metrics on User Usage follow consumption.enabled, not chat.allowed.
-    # Current session stays blocked; AI actions stay disabled; Consumption remains usable.
+    # Current session stays blocked; Fix it with AI stays disabled; Consumption remains usable.
     Given AI dashboard features are configured with
       | feature      | enabled | allowed |
       | ai           | true    |         |
@@ -209,7 +209,7 @@ Feature: Kiali AI Dashboard configuration matrix
     Then the AI User Usage page should show chat disabled for the current session
     And the AI User Usage page should show historic metrics
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should be disabled
+    Then the Fix it with AI button on troubleshooting problems should be disabled
     When user visits the AI dashboard on the "consumption" tab
     Then the AI Consumption page should be shown
 
@@ -230,5 +230,5 @@ Feature: Kiali AI Dashboard configuration matrix
     And the AI User Usage page should show historic metrics
     And the AI User Usage page should not show chat disabled for the current session
     When user visits the Troubleshooting page
-    Then the AI actions menu on troubleshooting problems should be enabled
-    And the AI actions menu should include Ask AI and Fix it with AI
+    Then the Fix it with AI button on troubleshooting problems should be enabled
+    And the Fix it with AI button should be available on troubleshooting problems
