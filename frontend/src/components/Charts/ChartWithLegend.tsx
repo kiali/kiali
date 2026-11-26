@@ -25,7 +25,7 @@ import { CustomTooltip } from './CustomTooltip';
 import { INTERPOLATION_STRATEGY } from './SparklineChart';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import regression from 'regression';
+import { linearRegression } from 'utils/linearRegression';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { t } from 'utils/I18nUtils';
@@ -473,7 +473,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             if (this.props.showTrendline === true && serie.datapoints[0]) {
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
 
-              const datapoints = serie.datapoints.map(d => {
+              const datapoints = serie.datapoints.map((d): [number, number] => {
                 const t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
                 let trendPoint = parseFloat(d.y.toString());
 
@@ -488,12 +488,12 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 return [t, trendPoint];
               });
 
-              const linearRegression = regression.linear(datapoints, { precision: 10 });
+              const trendline = linearRegression(datapoints, { precision: 10 });
 
               const regressionDatapoints = serie.datapoints.map(d => ({
                 ...d,
                 name: `${d.name} (trendline)`,
-                y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],
+                y: trendline.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],
                 y0: undefined // Clear y0, in case it is set to prevent the tooltip showing this value.
               }));
 

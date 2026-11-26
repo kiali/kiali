@@ -1646,7 +1646,6 @@ __metadata:
     redux-persist: "npm:^6.0.0"
     redux-persist-transform-filter: "npm:^0.0.22"
     redux-thunk: "npm:~3.1.0"
-    regression: "npm:^2.0.1"
     reselect: "npm:^5.3.0"
     sass: "npm:^1.100.0"
     seedrandom: "npm:^3.0.5"
@@ -11553,13 +11552,6 @@ __metadata:
     gopd: "npm:^1.2.0"
     set-function-name: "npm:^2.0.2"
   checksum: 10c0/83b88e6115b4af1c537f8dabf5c3744032cb875d63bc05c288b1b8c0ef37cbe55353f95d8ca817e8843806e3e150b118bc624e4279b24b4776b4198232735a77
-  languageName: node
-  linkType: hard
-
-"regression@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "regression@npm:2.0.1"
-  checksum: 10c0/ad3ca209409ed6e3ce1da64ff9779f616c1ef5cfdfc0785681aa670a046d674c8dcdaeac2a7c41f9cb3c22374051246d675e79c2ba3885deb6c9f9aadc756cd8
   languageName: node
   linkType: hard
 

@@ -71,10 +71,7 @@ rstest.mock('../CustomTooltip', () => {
   };
 });
 
-rstest.mock('regression', () => ({
-  __esModule: true,
-  default: { linear: () => ({ predict: () => [0, 0] }) }
-}));
+import * as linearRegressionModule from 'utils/linearRegression';
 
 import { ChartWithLegend, CHART_LEGEND_GAP, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
 
@@ -101,6 +98,25 @@ const makeSeries = (names: string[], pointCount = 5): VCLines<RichDataPoint> =>
   });
 
 describe('ChartWithLegend', () => {
+  it('computes trendlines when showTrendline is enabled', () => {
+    const spy = rstest.spyOn(linearRegressionModule, 'linearRegression');
+    const data = makeSeries(['Series A'], 5);
+    render(
+      <ChartWithLegend
+        data={data}
+        unit="ops"
+        seriesComponent={<div />}
+        fill={false}
+        stroke={true}
+        showTrendline={true}
+      />
+    );
+
+    expect(spy).toHaveBeenCalled();
+    expect(spy.mock.calls[0]?.[1]).toEqual({ precision: 10 });
+    spy.mockRestore();
+  });
+
   it('renders legend items for each series', () => {
     const data = makeSeries(['Series A', 'Series B', 'Series C']);
     render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
