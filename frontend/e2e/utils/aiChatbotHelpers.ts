@@ -130,6 +130,21 @@ export async function injectSecondAiProviderInConfig(page: Page, providerName = 
   });
 }
 
+/**
+ * Mocks /api/config so the AI chatbot is not allowed for the user (ai.chat.allowed = false).
+ * The config is fetched during bootstrap, so register before (re)loading the page.
+ */
+export async function mockChatbotNotAllowed(page: Page): Promise<void> {
+  await page.route('**/api/config', async route => {
+    const response = await route.fetch();
+    const body = await response.json();
+    if (body.ai?.chat) {
+      body.ai.chat.allowed = false;
+    }
+    await route.fulfill({ response, json: body });
+  });
+}
+
 export async function waitForChatAiPost(page: Page, timeout = 15_000): Promise<Response> {
   return page.waitForResponse(
     response =>

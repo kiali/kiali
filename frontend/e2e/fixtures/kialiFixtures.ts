@@ -1,5 +1,6 @@
 import { test as base } from '@playwright/test';
 import { AiChatbotPage } from '../pages/AiChatbotPage';
+import { AppearancePage } from '../pages/AppearancePage';
 import { AppDetailsPage } from '../pages/AppDetailsPage';
 import { AppsPage } from '../pages/AppsPage';
 import { GraphPage } from '../pages/GraphPage';
@@ -18,6 +19,7 @@ import { WorkloadsPage } from '../pages/WorkloadsPage';
 
 type KialiFixtures = {
   aiChatbotPage: AiChatbotPage;
+  appearancePage: AppearancePage;
   appDetailsPage: AppDetailsPage;
   appsPage: AppsPage;
   graphPage: GraphPage;
@@ -41,6 +43,9 @@ type KialiFixtures = {
 export const test = base.extend<KialiFixtures>({
   aiChatbotPage: async ({ page }, use) => {
     await use(new AiChatbotPage(page));
+  },
+  appearancePage: async ({ page }, use) => {
+    await use(new AppearancePage(page));
   },
   appDetailsPage: async ({ page }, use) => {
     await use(new AppDetailsPage(page));

@@ -1,7 +1,7 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { isOfflineProject } from '../../utils/projects';
-import { coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
+import { core2, coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('Workload details core-caching', () => {
   test.beforeEach(async ({ workloadDetailsPage }) => {
@@ -60,5 +60,22 @@ test.describe('Workload details core-caching', () => {
 
   test('See Envoy metrics for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.expectEnvoyMetrics();
+  });
+});
+
+test.describe('Workload details Envoy memory overview', () => {
+  test.beforeEach(async ({ workloadDetailsPage }) => {
+    // Offline runs serve bookinfo from the must-gather; there may be no cluster to install into.
+    if (!isOfflineProject(test.info())) {
+      ensureDemoApp('bookinfo');
+    }
+    await workloadDetailsPage.open('bookinfo', 'details-v1');
+  });
+
+  test('See Envoy memory overview for a workload', core2, async ({ workloadDetailsPage }) => {
+    await workloadDetailsPage.expectEnvoyMemoryOverview();
+    await workloadDetailsPage.expectEnvoyMemoryHealthy();
+    await workloadDetailsPage.expectEnvoyMemorySummaryMetrics();
+    await workloadDetailsPage.expectEnvoyMemoryChartStatistics();
   });
 });

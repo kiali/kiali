@@ -1,4 +1,6 @@
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/kialiFixtures';
+import { mockChatbotNotAllowed } from '../../utils/aiChatbotHelpers';
 import { aiChatbotOnly } from '../../utils/suite-tags';
 
 test.describe('AI chatbot toggle and theme', () => {
@@ -53,4 +55,20 @@ test.describe('AI chatbot toggle and theme', () => {
     await aiChatbotPage.open();
     await aiChatbotPage.expectWelcomeMessage();
   });
+
+  test(
+    'The AI chatbot toggle is disabled and warns the user when they are not allowed to use it',
+    aiChatbotOnly,
+    async ({ page, aiChatbotPage }) => {
+      await mockChatbotNotAllowed(page);
+      await page.reload();
+      await aiChatbotPage.expectToggleVisible();
+
+      await aiChatbotPage.toggle().hover();
+      await expect(page.locator('.pf-v6-c-tooltip__content')).toContainText('Chatbot is not allowed for this user');
+
+      await aiChatbotPage.clickToggle();
+      await aiChatbotPage.expectClosed();
+    }
+  );
 });

@@ -78,6 +78,30 @@ export class MeshPage extends BasePage {
     }).toPass({ intervals: [2_000], timeout: 60_000 });
   }
 
+  /**
+   * Asserts infra node types are absent from the mesh graph the UI itself requests with
+   * default display settings — includeKiali=false hides the Kiali node and its observability
+   * dependencies (Grafana, metric/trace stores, Perses). Mesh display settings are not
+   * persisted, so a reload restores the defaults regardless of prior tests.
+   */
+  async expectInfraNodesHiddenByDefault(infraTypes: string[]): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      response =>
+        response.url().includes('/api/mesh/graph') && response.request().method() === 'GET' && response.ok()
+    );
+    await this.page.reload();
+    const response = await responsePromise;
+    const body = (await response.json()) as MeshGraphResponse;
+    const nodes = body.elements?.nodes ?? [];
+    for (const infraType of infraTypes) {
+      const matched = nodes.filter(n => n.data?.infraType === infraType);
+      expect(
+        matched.length,
+        `Expected no "${infraType}" node(s) in the default mesh graph, got ${matched.length}`
+      ).toBe(0);
+    }
+  }
+
   /** Assert a source infra node has the expected number of edges to dest infra nodes. */
   async expectInfraConnectedTo(sourceInfraType: string, destInfraType: string, edgeCount: number): Promise<void> {
     await this.waitForLoad();
