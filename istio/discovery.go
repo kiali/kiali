@@ -821,6 +821,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
 				for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
 					switch {
+					case kubernetes.EnvVarIsTrue(istiodAmbientEnvKey, env):
+						controlPlane.IsAmbient = true
 					case kubernetes.EnvVarIsTrue(istiodExternalEnvKey, env):
 						controlPlane.ManagesExternal = true
 					case kubernetes.EnvVarIsTrue(istiodScopeGatewayEnvKey, env):
@@ -1011,6 +1013,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
+	unlabeledAmbientByCluster := map[string][]models.Namespace{}
 	// Multi-cluster is not supported without cluster wide access.
 	if !in.conf.AllNamespacesAccessible() {
 		// TODO: Namespace list / caching is probably something that other parts of Kiali need.
@@ -1029,6 +1032,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			}
 
 			n := models.CastNamespace(*ns, in.conf.KubernetesConfig.ClusterName)
+			if isUnlabeledAmbientNamespace(n) {
+				unlabeledAmbientByCluster[in.conf.KubernetesConfig.ClusterName] = append(unlabeledAmbientByCluster[in.conf.KubernetesConfig.ClusterName], n)
+				continue
+			}
 			rev := GetRevision(n)
 			if rev == "" {
 				// No revision label means there's no controlplane managing it.
@@ -1070,6 +1077,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			}
 
 			for _, n := range namespaces {
+				if isUnlabeledAmbientNamespace(n) {
+					unlabeledAmbientByCluster[cluster.Name] = append(unlabeledAmbientByCluster[cluster.Name], n)
+					continue
+				}
 				rev := GetRevision(n)
 				if rev == "" {
 					// No revision label means there's no controlplane managing it.
@@ -1118,22 +1129,35 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 	}
 
-	// set the NamespaceMap, any previous map will get gc'd
-	// Use the namespaces already collected in namespacesByClusterAndRev which respects cluster_wide_access
+	// Associate unlabeled Ambient namespaces with their managing Ambient control plane on each cluster.
+	// Sail Operator sets istiod's istio.io/rev label to the Istio CR metadata.name (which need not be "default"),
+	// while Ambient namespaces only require istio.io/dataplane-mode=ambient without an istio.io/rev label.
+	assignUnlabeledAmbientNamespaces(controlPlanes, unlabeledAmbientByCluster)
+
+	for _, cp := range controlPlanes {
+		for i := range cp.ManagedNamespaces {
+			if cp.ManagedNamespaces[i].Revision == "" && !cp.IsMaistra() {
+				cp.ManagedNamespaces[i].Revision = cp.EffectiveRevision(cp.ManagedNamespaces[i].Cluster)
+			}
+		}
+	}
+
+	// Build namespaceMap from the post-filter ManagedNamespaces so discoverySelectors and custom
+	// Ambient control plane revisions are respected across multiple meshes.
 	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		// For each control plane, find the namespaces that belong to it based on cluster and revision matching
-		cpRev := cp.Revision
-		if cp.Tag != nil {
-			cpRev = cp.Tag.Name
-		}
-
-		// Look up namespaces by cluster and revision
-		key := clusterRevisionKey{Cluster: cp.Cluster.Name, Revision: cpRev}
-		if namespaces, ok := namespacesByClusterAndRev[key]; ok {
-			for _, ns := range namespaces {
-				mapKey := in.namespaceMapKey(cp.Cluster.Name, ns.Name)
-				in.namespaceMap[mapKey] = cp
+		for _, ns := range cp.ManagedNamespaces {
+			clusterName := ns.Cluster
+			if clusterName == "" && cp.Cluster != nil {
+				clusterName = cp.Cluster.Name
+			}
+			mapKey := in.namespaceMapKey(clusterName, ns.Name)
+			in.namespaceMap[mapKey] = cp
+			if cp.Cluster != nil && clusterName != cp.Cluster.Name {
+				homeKey := in.namespaceMapKey(cp.Cluster.Name, ns.Name)
+				if _, exists := in.namespaceMap[homeKey]; !exists {
+					in.namespaceMap[homeKey] = cp
+				}
 			}
 		}
 	}
@@ -1146,6 +1170,81 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 // key returns "cluster:namespace"
 func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 	return cluster + ":" + namespace
+}
+
+// assignUnlabeledAmbientNamespaces binds Ambient-enrolled namespaces that lack an explicit istio.io/rev
+// label to the Ambient-enabled ControlPlane managing their cluster (respecting MeshConfig.DiscoverySelectors).
+// When no ControlPlane on the cluster advertises PILOT_ENABLE_AMBIENT=true, it falls back to matching
+// the "default" revision/tag for backward compatibility.
+// Assisted-by: Google Antigravity
+func assignUnlabeledAmbientNamespaces(controlPlanes []*models.ControlPlane, unlabeledAmbientByCluster map[string][]models.Namespace) {
+	for clusterName, ambientNamespaces := range unlabeledAmbientByCluster {
+		if len(ambientNamespaces) == 0 {
+			continue
+		}
+
+		var ambientCPs []*models.ControlPlane
+		var fallbackDefaultCPs []*models.ControlPlane
+		for _, cp := range controlPlanes {
+			if cp.IsMaistra() {
+				continue
+			}
+			managesCluster := sliceutil.Some(cp.ManagedClusters, func(mc *models.KubeCluster) bool {
+				return mc != nil && mc.Name == clusterName
+			})
+			if !managesCluster {
+				continue
+			}
+			if cp.IsAmbient {
+				ambientCPs = append(ambientCPs, cp)
+			}
+			cpRev := cp.Revision
+			if cp.Tag != nil && cp.Tag.Cluster == clusterName && cp.Tag.Revision == cp.Revision {
+				cpRev = cp.Tag.Name
+			}
+			if cpRev == models.DefaultRevisionLabel {
+				fallbackDefaultCPs = append(fallbackDefaultCPs, cp)
+			}
+		}
+
+		candidates := ambientCPs
+		if len(candidates) == 0 {
+			candidates = fallbackDefaultCPs
+		}
+		if len(candidates) == 0 {
+			continue
+		}
+
+		slices.SortFunc(candidates, func(a, b *models.ControlPlane) int {
+			aDefault := a.EffectiveRevision(clusterName) == models.DefaultRevisionLabel
+			bDefault := b.EffectiveRevision(clusterName) == models.DefaultRevisionLabel
+			if aDefault != bDefault {
+				if aDefault {
+					return -1
+				}
+				return 1
+			}
+			if cmp := strings.Compare(a.IstiodNamespace, b.IstiodNamespace); cmp != 0 {
+				return cmp
+			}
+			return strings.Compare(a.IstiodName, b.IstiodName)
+		})
+
+		for _, ns := range ambientNamespaces {
+			for _, cp := range candidates {
+				if cp.MeshConfig != nil && cp.MeshConfig.DiscoverySelectors != nil {
+					filtered := FilterNamespacesWithDiscoverySelectors([]models.Namespace{ns}, convertToDiscoverySelectors(cp.MeshConfig.DiscoverySelectors))
+					if len(filtered) == 0 {
+						continue
+					}
+				}
+				nsCopy := ns
+				nsCopy.Revision = cp.EffectiveRevision(clusterName)
+				cp.ManagedNamespaces = append(cp.ManagedNamespaces, nsCopy)
+				break
+			}
+		}
+	}
 }
 
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {

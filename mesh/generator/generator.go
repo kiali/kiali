@@ -190,10 +190,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
 				mesh.CheckError(err)
 
-				version := models.DefaultRevisionLabel
-				if rev, ok := wp.Labels[config.IstioRevisionLabel]; ok {
-					version = rev
-				}
+				version := resolveMeshWorkloadRevision(meshDef, wp.Cluster, wp.Namespace, wp.Labels)
 
 				infraData := struct {
 					Annotations                 map[string]string
@@ -213,14 +210,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				// add edge to the managing control plane
+				wpVersion, _ := wpNode.Metadata[mesh.Version].(string)
 				for _, infraNode := range meshMap {
 					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == wp.Cluster {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-						tag := "default"
-						if cp.Tag != nil {
-							tag = cp.Tag.Name
-						}
-						if tag == wpNode.Metadata[mesh.Version] {
+						if cpMatchesRevision(cp, wp.Cluster, wpVersion) {
 							infraNode.AddEdge(wpNode)
 							break
 						}
@@ -241,10 +235,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			for cluster, conf := range configMap {
 				gwNodes := []*mesh.Node{}
 				for _, gw := range conf.Gateways {
-					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
-						version = rev
-					}
+					version := resolveMeshWorkloadRevision(meshDef, cluster, gw.Namespace, gw.Labels)
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
@@ -254,10 +245,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
 						continue
 					}
-					version := models.DefaultRevisionLabel
-					if rev, ok := gw.Labels[config.IstioRevisionLabel]; ok {
-						version = rev
-					}
+					version := resolveMeshWorkloadRevision(meshDef, cluster, gw.Namespace, gw.Labels)
 					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
@@ -269,12 +257,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 						continue
 					}
 					cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-					tag := "default"
-					if cp.Tag != nil {
-						tag = cp.Tag.Name
-					}
 					for _, gwNode := range gwNodes {
-						if tag == gwNode.Metadata[mesh.Version] {
+						gwVersion, _ := gwNode.Metadata[mesh.Version].(string)
+						if cpMatchesRevision(cp, cluster, gwVersion) {
 							infraNode.AddEdge(gwNode)
 						}
 					}
@@ -326,14 +311,23 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			}
 
 			version := models.DefaultRevisionLabel
-			if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
+			hasExplicitRev := false
+			if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok && rev != "" {
 				version = rev
+				hasExplicitRev = true
+			}
+
+			istiod := findManagingIstiod(meshMap, ztunnel.Cluster, version, ztunnel.Labels[config.KubernetesVersionLabel])
+			if !hasExplicitRev && istiod != nil {
+				if cp, ok := istiod.Metadata[mesh.InfraData].(models.ControlPlane); ok {
+					version = cp.EffectiveRevision(ztunnel.Cluster)
+				}
 			}
 
 			ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeZtunnel, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
 			mesh.CheckError(err)
 
-			if istiod := findManagingIstiod(meshMap, ztunnel.Cluster, version, ztunnel.Labels[config.KubernetesVersionLabel]); istiod != nil {
+			if istiod != nil {
 				istiod.AddEdge(ztunnelNode)
 			}
 		}
@@ -443,32 +437,83 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	return meshMap, nil
 }
 
+// resolveMeshWorkloadRevision returns the explicit istio.io/rev label when set on the resource,
+// otherwise the effective revision of the ControlPlane managing namespace in cluster, falling
+// back to DefaultRevisionLabel.
+// Assisted-by: Google Antigravity
+func resolveMeshWorkloadRevision(meshDef *models.Mesh, cluster, namespace string, labels map[string]string) string {
+	if rev, ok := labels[config.IstioRevisionLabel]; ok && rev != "" {
+		return rev
+	}
+	if meshDef != nil {
+		if cp, err := meshDef.ControlPlaneForNamespace(cluster, namespace); err == nil && cp != nil {
+			return cp.EffectiveRevision(cluster)
+		}
+	}
+	return models.DefaultRevisionLabel
+}
+
+// cpMatchesRevision reports whether cp manages a workload or gateway with the given revision
+// on cluster, matching either the control plane's effective revision (tag when set) or its
+// underlying revision (e.g. when a workload carries an explicit istio.io/rev equal to cp.Revision
+// while cp.Tag is set to a tag name).
+// Assisted-by: Google Antigravity
+func cpMatchesRevision(cp models.ControlPlane, cluster, workloadRev string) bool {
+	if workloadRev == "" {
+		return false
+	}
+	if cp.EffectiveRevision(cluster) == workloadRev {
+		return true
+	}
+	return cp.Revision != "" && cp.Revision == workloadRev
+}
+
 // findManagingIstiod returns the istiod node that manages the given ztunnel workload.
-// Revision/tag is the primary match; app.kubernetes.io/version is used as a tie-breaker.
-// When multiple control planes match, the result is deterministic (namespace, then name).
+// Control planes whose app.kubernetes.io/version conflicts with ztunnelVersion (when both are set)
+// are filtered out before matching by revision or tag.
+// When ztunnel carries no explicit revision (DefaultRevisionLabel) and no "default" istiod matches,
+// it falls back to Ambient-enabled istiod nodes on the cluster (e.g. Sail Operator custom-named Istio CRs).
+// When multiple control planes match, Ambient-enabled istiods are preferred, then (namespace, name).
 func findManagingIstiod(meshMap mesh.MeshMap, ztunnelCluster, ztunnelRevision, ztunnelVersion string) *mesh.Node {
 	var candidates []*mesh.Node
+	var ambientFallbackCandidates []*mesh.Node
 	for _, infraNode := range meshMap {
 		if infraNode.InfraType != mesh.InfraTypeIstiod || infraNode.Cluster != ztunnelCluster {
 			continue
 		}
 		cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-		tag := models.DefaultRevisionLabel
-		if cp.Tag != nil {
-			tag = cp.Tag.Name
-		}
-		if tag != ztunnelRevision {
-			continue
-		}
 		if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
 			continue
 		}
-		candidates = append(candidates, infraNode)
+		if cpMatchesRevision(cp, ztunnelCluster, ztunnelRevision) {
+			candidates = append(candidates, infraNode)
+			continue
+		}
+		if isAmbient, ok := infraNode.Metadata[mesh.IsAmbient].(bool); (ok && isAmbient) || cp.IsAmbient {
+			ambientFallbackCandidates = append(ambientFallbackCandidates, infraNode)
+		}
+	}
+	if len(candidates) == 0 && ztunnelRevision == models.DefaultRevisionLabel {
+		candidates = ambientFallbackCandidates
 	}
 	if len(candidates) == 0 {
 		return nil
 	}
 	slices.SortFunc(candidates, func(a, b *mesh.Node) int {
+		aAmbient, _ := a.Metadata[mesh.IsAmbient].(bool)
+		if cpA, ok := a.Metadata[mesh.InfraData].(models.ControlPlane); ok && cpA.IsAmbient {
+			aAmbient = true
+		}
+		bAmbient, _ := b.Metadata[mesh.IsAmbient].(bool)
+		if cpB, ok := b.Metadata[mesh.InfraData].(models.ControlPlane); ok && cpB.IsAmbient {
+			bAmbient = true
+		}
+		if aAmbient != bAmbient {
+			if aAmbient {
+				return -1
+			}
+			return 1
+		}
 		if cmp := strings.Compare(a.Namespace, b.Namespace); cmp != 0 {
 			return cmp
 		}

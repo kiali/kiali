@@ -3433,3 +3433,190 @@ func TestGetMeshSkipsRemoteWithFailedIstiodList(t *testing.T) {
 	_, err = discovery.Mesh(t.Context())
 	require.Error(err, "the home cluster's istiod list failing is fatal")
 }
+
+// Assisted-by: Google Antigravity
+func TestDiscoverAmbientCustomIstioCRAndMultiMesh(t *testing.T) {
+	t.Run("custom Sail Operator Istio CR revision manages unlabeled ambient namespaces", func(t *testing.T) {
+		require := require.New(t)
+		conf := config.NewConfig()
+		conf.KubernetesConfig.ClusterName = "Kubernetes"
+		conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+		ambientIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+		ambientIstiod.Name = "istiod-custom-mesh"
+		ambientIstiod.Namespace = "istio-custom"
+		ambientIstiod.Labels[config.IstioRevisionLabel] = "custom-mesh"
+		ambientIstiod.Spec.Template.Spec.Containers[0].Env = append(
+			ambientIstiod.Spec.Template.Spec.Containers[0].Env,
+			core_v1.EnvVar{Name: "PILOT_ENABLE_AMBIENT", Value: "true"},
+		)
+
+		istioCM := &core_v1.ConfigMap{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "istio-custom-mesh",
+				Namespace: "istio-custom",
+				Labels:    map[string]string{config.IstioRevisionLabel: "custom-mesh"},
+			},
+			Data: map[string]string{
+				"mesh": "enableAutoMtls: true\nrootNamespace: istio-custom\ntrustDomain: cluster.local\n",
+			},
+		}
+
+		objects := []runtime.Object{
+			ambientIstiod,
+			istioCM,
+			certtest.FakeIstioCertificateConfigMap("istio-custom"),
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-custom"}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name:   "orders-ambient",
+				Labels: map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue},
+			}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name: "payments-ambient-empty-rev",
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					config.IstioRevisionLabel:         "",
+				},
+			}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "outside-mesh"}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+		kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+		discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+		mesh, err := discovery.Mesh(context.Background())
+		require.NoError(err)
+		require.Len(mesh.ControlPlanes, 1)
+
+		cp := mesh.ControlPlanes[0]
+		require.True(cp.IsAmbient)
+		require.Equal("custom-mesh", cp.Revision)
+		require.Len(cp.ManagedNamespaces, 2)
+
+		ordersNS := slicetest.FindOrFail(t, cp.ManagedNamespaces, func(ns models.Namespace) bool {
+			return ns.Name == "orders-ambient"
+		})
+		require.Equal("custom-mesh", ordersNS.Revision)
+
+		paymentsNS := slicetest.FindOrFail(t, cp.ManagedNamespaces, func(ns models.Namespace) bool {
+			return ns.Name == "payments-ambient-empty-rev"
+		})
+		require.Equal("custom-mesh", paymentsNS.Revision)
+
+		owningCP, err := mesh.ControlPlaneForNamespace(conf.KubernetesConfig.ClusterName, "orders-ambient")
+		require.NoError(err)
+		require.Equal("istiod-custom-mesh", owningCP.IstiodName)
+
+		owningCPPayments, err := mesh.ControlPlaneForNamespace(conf.KubernetesConfig.ClusterName, "payments-ambient-empty-rev")
+		require.NoError(err)
+		require.Equal("istiod-custom-mesh", owningCPPayments.IstiodName)
+
+		require.Equal("istio-custom", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "orders-ambient"))
+		require.Equal("istio-custom", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "payments-ambient-empty-rev"))
+		require.Empty(discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "outside-mesh"))
+	})
+
+	t.Run("hybrid multi-mesh isolates sidecar and custom-named ambient control planes via discoverySelectors", func(t *testing.T) {
+		require := require.New(t)
+		conf := config.NewConfig()
+		conf.KubernetesConfig.ClusterName = "Kubernetes"
+		conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+		sidecarIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+		sidecarIstiod.Name = "istiod-sidecar-mesh"
+		sidecarIstiod.Namespace = "istio-sidecar"
+		sidecarIstiod.Labels[config.IstioRevisionLabel] = "sidecar-mesh"
+
+		sidecarCM := &core_v1.ConfigMap{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "istio-sidecar-mesh",
+				Namespace: "istio-sidecar",
+				Labels:    map[string]string{config.IstioRevisionLabel: "sidecar-mesh"},
+			},
+			Data: map[string]string{
+				"mesh": "discoverySelectors:\n  - matchLabels:\n      mesh-tenant: legacy\nrootNamespace: istio-sidecar\n",
+			},
+		}
+
+		ambientIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+		ambientIstiod.Name = "istiod-ambient-mesh"
+		ambientIstiod.Namespace = "istio-ambient"
+		ambientIstiod.Labels[config.IstioRevisionLabel] = "ambient-mesh"
+		ambientIstiod.Spec.Template.Spec.Containers[0].Env = append(
+			ambientIstiod.Spec.Template.Spec.Containers[0].Env,
+			core_v1.EnvVar{Name: "PILOT_ENABLE_AMBIENT", Value: "true"},
+		)
+
+		ambientCM := &core_v1.ConfigMap{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "istio-ambient-mesh",
+				Namespace: "istio-ambient",
+				Labels:    map[string]string{config.IstioRevisionLabel: "ambient-mesh"},
+			},
+			Data: map[string]string{
+				"mesh": "discoverySelectors:\n  - matchLabels:\n      mesh-tenant: modern\nrootNamespace: istio-ambient\n",
+			},
+		}
+
+		objects := []runtime.Object{
+			sidecarIstiod,
+			sidecarCM,
+			certtest.FakeIstioCertificateConfigMap("istio-sidecar"),
+			ambientIstiod,
+			ambientCM,
+			certtest.FakeIstioCertificateConfigMap("istio-ambient"),
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-sidecar"}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-ambient"}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name: "legacy-app",
+				Labels: map[string]string{
+					config.IstioRevisionLabel: "sidecar-mesh",
+					"mesh-tenant":             "legacy",
+				},
+			}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name: "modern-ambient-app",
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					"mesh-tenant":                     "modern",
+				},
+			}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+				Name: "unselected-ambient-app",
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					"mesh-tenant":                     "other",
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+		kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+		discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+		mesh, err := discovery.Mesh(context.Background())
+		require.NoError(err)
+		require.Len(mesh.ControlPlanes, 2)
+
+		sidecarCP := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+			return cp.Revision == "sidecar-mesh"
+		})
+		ambientCP := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+			return cp.Revision == "ambient-mesh"
+		})
+
+		require.Len(sidecarCP.ManagedNamespaces, 1)
+		require.Equal("legacy-app", sidecarCP.ManagedNamespaces[0].Name)
+
+		require.Len(ambientCP.ManagedNamespaces, 1)
+		require.Equal("modern-ambient-app", ambientCP.ManagedNamespaces[0].Name)
+		require.Equal("ambient-mesh", ambientCP.ManagedNamespaces[0].Revision)
+
+		require.Equal("istio-sidecar", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "legacy-app"))
+		require.Equal("istio-ambient", discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "modern-ambient-app"))
+		require.Empty(discovery.GetRootNamespace(context.Background(), conf.KubernetesConfig.ClusterName, "unselected-ambient-app"))
+	})
+}

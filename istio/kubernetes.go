@@ -93,16 +93,31 @@ func GetRevision(namespace models.Namespace) string {
 			return memberOf
 		}
 	}
-	rev, hasRevLabel := namespace.Labels[config.IstioRevisionLabel]
+	rev := namespace.Labels[config.IstioRevisionLabel]
 	injectionEnabled := namespace.Labels[config.IstioInjectionLabelName] == models.IstioInjectionEnabledLabelValue
 	// Injection label takes precedence over revision label.
-	// Or if there's no rev label and ambient is enabled then set to default.
+	// Or if there's no rev label (or it is empty) and ambient is enabled then set to default.
 	// TODO: Factor in exclude namespaces for cni for ambient.
-	if injectionEnabled || (!hasRevLabel && namespace.IsAmbient) {
+	if injectionEnabled || (rev == "" && namespace.IsAmbient) {
 		rev = "default"
 	}
 
 	return rev
+}
+
+// isUnlabeledAmbientNamespace reports whether namespace is enrolled in Ambient mode
+// without an explicit non-empty revision, sidecar injection, or Maistra membership label.
+func isUnlabeledAmbientNamespace(namespace models.Namespace) bool {
+	const maistraMemberOfLabel = "maistra.io/member-of"
+	const maistraIgnoreNamespaceLabel = "maistra.io/ignore-namespace"
+	if _, hasMaistraIgnoreLabel := namespace.Labels[maistraIgnoreNamespaceLabel]; !hasMaistraIgnoreLabel {
+		if _, hasMemberOfLabel := namespace.Labels[maistraMemberOfLabel]; hasMemberOfLabel {
+			return false
+		}
+	}
+	rev := namespace.Labels[config.IstioRevisionLabel]
+	injectionEnabled := namespace.Labels[config.IstioInjectionLabelName] == models.IstioInjectionEnabledLabelValue
+	return !injectionEnabled && rev == "" && namespace.IsAmbient
 }
 
 func GetIstiodRevisions(ctx context.Context, kubeCache ctrlclient.Reader, namespace string) ([]string, error) {

@@ -62,7 +62,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 	}
 
 	idx := slices.IndexFunc(mesh.ControlPlanes, func(controlPlane models.ControlPlane) bool {
-		return controlPlane.Revision == revision && controlPlane.Cluster.Name == cluster
+		return (controlPlane.Revision == revision || controlPlane.EffectiveRevision(cluster) == revision) && controlPlane.Cluster.Name == cluster
 	})
 	if idx == -1 {
 		return models.MTLSStatus{}, fmt.Errorf("revision [%s] not found on cluster [%s]", revision, cluster)
@@ -83,9 +83,19 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 		return models.MTLSStatus{}, err
 	}
 
-	// Look for enabled if rev label isn't set: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
+	managedNamespaces := make(map[string]struct{}, len(controlPlane.ManagedNamespaces))
+	for _, mns := range controlPlane.ManagedNamespaces {
+		managedNamespaces[mns.Name] = struct{}{}
+	}
+
+	// Include namespaces managed by this control plane (including Ambient namespaces without istio.io/rev),
+	// explicit revision matches, and legacy istio-injection=enabled for the default revision.
 	namespacesForRevision := sliceutil.Filter(namespaces, func(ns models.Namespace) bool {
-		return ns.Labels[config.IstioRevisionLabel] == revision || ns.Labels[config.IstioInjectionLabelName] == "enabled"
+		_, isManaged := managedNamespaces[ns.Name]
+		return isManaged ||
+			ns.Revision == revision ||
+			ns.Labels[config.IstioRevisionLabel] == revision ||
+			(controlPlane.EffectiveRevision(cluster) == models.DefaultRevisionLabel && ns.Labels[config.IstioInjectionLabelName] == models.IstioInjectionEnabledLabelValue)
 	})
 	namespaceNames := sliceutil.Map(namespacesForRevision, func(ns models.Namespace) string {
 		return ns.Name
@@ -172,7 +182,11 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 
 	status := in.namespaceMTLSOverallStatus(ctx, cluster, namespace, pas, mtlsStatus)
 	if status == MTLSUnset {
-		status = in.resolveUnsetNamespaceStatus(ctx, cluster, namespace, rootNamespace, ns)
+		var cp *models.ControlPlane
+		if mesh != nil {
+			cp, _ = mesh.ControlPlaneForNamespace(cluster, namespace)
+		}
+		status = in.resolveUnsetNamespaceStatus(ctx, cluster, namespace, rootNamespace, ns, cp)
 	}
 
 	return models.MTLSStatus{
@@ -207,8 +221,6 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		return result, err
 	}
 
-	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces)
-
 	mesh, err := in.discovery.Mesh(ctx)
 	if err != nil {
 		return result, err
@@ -220,6 +232,8 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 			cpForNamespace[ns.Name] = cp
 		}
 	}
+
+	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces, cpForNamespace)
 
 	for _, namespace := range namespaces {
 		pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace.Name})
@@ -248,13 +262,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 
 		status := in.namespaceMTLSOverallStatus(ctx, cluster, namespace.Name, pas, mtlsStatus)
 		if status == MTLSUnset {
-			revision := namespace.Revision
-			if revision == "" && namespace.Labels != nil {
-				revision = namespace.Labels[config.IstioRevisionLabel]
-			}
-			if revision == "" {
-				revision = models.DefaultRevisionLabel
-			}
+			revision := resolveNamespaceRevision(cluster, &namespace, cp)
 			status = in.resolveUnsetStatusWithMeshStatus(meshStatusByRevision[revision], cluster, namespace.Name, rootNamespace)
 		}
 
@@ -269,20 +277,35 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	return result, nil
 }
 
+// resolveNamespaceRevision determines the control plane revision for a namespace, preferring explicit
+// namespace revision/labels, then the owning ControlPlane's effective revision from mesh discovery
+// (e.g. custom-named Sail Operator Ambient Istio CRs or tagged control planes where namespaces have no
+// istio.io/rev label), and finally DefaultRevisionLabel.
+// Assisted-by: Google Antigravity
+func resolveNamespaceRevision(cluster string, ns *models.Namespace, cp *models.ControlPlane) string {
+	if ns != nil {
+		if ns.Revision != "" {
+			return ns.Revision
+		}
+		if ns.Labels != nil {
+			if rev := ns.Labels[config.IstioRevisionLabel]; rev != "" {
+				return rev
+			}
+		}
+	}
+	if cp != nil {
+		if effRev := cp.EffectiveRevision(cluster); effRev != "" {
+			return effRev
+		}
+	}
+	return models.DefaultRevisionLabel
+}
+
 // resolveUnsetNamespaceStatus returns the effective mTLS status when namespace status is UNSET:
 // - Control plane (root) namespace: mesh-wide status for its revision.
 // - Data plane namespace with mesh in STRICT: MTLS_ENABLED_EXTENDED so the UI shows a closed lock.
-func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, namespace, rootNamespace string, ns *models.Namespace) string {
-	revision := models.DefaultRevisionLabel
-	if ns != nil {
-		revision = ns.Revision
-		if revision == "" && ns.Labels != nil {
-			revision = ns.Labels[config.IstioRevisionLabel]
-		}
-		if revision == "" {
-			revision = models.DefaultRevisionLabel
-		}
-	}
+func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, namespace, rootNamespace string, ns *models.Namespace, cp *models.ControlPlane) string {
+	revision := resolveNamespaceRevision(cluster, ns, cp)
 	meshStatus, err := in.MeshWidemTLSStatus(ctx, cluster, revision)
 	if err != nil {
 		return MTLSUnset
@@ -291,16 +314,10 @@ func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, 
 }
 
 // meshStatusByRevisionForNamespaces returns mesh-wide mTLS status per revision for the given namespaces.
-func (in *TLSService) meshStatusByRevisionForNamespaces(ctx context.Context, cluster string, namespaces []models.Namespace) map[string]string {
+func (in *TLSService) meshStatusByRevisionForNamespaces(ctx context.Context, cluster string, namespaces []models.Namespace, cpForNamespace map[string]*models.ControlPlane) map[string]string {
 	revisions := make(map[string]struct{})
-	for _, ns := range namespaces {
-		rev := ns.Revision
-		if rev == "" && ns.Labels != nil {
-			rev = ns.Labels[config.IstioRevisionLabel]
-		}
-		if rev == "" {
-			rev = models.DefaultRevisionLabel
-		}
+	for i := range namespaces {
+		rev := resolveNamespaceRevision(cluster, &namespaces[i], cpForNamespace[namespaces[i].Name])
 		revisions[rev] = struct{}{}
 	}
 	out := make(map[string]string, len(revisions))
