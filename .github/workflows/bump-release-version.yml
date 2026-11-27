@@ -16,10 +16,10 @@ on:
         default: v2.4,v2.11,v2.17,v2.22
         type: string
 
+permissions: read-all
+
 jobs:
   initialize:
-    permissions:
-      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -46,8 +46,6 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   bump_version:
-    permissions:
-      contents: write
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
@@ -86,10 +84,10 @@ jobs:
         print('.'.join(['v' + str(major), str(minor), str(patch)]))
         EOF
 
-    - name: Configure git
-      run: |
-        git config user.email 'kiali-dev@googlegroups.com'
-        git config user.name 'kiali-bot'
+    - name: Configure kiali-bot git
+      uses: ./.github/actions/configure-kiali-bot-git
+      with:
+        signing-key: ${{ secrets.KIALI_BOT_SIGNING_KEY }}
 
     - name: Bump to next version
       env:

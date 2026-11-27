@@ -13,8 +13,6 @@ permissions: read-all
 
 jobs:
   initialize:
-    permissions:
-      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -58,11 +56,6 @@ jobs:
         # We need to fetch the full history to determine the latest tag
         fetch-depth: 0
 
-    - name: Configure git
-      run: |
-        git config user.email 'kiali-dev@googlegroups.com'
-        git config user.name 'kiali-bot'
-
     - name: Create Release Tag in kiali/kiali
       run: |
         RELEASE_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
@@ -84,8 +77,6 @@ jobs:
         fi
 
   bump_version:
-    permissions:
-      contents: write
     name: Bump to Next Version
     needs: [initialize, release_tag]
     # Allow other branches to bump to the next version even if one of the branches failed to create the release tag

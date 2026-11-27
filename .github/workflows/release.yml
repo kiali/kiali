@@ -40,8 +40,6 @@ permissions: read-all
 
 jobs:
   initialize:
-    permissions:
-      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -244,8 +242,6 @@ jobs:
       istio_minor_version_offset: 0
 
   build_cross_platform_binaries:
-    permissions:
-      contents: read
     name: Build cross-platform binaries
     if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     runs-on: ubuntu-latest
@@ -282,8 +278,6 @@ jobs:
         retention-days: 30
 
   test_cross_platform_binaries:
-    permissions:
-      contents: read
     name: Test cross-platform binaries
     if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     runs-on: ${{ matrix.os }}
@@ -390,12 +384,11 @@ jobs:
     - name: Build and push image
       run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
-    - name: Configure git
+    - name: Configure kiali-bot git
       if: ${{ needs.initialize.outputs.release_type != 'publish' }}
-      run: |
-        git config user.email 'kiali-dev@googlegroups.com'
-
-        git config user.name 'kiali-bot'
+      uses: ./.github/actions/configure-kiali-bot-git
+      with:
+        signing-key: ${{ secrets.KIALI_BOT_SIGNING_KEY }}
 
     - name: Create tag
       if: ${{ needs.initialize.outputs.release_type != 'publish' }}

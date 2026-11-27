@@ -417,7 +417,6 @@ jobs:
     name: Update Token Baseline
     needs: [check-trigger, run-evaluation, run-evaluation-multicluster]
     permissions:
-      contents: write
       pull-requests: write
     if: |
       always() &&
@@ -429,6 +428,7 @@ jobs:
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ env.DEFAULT_BRANCH }}
+        token: ${{ secrets.KIALI_BOT_TOKEN }}
 
     - name: Save previous baselines
       id: previous-baseline
@@ -580,14 +580,16 @@ jobs:
       run: |
         make mcp-update-token-readme
 
+    - name: Configure kiali-bot git
+      uses: ./.github/actions/configure-kiali-bot-git
+      with:
+        signing-key: ${{ secrets.KIALI_BOT_SIGNING_KEY }}
+
     - name: Create PR with updated baseline
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         BRANCH="chore/update-mcp-eval-token-baseline"
-
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
 
         git checkout -B "$BRANCH"
         FILES_TO_ADD=(ai/mcp/README.md)

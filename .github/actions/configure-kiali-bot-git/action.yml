@@ -1,0 +1,30 @@
+name: Configure kiali-bot git
+description: Set kiali-bot git author and SSH commit signing for verified release commits
+inputs:
+  signing-key:
+    description: Private SSH signing key for kiali-bot (KIALI_BOT_SIGNING_KEY)
+    required: true
+runs:
+  using: composite
+  steps:
+  - shell: bash
+    env:
+      SSH_SIGNING_KEY: ${{ inputs.signing-key }}
+    run: |
+      set -euo pipefail
+      # Author metadata: links commits to the kiali-bot GitHub user.
+      git config --global user.name 'kiali-bot'
+      git config --global user.email '19257045+kiali-bot@users.noreply.github.com'
+
+      # Load the private key from the workflow secret (public key must be a Signing Key on kiali-bot).
+      mkdir -p ~/.ssh
+      printf '%s\n' "$SSH_SIGNING_KEY" > ~/.ssh/kiali-bot-signing
+      chmod 600 ~/.ssh/kiali-bot-signing
+      ssh-keygen -y -f ~/.ssh/kiali-bot-signing > ~/.ssh/kiali-bot-signing.pub
+      eval "$(ssh-agent -s)"
+      ssh-add ~/.ssh/kiali-bot-signing
+
+      # Git 2.34+ SSH signatures; GitHub shows commits as Verified when the key matches the account.
+      git config --global gpg.format ssh
+      git config --global user.signingkey ~/.ssh/kiali-bot-signing.pub
+      git config --global commit.gpgsign true
