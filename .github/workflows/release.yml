@@ -331,7 +331,6 @@ jobs:
         echo "✓ ${{ matrix.binary_name }} works correctly on ${{ matrix.os }}"
 
   release:
-    # GITHUB_TOKEN: gh release create and gh pr create. Git push uses KIALI_BOT_TOKEN.
     permissions:
       contents: write
       pull-requests: write

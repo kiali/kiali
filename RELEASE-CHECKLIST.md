@@ -20,6 +20,21 @@ The release happens in two phases:
 > due to platform load. If the release workflows have not run by Monday afternoon, trigger them
 > manually (see [Re-Trigger Release Workflows Manually](#step-6-re-trigger-release-workflows-manually)).
 
+## Release automation (CI tokens)
+
+Release workflows use two credentials; keep each on the operations it is meant for:
+
+| Credential | Use for | Notes |
+|------------|---------|--------|
+| **`KIALI_BOT_TOKEN`** | Git commit, tag, and branch push (including protected branches) | Long-lived org secret. Checkout passes this token to `actions/checkout`. Pair with **`KIALI_BOT_SIGNING_KEY`** for verified **kiali-bot** commits. |
+| **`GITHUB_TOKEN`** | `gh release create`, `gh pr create` / `gh pr edit` | Ephemeral, per-job. Grant only the scopes that job needs (e.g. `contents: write` where a GitHub Release is created; `pull-requests: write` for prepare-for-next-version PRs). |
+
+Git writes should not use `GITHUB_TOKEN` on protected release branches (rulesets block it). **`gh release` and `gh pr` should stay on `GITHUB_TOKEN`**, not the bot PAT, unless a concrete requirement forces otherwise.
+
+Where workflows set `permissions: read-all` at the top, only jobs that call `gh` with elevated scopes should add `contents: write` and/or `pull-requests: write`. Jobs that only push git objects via **`KIALI_BOT_TOKEN`** need **`contents: read`** on `GITHUB_TOKEN`.
+
+**`KIALI_API_TOKEN`** is separate (community metrics API) and is not part of release automation.
+
 ---
 
 # Day 1 — Main Release (Sunday)

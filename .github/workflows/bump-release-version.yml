@@ -46,7 +46,6 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   bump_version:
-    # Git push uses KIALI_BOT_TOKEN; GITHUB_TOKEN needs read-only contents.
     permissions:
       contents: read
     needs: [initialize]

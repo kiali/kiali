@@ -416,7 +416,6 @@ jobs:
   update-baseline:
     name: Update Token Baseline
     needs: [check-trigger, run-evaluation, run-evaluation-multicluster]
-    # GITHUB_TOKEN: gh pr create/edit. Git push uses KIALI_BOT_TOKEN.
     permissions:
       contents: read
       pull-requests: write

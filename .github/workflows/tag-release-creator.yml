@@ -41,7 +41,6 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   release_tag:
-    # Tag push/delete uses GITHUB_TOKEN.
     permissions:
       contents: write
     needs: [initialize]
@@ -80,7 +79,6 @@ jobs:
         fi
 
   bump_version:
-    # Reusable workflow; git push uses KIALI_BOT_TOKEN.
     permissions:
       contents: read
     name: Bump to Next Version
