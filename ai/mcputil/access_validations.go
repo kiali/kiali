@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
@@ -60,6 +61,56 @@ func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer,
 	return "", http.StatusOK
 }
 
+// maxPointsPerSeries is kept below the 11,000 points Prometheus allows per series in a range query.
+const maxPointsPerSeries = 10000
+
+// metricsTimeWindow returns the start and end of the metrics query. `to` is an RFC3339 timestamp
+// and defaults to now. `since` is either an RFC3339 timestamp or a duration before `to`, such as
+// "2h" or "1d". Without them, the older `queryTime` (Unix seconds) and `duration` arguments apply.
+func metricsTimeWindow(args map[string]interface{}, now time.Time) (time.Time, time.Time, error) {
+	end := now
+	if to := GetStringArg(args, "to"); to != "" {
+		parsed, err := time.Parse(time.RFC3339, to)
+		if err != nil {
+			return time.Time{}, time.Time{}, errors.New("bad request, query parameter 'to' must be an RFC3339 timestamp such as '2026-01-02T15:04:05Z'")
+		}
+		end = parsed
+	} else if queryTime := GetStringArg(args, "queryTime"); queryTime != "" {
+		num, err := strconv.ParseInt(queryTime, 10, 64)
+		if err != nil {
+			return time.Time{}, time.Time{}, errors.New("bad request, cannot parse query parameter 'queryTime'")
+		}
+		end = time.Unix(num, 0)
+	}
+
+	var start time.Time
+	if since := GetStringArg(args, "since"); since != "" {
+		if parsed, err := time.Parse(time.RFC3339, since); err == nil {
+			start = parsed
+		} else if d, err := model.ParseDuration(since); err == nil && d > 0 {
+			start = end.Add(-time.Duration(d))
+		} else {
+			return time.Time{}, time.Time{}, errors.New("bad request, query parameter 'since' must be an RFC3339 timestamp or a duration such as '30m', '2h' or '1d'")
+		}
+	} else {
+		var duration time.Duration
+		dur := GetStringOrDefault(args, DefaultDuration, "duration")
+		if num, err := strconv.ParseInt(dur, 10, 64); err == nil {
+			duration = time.Duration(num) * time.Second
+		} else if parsedDur, err := time.ParseDuration(dur); err == nil {
+			duration = parsedDur
+		} else {
+			return time.Time{}, time.Time{}, errors.New("bad request, cannot parse query parameter 'duration'")
+		}
+		start = end.Add(-duration)
+	}
+
+	if !start.Before(end) {
+		return time.Time{}, time.Time{}, errors.New("bad request, 'since' must be before 'to'")
+	}
+	return start, end, nil
+}
+
 func extractBaseMetricsQueryParams(args map[string]interface{}, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {
 	q.RateInterval = GetStringOrDefault(args, DefaultRateInterval, "rateInterval")
 
@@ -70,32 +121,25 @@ func extractBaseMetricsQueryParams(args map[string]interface{}, q *prometheus.Ra
 		q.RateFunc = rf
 	}
 
-	now := time.Now()
-	q.End = now
-	if queryTime := GetStringArg(args, "queryTime"); queryTime != "" {
-		if num, err := strconv.ParseInt(queryTime, 10, 64); err == nil {
-			q.End = time.Unix(num, 0)
-		} else {
-			return errors.New("bad request, cannot parse query parameter 'queryTime'")
-		}
+	start, end, err := metricsTimeWindow(args, time.Now())
+	if err != nil {
+		return err
 	}
-
-	var duration time.Duration
-	dur := GetStringOrDefault(args, DefaultDuration, "duration")
-	if num, err := strconv.ParseInt(dur, 10, 64); err == nil {
-		duration = time.Duration(num) * time.Second
-	} else if parsedDur, err := time.ParseDuration(dur); err == nil {
-		duration = parsedDur
-	} else {
-		return errors.New("bad request, cannot parse query parameter 'duration'")
-	}
-	q.Start = q.End.Add(-duration)
+	q.Start = start
+	q.End = end
 
 	step := GetStringOrDefault(args, DefaultStep, "step")
 	if num, err := strconv.Atoi(step); err == nil {
 		q.Step = time.Duration(num) * time.Second
 	} else {
 		return errors.New("bad request, cannot parse query parameter 'step'")
+	}
+	// A long since/to window at the default step can exceed the Prometheus limit on points per
+	// series, so widen the step unless the caller set one.
+	if GetStringArg(args, "step") == "" && q.Step > 0 {
+		if minStep := q.End.Sub(q.Start) / maxPointsPerSeries; minStep > q.Step {
+			q.Step = (minStep/time.Second + 1) * time.Second
+		}
 	}
 
 	quantiles := GetStringOrDefault(args, DefaultQuantiles, "quantiles")
