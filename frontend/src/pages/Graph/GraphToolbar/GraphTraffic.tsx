@@ -106,7 +106,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const ambientOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.AMBIENT_WAYPOINT,
-        labelText: 'Waypoint',
+        labelText: t('Waypoint'),
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_WAYPOINT),
         tooltip: (
           <div style={{ textAlign: 'left' }}>Limit to only waypoint-reported traffic, for the enabled protocols.</div>
@@ -114,7 +114,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.AMBIENT_ZTUNNEL,
-        labelText: 'Ztunnel',
+        labelText: t('Ztunnel'),
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_ZTUNNEL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>

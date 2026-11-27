@@ -1,0 +1,155 @@
+import { execSync } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, '../../..');
+const HACK_ISTIO = path.join(REPO_ROOT, 'hack/istio');
+
+export type DemoApp = 'bookinfo' | 'error-rates' | 'sleep' | 'loggers';
+
+type DemoAppConfig = {
+  deletionArgs: string;
+  installExtraArgs: string;
+  namespaces: string;
+  statusScript: string;
+  tgArg: string;
+};
+
+const DEMO_APP_CONFIG: Record<DemoApp, DemoAppConfig> = {
+  bookinfo: {
+    deletionArgs: '--delete-bookinfo',
+    installExtraArgs: '-in istio-system',
+    namespaces: 'bookinfo',
+    statusScript: 'bookinfo-status.sh',
+    tgArg: '-tg'
+  },
+  'error-rates': {
+    deletionArgs: '--delete',
+    installExtraArgs: '-in istio-system',
+    namespaces: 'alpha beta',
+    statusScript: 'error-rates-status.sh',
+    tgArg: ''
+  },
+  sleep: {
+    deletionArgs: '--delete-sleep',
+    installExtraArgs: '',
+    namespaces: 'sleep',
+    statusScript: 'sleep-status.sh',
+    tgArg: ''
+  },
+  loggers: {
+    deletionArgs: '--delete',
+    installExtraArgs: '',
+    namespaces: 'loggers',
+    statusScript: 'loggers-status.sh',
+    tgArg: ''
+  }
+};
+
+function isOpenShift(): boolean {
+  try {
+    execSync('kubectl api-versions | grep --quiet "route.openshift.io"', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function mapProcessArch(): string {
+  return process.arch === 'x64' ? 'amd64' : process.arch;
+}
+
+/** Resolve worker-node arch for demo image selection. Retries under API load; falls back to process.arch. */
+function getNodeArchitecture(): string {
+  const script = path.join(HACK_ISTIO, 'cypress/get-node-architecture.sh');
+  const deadline = Date.now() + 60_000;
+  let lastErr: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      const arch = execSync(script, { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
+      if (arch) {
+        return arch;
+      }
+    } catch (e) {
+      // kubectl can miss worker-node labels while the API is busy with parallel installs
+      lastErr = e;
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_000);
+  }
+
+  const fallback = mapProcessArch();
+  const detail = lastErr instanceof Error ? ` (last attempt: ${lastErr.message})` : '';
+  console.warn(`Could not detect node architecture via kubectl${detail}; falling back to ${fallback}`);
+  return fallback;
+}
+
+function hasKialiCr(): boolean {
+  try {
+    execSync('kubectl get crd kialis.kiali.io', { stdio: 'ignore' });
+    const names = execSync('kubectl get kiali --all-namespaces -o name', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+    return names.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function waitForDemoNamespaces(namespaces: string): void {
+  if (hasKialiCr()) {
+    execSync(path.join(HACK_ISTIO, 'wait-for-namespace.sh') + ` -n ${namespaces}`, {
+      cwd: REPO_ROOT,
+      stdio: 'inherit',
+      timeout: 400000
+    });
+    return;
+  }
+
+  // Local Kiali (make run-backend): no Kiali CR / operator — wait for pods only.
+  for (const namespace of namespaces.split(/\s+/)) {
+    execSync(`kubectl wait pods -n ${namespace} --for condition=Ready --timeout=120s --all`, {
+      cwd: REPO_ROOT,
+      stdio: 'inherit',
+      timeout: 130000
+    });
+  }
+}
+
+function installDemoApp(demoapp: DemoApp): void {
+  const config = DEMO_APP_CONFIG[demoapp];
+  const arch = getNodeArchitecture();
+
+  const installScript = path.join(HACK_ISTIO, `install-${demoapp}-demo.sh`);
+  const openshift = isOpenShift();
+  const clientArg = openshift ? '' : '-c kubectl';
+  const tgArg = config.tgArg ? `${config.tgArg} ` : '';
+  const extraArgs = config.installExtraArgs ? `${config.installExtraArgs} ` : '';
+
+  execSync(`${installScript} ${config.deletionArgs} true ${clientArg}`, {
+    cwd: REPO_ROOT,
+    stdio: 'inherit',
+    timeout: 300000
+  });
+  execSync(`${installScript} ${clientArg} ${tgArg}${extraArgs}-a ${arch}`, {
+    cwd: REPO_ROOT,
+    stdio: 'inherit',
+    timeout: 300000
+  });
+  waitForDemoNamespaces(config.namespaces);
+}
+
+/**
+ * Ensure a demo app is installed (same preconditions as the per-app test hooks).
+ */
+export function ensureDemoApp(demoapp: DemoApp): void {
+  const config = DEMO_APP_CONFIG[demoapp];
+  const statusScript = path.join(HACK_ISTIO, 'cypress', config.statusScript);
+  try {
+    execSync(statusScript, { cwd: REPO_ROOT, stdio: 'inherit', timeout: 120000 });
+  } catch {
+    installDemoApp(demoapp);
+  }
+}

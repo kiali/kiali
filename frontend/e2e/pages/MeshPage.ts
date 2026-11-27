@@ -1,0 +1,674 @@
+import { expect } from '@playwright/test';
+import { BasePage } from './BasePage';
+import { gotoConsolePage } from '../utils/navigation';
+import { kialiUrl } from '../utils/kialiUrl';
+import {
+  selectAmbientIstiodMeshNode,
+  selectClusterMeshNode,
+  selectMeshNodeByLabel,
+  selectNonAmbientIstiodMeshNode,
+  selectTracingMeshNode
+} from '../utils/meshTopology';
+import { waitForLoadingComplete } from '../utils/transition';
+
+type IstiodMeshConfig = {
+  config?: {
+    standardConfig?: {
+      configMap?: {
+        mesh?: {
+          defaultConfig?: { meshId?: string };
+          trustDomain?: string;
+        };
+      };
+    };
+  };
+};
+
+type MeshGraphNode = {
+  data?: {
+    cluster?: string;
+    healthData?: string;
+    id?: string;
+    infraData?: IstiodMeshConfig | Array<{ isAmbient?: boolean }> | Record<string, unknown>;
+    infraName?: string;
+    infraType?: string;
+    isAmbient?: boolean;
+    namespace?: string;
+  };
+};
+
+type MeshGraphEdge = {
+  data?: {
+    source?: string;
+    target?: string;
+  };
+};
+
+type MeshGraphResponse = {
+  elements?: {
+    nodes?: MeshGraphNode[];
+    edges?: MeshGraphEdge[];
+  };
+};
+
+export class MeshPage extends BasePage {
+  async open(): Promise<void> {
+    await gotoConsolePage(this.page, 'mesh');
+  }
+
+  /**
+   * Assert kiali infra node has the expected number of edges to istiod nodes.
+   * Uses /api/mesh/graph (more stable than React fiber selectors).
+   */
+  async expectKialiConnectedToIstiod(edgeCount = 1): Promise<void> {
+    await this.expectInfraConnectedTo('kiali', 'istiod', edgeCount);
+  }
+
+  /** Assert count of mesh infra nodes of a given type on a named cluster. */
+  async expectInfraNodeCount(infraType: string, cluster: string, count: number): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const matched = nodes.filter(n => n.data?.infraType === infraType && n.data?.cluster === cluster);
+      expect(
+        matched.length,
+        `Expected ${count} "${infraType}" node(s) on cluster "${cluster}", got ${matched.length}`
+      ).toBe(count);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  /**
+   * Asserts infra node types are absent from the mesh graph the UI itself requests with
+   * default display settings — includeKiali=false hides the Kiali node and its observability
+   * dependencies (Grafana, metric/trace stores, Perses). Mesh display settings are not
+   * persisted, so a reload restores the defaults regardless of prior tests.
+   */
+  async expectInfraNodesHiddenByDefault(infraTypes: string[]): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      response =>
+        response.url().includes('/api/mesh/graph') && response.request().method() === 'GET' && response.ok()
+    );
+    await this.page.reload();
+    const response = await responsePromise;
+    const body = (await response.json()) as MeshGraphResponse;
+    const nodes = body.elements?.nodes ?? [];
+    for (const infraType of infraTypes) {
+      const matched = nodes.filter(n => n.data?.infraType === infraType);
+      expect(
+        matched.length,
+        `Expected no "${infraType}" node(s) in the default mesh graph, got ${matched.length}`
+      ).toBe(0);
+    }
+  }
+
+  /** Assert a source infra node has the expected number of edges to dest infra nodes. */
+  async expectInfraConnectedTo(sourceInfraType: string, destInfraType: string, edgeCount: number): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+
+      const source = nodes.find(n => n.data?.infraType === sourceInfraType);
+      expect(source?.data?.id, `Expected a "${sourceInfraType}" infra node in mesh graph`).toBeTruthy();
+
+      const destIds = new Set(
+        nodes
+          .filter(n => n.data?.infraType === destInfraType)
+          .map(n => n.data?.id)
+          .filter(Boolean) as string[]
+      );
+      expect(destIds.size, `Expected at least one "${destInfraType}" node`).toBeGreaterThan(0);
+
+      const sourceId = source!.data!.id!;
+      const connected = edges.filter(e => {
+        const { source: edgeSource, target } = e.data ?? {};
+        if (!edgeSource || !target) {
+          return false;
+        }
+        return (edgeSource === sourceId && destIds.has(target)) || (target === sourceId && destIds.has(edgeSource));
+      });
+
+      expect(
+        connected.length,
+        `Expected ${edgeCount} ${sourceInfraType}↔${destInfraType} edge(s), got ${connected.length}`
+      ).toBe(edgeCount);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  private async fetchMeshGraph(): Promise<{ edges: MeshGraphEdge[]; nodes: MeshGraphNode[] }> {
+    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
+    expect(response.ok(), `Expected /api/mesh/graph OK, got ${response.status()}`).toBeTruthy();
+    const body = (await response.json()) as MeshGraphResponse;
+    return {
+      edges: body.elements?.edges ?? [],
+      nodes: body.elements?.nodes ?? []
+    };
+  }
+
+  async selectMeshNodeByLabel(label: string, cluster?: string, nodeType?: string): Promise<void> {
+    await this.waitForLoad();
+    await selectMeshNodeByLabel(this.page, label, cluster, nodeType);
+    await this.waitForLoad();
+  }
+
+  async selectClusterNodeOnCluster(cluster: string): Promise<void> {
+    await this.waitForLoad();
+    await selectClusterMeshNode(this.page, cluster);
+    await this.waitForLoad();
+  }
+
+  async expectNamespaceSidePanel(namespace: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(namespace);
+  }
+
+  async expectControlPlaneDonutInNamespacePanel(): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Namespaces managed by Control Planes');
+    await expect(panel.getByTestId('controlplane-donut')).toBeVisible();
+  }
+
+  /**
+   * Namespace panel donut lists control planes for the selected namespace on that cluster only
+   * (see TargetPanelNamespace.getControlPlanes). Istiod names often collide across clusters
+   * (both "istiod"), so compare legend entry count to the mesh graph instead of legend text.
+   */
+  async expectNamespacePanelOwnControlPlane(cluster: string, namespace = 'istio-system'): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Namespaces managed by Control Planes');
+    await expect(panel).toContainText(cluster);
+    const donut = panel.getByTestId('controlplane-donut');
+    await expect(donut).toBeVisible();
+    await expect(donut).toContainText(/namespaces/i);
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const ownIstiods = nodes.filter(
+        n => n.data?.infraType === 'istiod' && n.data?.cluster === cluster && n.data?.namespace === namespace
+      );
+      expect(ownIstiods.length, `Expected istiod in "${namespace}" on cluster "${cluster}"`).toBeGreaterThan(0);
+
+      const donutText = await donut.innerText();
+      const legendLines = donutText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /:\s*\d/.test(line));
+      expect(
+        legendLines.length,
+        `Expected ${ownIstiods.length} control-plane legend line(s) for ${cluster}, donut text:\n${donutText}`
+      ).toBe(ownIstiods.length);
+    }).toPass({ intervals: [2_000], timeout: 30_000 });
+  }
+
+  async expectNamespacePanelClusterBadge(cluster: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(cluster);
+  }
+
+  /** Each cluster's istiod should share an edge with that cluster's dataplane. */
+  async expectIstiodDataplaneEdgesPerCluster(): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+      const istiods = nodes.filter(n => n.data?.infraType === 'istiod' && n.data?.cluster && n.data?.id);
+      const dataplanes = nodes.filter(n => n.data?.infraType === 'dataplane' && n.data?.cluster && n.data?.id);
+      expect(istiods.length, 'Expected istiod nodes on multiple clusters').toBeGreaterThanOrEqual(2);
+      expect(dataplanes.length, 'Expected dataplane nodes on multiple clusters').toBeGreaterThanOrEqual(2);
+
+      for (const istiod of istiods) {
+        const cluster = istiod.data!.cluster!;
+        const istiodId = istiod.data!.id!;
+        const dpIds = new Set(dataplanes.filter(d => d.data?.cluster === cluster).map(d => d.data!.id!));
+        expect(dpIds.size, `Expected a dataplane on cluster "${cluster}"`).toBeGreaterThan(0);
+        const linked = edges.some(e => {
+          const { source, target } = e.data ?? {};
+          if (!source || !target) {
+            return false;
+          }
+          return (source === istiodId && dpIds.has(target)) || (target === istiodId && dpIds.has(source));
+        });
+        expect(linked, `Expected istiod↔dataplane edge on cluster "${cluster}"`).toBe(true);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectManagedByRemoteControlPlane(primaryCluster: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-cluster');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Managed by remote ControlPlane');
+    await expect(panel).toContainText(primaryCluster);
+  }
+
+  async selectAmbientIstiod(): Promise<void> {
+    await this.waitForLoad();
+    await selectAmbientIstiodMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async selectNonAmbientIstiod(): Promise<void> {
+    await this.waitForLoad();
+    await selectNonAmbientIstiodMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async expectControlPlaneAmbientBadge(visible: boolean): Promise<void> {
+    const panel = this.page.locator('#target-panel-control-plane');
+    await expect(panel).toBeVisible();
+    if (visible) {
+      await expect(panel.getByText('ambient', { exact: false })).toBeVisible();
+    } else {
+      await expect(panel.getByText('ambient', { exact: false })).toHaveCount(0);
+    }
+  }
+
+  async expectClusterCount(count: number): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const clusters = nodes.filter(n => n.data?.infraType === 'cluster');
+      expect(clusters.length, `Expected ${count} cluster node(s), got ${clusters.length}`).toBe(count);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectZtunnelInBothClusters(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const ztunnels = nodes.filter(n => n.data?.infraType === 'ztunnel' && n.data?.cluster);
+      const clusters = new Set(ztunnels.map(n => n.data?.cluster));
+      expect(ztunnels.length, 'Expected at least one ztunnel per cluster').toBeGreaterThanOrEqual(2);
+      expect(clusters.size, 'Expected ztunnel nodes on both clusters').toBeGreaterThanOrEqual(2);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectAmbientDataPlanesInBothClusters(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const dataPlanes = nodes.filter(n => n.data?.infraType === 'dataplane');
+      expect(dataPlanes.length, 'Expected data plane nodes in both clusters').toBeGreaterThanOrEqual(2);
+      for (const plane of dataPlanes) {
+        const infra = plane.data?.infraData;
+        const namespaces = Array.isArray(infra) ? infra : [];
+        const ambientNamespaces = namespaces.filter(ns => ns.isAmbient);
+        expect(
+          ambientNamespaces.length,
+          `Expected an ambient namespace on data plane cluster ${plane.data?.cluster ?? 'unknown'}`
+        ).toBeGreaterThanOrEqual(1);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectNodeSidePanel(name: string): Promise<void> {
+    await this.waitForLoad();
+    await expect(this.page.locator('#target-panel-node')).toBeVisible();
+    await expect(this.page.locator('#target-panel-node')).toContainText(name);
+  }
+
+  /** True when Kiali reaches Grafana via local port-forward (KinD CI), not an in-cluster route (Jenkins/OSSM). */
+  async usesLocalGrafanaPortForward(): Promise<boolean> {
+    const panel = this.page.locator('#target-panel-node');
+    await expect(panel).toBeVisible();
+    const text = await panel.textContent();
+    return Boolean(text?.includes('localhost:') || text?.includes('127.0.0.1'));
+  }
+
+  async waitForInfraHealth(infraName: string, predicate: (health: string) => boolean): Promise<void> {
+    await expect(async () => {
+      const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
+      expect(response.ok()).toBeTruthy();
+      const body = (await response.json()) as MeshGraphResponse;
+      const node = (body.elements?.nodes ?? []).find(n => n.data?.infraName?.toLowerCase() === infraName.toLowerCase());
+      const health = node?.data?.healthData;
+      expect(health, `Expected health data for ${infraName}`).toBeTruthy();
+      expect(predicate(health!)).toBe(true);
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
+  /**
+   * Poll /api/mesh/graph for health, then refresh the mesh page so cytoscape node data
+   * (and the side-panel health icon) match the API before selecting the node.
+   */
+  async syncInfraHealthToUi(infraName: string, predicate: (health: string) => boolean): Promise<void> {
+    await this.waitForInfraHealth(infraName, predicate);
+    await this.refreshPage();
+  }
+
+  async expectSidePanelIcon(type: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-node');
+    await expect(async () => {
+      await expect(panel.getByTestId(`icon-${type}-validation`)).toBeVisible();
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
+  /**
+   * Select a mesh node and assert its side-panel health icon, retrying the whole sequence.
+   * A selection made right after refreshPage() can bind the pre-refresh node (cytoscape has
+   * not re-rendered yet) and the side panel never re-reads node data — only re-selecting
+   * picks up the fresh health.
+   */
+  async selectNodeAndExpectSidePanelIcon(label: string, icon: string): Promise<void> {
+    await expect(async () => {
+      await this.selectMeshNodeByLabel(label);
+      await this.expectNodeSidePanel(label);
+      await expect(this.page.locator('#target-panel-node').getByTestId(`icon-${icon}-validation`)).toBeVisible();
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
+  async expectNoSidePanelIcon(type: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-node').getByTestId(`icon-${type}-validation`)).toHaveCount(0);
+  }
+
+  async expectSidePanelContains(text: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-node')).toContainText(text);
+  }
+
+  async expectConfigTabs(tabs: string): Promise<void> {
+    for (const tab of tabs.split(',')) {
+      await expect(this.getBySel(`config-tab-${tab.trim()}`)).toBeVisible();
+    }
+  }
+
+  async expectConfigTabContains(tab: string, text: string): Promise<void> {
+    await this.getBySel(`config-tab-${tab}`).click();
+    await expect(this.getBySel(`${tab}-config-editor`)).toContainText(text);
+  }
+
+  async expectConfigTabNotContains(tab: string, text: string): Promise<void> {
+    await this.getBySel(`config-tab-${tab}`).click();
+    await expect(this.getBySel(`${tab}-config-editor`)).not.toContainText(text);
+  }
+
+  async refreshPage(): Promise<void> {
+    await this.getBySel('refresh-button').click();
+    await this.waitForLoad();
+  }
+
+  async expectControlPlaneSidePanel(): Promise<void> {
+    await expect(async () => {
+      const response = await this.page.request.get(
+        kialiUrl('/api/namespaces/istio-system/controlplanes/istiod/metrics')
+      );
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.process_resident_memory_bytes).toBeTruthy();
+      expect(body.process_cpu_seconds_total).toBeTruthy();
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+
+    await expect(async () => {
+      await this.refreshPage();
+      await this.selectMeshNodeByLabel('istiod');
+      const panel = this.page.locator('#target-panel-control-plane');
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText('istiod');
+      await expect(panel).toContainText('Outbound policy');
+      await expect(panel.getByTestId('memory-chart')).toBeVisible();
+      await expect(panel.getByTestId('cpu-chart')).toBeVisible();
+      await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
+      await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }
+
+  async openMeshTour(): Promise<void> {
+    await this.page.locator('button#mesh-tour').click();
+  }
+
+  async closeMeshTour(): Promise<void> {
+    await this.page.locator('div[role="dialog"]').getByRole('button', { name: 'Close' }).click();
+  }
+
+  async expectMeshTourVisible(visible: boolean): Promise<void> {
+    // Read-only .pf-v6-c-popover scope: the tour popover has no role/label that a
+    // role-based locator can target, and the 'Shortcuts' text keeps it unambiguous.
+    const popover = this.page.locator('.pf-v6-c-popover').filter({ hasText: 'Shortcuts' });
+    if (visible) {
+      await expect(popover).toBeVisible();
+    } else {
+      await expect(popover).toHaveCount(0);
+    }
+  }
+
+  async selectClusterNode(): Promise<void> {
+    await this.waitForLoad();
+    await selectClusterMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async selectTracingNode(): Promise<void> {
+    await this.waitForLoad();
+    await selectTracingMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async expectMeshSidePanel(): Promise<void> {
+    const panel = this.page.locator('#target-panel-mesh');
+    await expect(panel).toBeVisible();
+    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
+    expect(response.ok()).toBeTruthy();
+    const body = await response.json();
+    const meshNames = body.meshNames as string[];
+    expect(meshNames?.length).toBeGreaterThan(0);
+    expect(meshNames).not.toContain('');
+
+    const tabs = this.getBySel('mesh-tabs');
+    if ((await tabs.count()) > 0) {
+      await tabs.getByRole('tab', { name: /Meshes/ }).click();
+    }
+
+    for (const meshName of meshNames) {
+      await expect(panel).toContainText(`Mesh: ${meshName}`);
+    }
+  }
+
+  async expectExpectedMeshInfra(): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+      const nodeNames = nodes.map(n => (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase());
+      const meshNames = new Set(nodes.filter(n => n.data?.infraType === 'istiod').map(n => this.meshNameFromIstiod(n)));
+      const isMultiMesh = meshNames.size > 1;
+      const minNodes = nodeNames.some(n => n === 'external deployments') ? (isMultiMesh ? 13 : 9) : 8;
+      const minEdges = isMultiMesh ? 7 : 5;
+
+      expect(nodes.length, `Expected at least ${minNodes} infra nodes, got ${nodes.length}`).toBeGreaterThanOrEqual(
+        minNodes
+      );
+      expect(edges.length, `Expected at least ${minEdges} infra edges, got ${edges.length}`).toBeGreaterThanOrEqual(
+        minEdges
+      );
+      // Labels use "Data Plane"; infraType fallback is "dataplane".
+      expect(nodeNames.includes('data plane') || nodeNames.includes('dataplane')).toBeTruthy();
+      expect(nodeNames).toContain('grafana');
+      expect(nodeNames.some(n => n.startsWith('istiod'))).toBeTruthy();
+      expect(nodeNames.includes('jaeger') || nodeNames.includes('tempo')).toBeTruthy();
+      expect(nodeNames).toContain('kiali');
+      expect(nodeNames).toContain('prometheus');
+
+      const tabs = this.getBySel('mesh-tabs');
+      if (isMultiMesh) {
+        await expect(tabs).toBeVisible();
+        await expect(tabs.getByRole('tab', { name: 'Overview', exact: true })).toBeVisible();
+        await expect(tabs.getByRole('tab', { name: /Meshes/ })).toBeVisible();
+      } else {
+        await expect(tabs).toHaveCount(0);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectMeshTabCountMatchesControlPlanes(): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const meshNames = new Set(nodes.filter(n => n.data?.infraType === 'istiod').map(n => this.meshNameFromIstiod(n)));
+      expect(meshNames.size, 'Expected at least 2 distinct mesh names from istiod nodes').toBeGreaterThan(1);
+      await expect(
+        this.getBySel('mesh-tabs').getByRole('tab', { name: `Meshes (${meshNames.size})`, exact: true })
+      ).toBeVisible();
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectControlPlaneSummaryClusterNames(): Promise<void> {
+    await this.waitForLoad();
+    const panel = this.page.locator('#target-panel-mesh');
+    await expect(panel).toBeVisible();
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const istiodNodes = nodes.filter(n => n.data?.infraType === 'istiod');
+      expect(istiodNodes.length, 'Expected at least one istiod node').toBeGreaterThan(0);
+      for (const n of istiodNodes) {
+        expect(n.data?.cluster, `istiod node ${n.data?.infraName} is missing its cluster`).toBeTruthy();
+      }
+      const clusterNames = new Set(istiodNodes.map(n => n.data!.cluster as string));
+      for (const cluster of clusterNames) {
+        await expect(panel).toContainText(cluster);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  /** Assert each Data Plane node lists at least one dataplane namespace (UI summary source). */
+  async expectDataPlaneNamespacesPopulated(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const dpNodes = nodes.filter(n => n.data?.infraType === 'dataplane');
+      expect(dpNodes.length, 'Expected Data Plane nodes in mesh graph').toBeGreaterThan(0);
+      for (const dp of dpNodes) {
+        const infraData = dp.data?.infraData;
+        const nsCount = Array.isArray(infraData) ? infraData.length : 0;
+        expect(nsCount, `Data Plane node ${dp.data?.infraName} should list dataplane namespaces`).toBeGreaterThan(0);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  private meshNameFromIstiod(node: MeshGraphNode): string {
+    const infra = node.data?.infraData;
+    if (!infra || Array.isArray(infra)) {
+      return 'Istio mesh';
+    }
+    const mesh = (infra as IstiodMeshConfig).config?.standardConfig?.configMap?.mesh;
+    return mesh?.defaultConfig?.meshId || mesh?.trustDomain || 'Istio mesh';
+  }
+
+  async expectDataPlaneSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-data-plane')).toBeVisible();
+    await expect(this.page.locator('#target-panel-data-plane')).toContainText('Data Plane');
+  }
+
+  async expandDataPlaneNamespace(): Promise<void> {
+    const panel = this.page.locator('#target-panel-data-plane');
+    await panel.locator('button[id^="ns-bookinfo"]').first().click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectConfigValidationInfo(): Promise<void> {
+    const panel = this.page.locator('#target-panel-data-plane');
+    await expect(panel.getByText('Istio config', { exact: true })).toBeVisible();
+    await expect(panel.getByText('Istio config').locator('..')).not.toContainText('N/A');
+  }
+
+  async expectClusterSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-cluster')).toBeVisible();
+  }
+
+  async expectNamespaceSidePanel(name: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-namespace')).toBeVisible();
+    await expect(this.page.locator('#target-panel-namespace')).toContainText(name);
+  }
+
+  async expectMeshBodyNotContains(text: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-mesh-body')).not.toContainText(text);
+  }
+
+  async expectTracingSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-node')).toContainText(/jaeger|Jaeger|tempo|Tempo/);
+  }
+
+  async toggleMeshDisplayMenu(open: boolean): Promise<void> {
+    const button = this.page.locator('button#display-settings');
+    if (open) {
+      await button.click();
+      await expect(this.page.locator('div#mesh-display-menu')).toBeVisible();
+    } else {
+      await button.click();
+      await expect(this.page.locator('div#mesh-display-menu')).toHaveCount(0);
+    }
+  }
+
+  async setMeshDisplayOption(option: string, enabled: boolean): Promise<void> {
+    const lower = option.toLowerCase();
+    const optionId =
+      lower === 'gateways'
+        ? 'filterGateways'
+        : lower === 'waypoints'
+          ? 'filterWaypoints'
+          : lower === 'kiali'
+            ? 'filterKiali'
+            : option;
+    const input = this.page.locator(`div#mesh-display-menu input#${optionId}`);
+    if (enabled) {
+      await input.check();
+    } else {
+      await input.uncheck();
+    }
+  }
+
+  // External observability services (Grafana, Prometheus, tracing, Perses, Kiali) are only
+  // discovered when the "Show Kiali" display option is enabled (off by default).
+  async enableKialiInfraDiscovery(): Promise<void> {
+    await this.toggleMeshDisplayMenu(true);
+    await this.setMeshDisplayOption('kiali', true);
+    await this.toggleMeshDisplayMenu(false);
+    await this.waitForLoad();
+  }
+
+  async openTraceConfigurationModal(): Promise<void> {
+    const diagnosePromise = this.page
+      .waitForResponse(response => response.url().includes('/api/tracing/diagnose') && response.ok())
+      .catch(() => undefined);
+    await this.page.getByRole('button', { name: 'Configuration Discovery' }).click();
+    await expect(this.page.getByRole('dialog')).toBeVisible();
+    await diagnosePromise;
+  }
+
+  async expectTraceConfigurationModal(): Promise<void> {
+    const dialog = this.page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(this.page.getByRole('heading', { name: 'Configuration Discovery' })).toBeVisible();
+  }
+
+  async expectTraceConfigFooterActions(): Promise<void> {
+    const dialog = this.page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    // The deprecated PF Modal renders two "Close" buttons (header X + footer action); scope
+    // to the footer (implicit contentinfo role) to keep the locator strict-mode safe.
+    await expect(dialog.getByRole('contentinfo').getByRole('button', { name: 'Close' })).toBeVisible();
+  }
+
+  async clickRediscover(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      response => response.url().includes('/api/tracing/diagnose') && response.ok()
+    );
+    await this.page.getByRole('dialog').getByRole('button', { name: 'Rediscover' }).click();
+    await responsePromise;
+    await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
+  }
+
+  async expectDiscoveryInformation(): Promise<void> {
+    const discovery = this.page.locator('#tracing-discovery-content');
+    await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
+    await expect(discovery).toContainText('Possible configuration(s) found');
+    await expect(discovery.locator('#valid-configurations')).toContainText('Provider:');
+    await expect(discovery).toContainText('Logs');
+    await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
+    await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
+  }
+}
