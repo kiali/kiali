@@ -2,7 +2,7 @@
  Jaeger types are exported from https://github.com/jaegertracing/jaeger-ui/blob/5af9ed27c5c95031ca2c926902b51dc392413a09/packages/jaeger-ui/src/types/trace.tsx
 */
 
-import { Target } from './MetricsOptions';
+import type { Target } from './MetricsOptions';
 
 export interface TracingInfo {
   enabled: boolean;
@@ -145,15 +145,17 @@ export type LogLine = {
   time: string;
 };
 
+export type TracingProbeResult = {
+  httpStatus?: number;
+  status: 'failed' | 'passed' | 'unverified';
+};
+
 export type TracingCheck = {
   code?: number;
   error?: string;
   logLine: LogLine[];
   message: string;
+  queryAPI?: TracingProbeResult;
+  readiness?: TracingProbeResult;
   validConfig?: ValidConfig[];
-};
-
-export type ConfigurationValidation = {
-  error?: string;
-  message: string;
 };

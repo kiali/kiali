@@ -105,6 +105,28 @@ stop_perses_port_forward() {
   fi
 }
 
+start_perses_port_forward() {
+  if kubectl get svc perses -n istio-system &>/dev/null; then
+    infomsg "Starting Perses port-forward on localhost:4000"
+    kubectl port-forward -n istio-system svc/perses 4000:8080 &
+    PERSES_PORT_FORWARD_PID=$!
+    for _ in $(seq 1 30); do
+      if curl -s --fail "http://localhost:4000/api/v1/health" > /dev/null 2>&1; then
+        infomsg "Perses port-forward is ready"
+        return 0
+      fi
+      sleep 1
+    done
+    infomsg "WARNING: Perses port-forward may not be ready"
+  fi
+}
+
+stop_perses_port_forward() {
+  if [ -n "${PERSES_PORT_FORWARD_PID}" ]; then
+    kill "${PERSES_PORT_FORWARD_PID}" 2>/dev/null || true
+  fi
+}
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"

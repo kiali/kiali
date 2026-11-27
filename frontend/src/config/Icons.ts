@@ -1,5 +1,5 @@
-import * as React from 'react';
-import deepFreeze from 'deep-freeze';
+import type * as React from 'react';
+import { deepFreeze } from '../utils/deepFreeze';
 import {
   ArrowAltCircleRightIcon,
   BanIcon,

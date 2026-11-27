@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -419,58 +418,18 @@ func TracingDiagnose(
 			return
 		}
 
-		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
+		homeClient := clientFactory.GetSAHomeClusterClient()
+		if !business.Namespace.HasMeshAccess(r.Context(), homeClient.ClusterInfo().Name) {
 			RespondWithError(w, http.StatusInternalServerError, "TracingDiagnose unauthorized")
 			return
 		}
 
-		status, err := business.Tracing.TracingDiagnose(r.Context(), clientFactory.GetSAHomeClusterClient().GetToken())
+		status, err := business.Tracing.TracingDiagnose(r.Context(), kubernetes.GetServiceAccountTokenCredential(homeClient))
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
 		}
 
-		RespondWithJSON(w, http.StatusOK, status)
-	}
-}
-
-// TracingConfigurationCheck is the API handler to test a Tracing configuration
-func TracingConfigurationCheck(
-	conf *config.Config,
-	kialiCache cache.KialiCache,
-	clientFactory kubernetes.ClientFactory,
-	prom prometheus.ClientInterface,
-	cpm business.ControlPlaneMonitor,
-	traceClientLoader func() tracing.ClientInterface,
-	grafana *grafana.Service,
-	discovery *istio.Discovery,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := boundedReadAll(r)
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
-			return
-		}
-		testConfig := string(body)
-		var tracingConfig config.TracingConfig
-		err = json.Unmarshal([]byte(testConfig), &tracingConfig)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Tracing configuration is not valid: "+err.Error())
-			return
-		}
-
-		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck getLayer error: "+err.Error())
-			return
-		}
-
-		if !business.Namespace.HasMeshAccess(r.Context(), clientFactory.GetSAHomeClusterClient().ClusterInfo().Name) {
-			RespondWithError(w, http.StatusInternalServerError, "TracingConfigurationCheck Unauthorized")
-			return
-		}
-
-		status := business.Tracing.ValidateConfiguration(r.Context(), conf, &tracingConfig, clientFactory.GetSAHomeClusterClient().GetToken())
 		RespondWithJSON(w, http.StatusOK, status)
 	}
 }

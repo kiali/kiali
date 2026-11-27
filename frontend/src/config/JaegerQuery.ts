@@ -1,13 +1,13 @@
-import deepFreeze from 'deep-freeze';
+import { deepFreeze } from '../utils/deepFreeze';
 
-const jaegerQueryConfig = {
+const jaegerQueryConfig = deepFreeze({
   path: '/search',
   embed: {
     uiEmbed: 'uiEmbed',
     version: 'v0'
   }
-};
+});
 
-export const jaegerQuery = () => {
-  return deepFreeze(jaegerQueryConfig) as typeof jaegerQueryConfig;
+export const jaegerQuery = (): typeof jaegerQueryConfig => {
+  return jaegerQueryConfig;
 };

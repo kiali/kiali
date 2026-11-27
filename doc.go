@@ -916,11 +916,25 @@ type ClusterTlsResponse struct {
 	Body models.MTLSStatus
 }
 
-// Response of the configuration validation query
-// swagger:response configurationValidation
-type ConfigurationValidationResponse struct {
+// Response of the graph cache metrics test endpoint
+// swagger:response graphCacheMetricsResponse
+type GraphCacheMetricsResponse struct {
 	// in: body
-	Body model.ConfigurationValidation
+	Body handlers.GraphCacheMetrics
+}
+
+// Response of the health cache metrics test endpoint
+// swagger:response healthCacheMetricsResponse
+type HealthCacheMetricsResponse struct {
+	// in: body
+	Body handlers.HealthCacheMetrics
+}
+
+// Response of the health status metrics test endpoint
+// swagger:response healthStatusMetricsResponse
+type HealthStatusMetricsResponse struct {
+	// in: body
+	Body handlers.HealthStatusMetrics
 }
 
 // Response of the graph cache metrics test endpoint

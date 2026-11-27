@@ -6,6 +6,71 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
 import { buildNodeTree, findComponentsInTree, getReactFiber } from '../../support/react-utils';
+import { waitForWaypointNodeVisibleInGraph } from './waypoint';
+
+/** Default graph rate interval for Cypress tests (5 minutes, in seconds). */
+export const DEFAULT_GRAPH_DURATION_SECONDS = 300;
+
+/** Query params for detail-page visits (overview minigraph, traffic tab). */
+export const detailPageQueryParams = (extra: Record<string, string> = {}): Record<string, string> => ({
+  duration: String(DEFAULT_GRAPH_DURATION_SECONDS),
+  refresh: '0',
+  ...extra
+});
+
+/**
+ * Ensure the masthead duration matches the expected graph window.
+ * Re-selecting the current duration does not refetch graph data — never wait for a graph
+ * request unless the dropdown selection actually changes.
+ */
+export const ensureGraphDuration = (durationSeconds: number = DEFAULT_GRAPH_DURATION_SECONDS): void => {
+  cy.url().then(url => {
+    const urlDuration = new URL(url).searchParams.get('duration');
+    if (urlDuration === String(durationSeconds)) {
+      cy.get('#loading_kiali_spinner').should('not.exist');
+      return;
+    }
+
+    cy.get('button#time_range_duration-toggle').should('be.visible').click();
+    cy.get(`button[id="${durationSeconds}"]`).then($option => {
+      const alreadySelected = $option.attr('aria-selected') === 'true';
+
+      if (alreadySelected) {
+        cy.get('button#time_range_duration-toggle').click();
+        cy.get('#loading_kiali_spinner').should('not.exist');
+        return;
+      }
+
+      cy.intercept('**/api/**/graph*').as('graphAfterDuration');
+      cy.wrap($option).click();
+
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphAfterDuration');
+      }
+      cy.get('#loading_kiali_spinner').should('not.exist');
+    });
+  });
+};
+
+/** Refetch namespace graph via the toolbar so React state matches the latest API data. */
+export const refetchNamespacesGraph = (): Cypress.Chainable<void> => {
+  cy.intercept('**/api/namespaces/graph*').as('graphNamespacesRefetch');
+
+  cy.get('[data-test="refresh-button"]').first().should('be.visible').and('not.be.disabled').click();
+
+  return cy
+    .url()
+    .then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        return cy.wait('@graphNamespacesRefetch');
+      }
+    })
+    .then(() => {
+      cy.getBySel('loading-screen').should('not.exist');
+      cy.getBySel('login-form').should('not.exist');
+      return cy.get('#loading_kiali_spinner').should('not.exist');
+    });
+};
 
 /** Default graph rate interval for Cypress tests (5 minutes, in seconds). */
 export const DEFAULT_GRAPH_DURATION_SECONDS = 300;
@@ -194,9 +259,9 @@ const assertReady = (
   componentName: string,
   stateFilter: Record<string, any>,
   fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void
-): void => {
+): Cypress.Chainable<void> => {
   cy.waitForReact();
-  cy.window({ log: false }).should((win: Window) => {
+  return cy.window({ log: false }).should((win: Window) => {
     const rootFiber = freshFiber(win);
     assert.isNotNull(rootFiber, 'React fiber root must exist');
 
@@ -211,8 +276,10 @@ const assertReady = (
   });
 };
 
-export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
-  assertReady('GraphPageComponent', { graphData: { isLoading: false }, isReady: true }, fn);
+export const assertGraphReady = (
+  fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void
+): Cypress.Chainable<void> => {
+  return assertReady('GraphPageComponent', { graphData: { isLoading: false }, isReady: true }, fn);
 };
 
 type GraphFindHideExpectation = {
@@ -373,51 +440,60 @@ Then('user sees graph workloads from both clusters', () => {
 Then(
   'the waypoint node {string} is visible in the graph for the {string} cluster',
   (workload: string, cluster: string) => {
-    assertGraphReady(({ nodes }) => {
-      const target = workload.toLowerCase();
+    cy.url()
+      .then(url => {
+        const namespacesParam = new URL(url).searchParams.get('namespaces') ?? '';
+        const namespace = namespacesParam.split(',')[0];
+        return waitForWaypointNodeVisibleInGraph(namespace, { cluster, graphType: 'workload', workload });
+      })
+      .then(() => refetchNamespacesGraph())
+      .then(() =>
+        assertGraphReady(({ nodes }) => {
+          const target = workload.toLowerCase();
 
-      const matches = nodes.filter(node => {
-        const data = node.getData();
-        const label = (node as any)?.getLabel?.() as string | undefined;
-
-        const candidates = [data.workload, data.app, data.service, data.name, label].filter(
-          v => typeof v === 'string'
-        ) as string[];
-
-        return (
-          data.isBox === undefined &&
-          data.cluster === cluster &&
-          data.isWaypoint === true &&
-          candidates.some(c => {
-            const lc = c.toLowerCase();
-            return lc === target || lc.startsWith(`${target}-`);
-          })
-        );
-      });
-
-      if (matches.length === 0) {
-        const waypointNodes = nodes
-          .map(node => {
+          const matches = nodes.filter(node => {
             const data = node.getData();
-            return {
-              app: data.app,
-              cluster: data.cluster,
-              isWaypoint: data.isWaypoint,
-              name: data.name,
-              service: data.service,
-              workload: data.workload
-            };
-          })
-          .filter(n => n.cluster === cluster && n.isWaypoint === true);
+            const label = (node as any)?.getLabel?.() as string | undefined;
 
-        Cypress.log({
-          name: 'waypointNodeNotFound',
-          message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
-        });
-      }
+            const candidates = [data.workload, data.app, data.service, data.name, label].filter(
+              v => typeof v === 'string'
+            ) as string[];
 
-      expect(matches.length).to.be.at.least(1);
-    });
+            return (
+              data.isBox === undefined &&
+              data.cluster === cluster &&
+              data.isWaypoint === true &&
+              candidates.some(c => {
+                const lc = c.toLowerCase();
+                return lc === target || lc.startsWith(`${target}-`);
+              })
+            );
+          });
+
+          if (matches.length === 0) {
+            const waypointNodes = nodes
+              .map(node => {
+                const data = node.getData();
+                return {
+                  app: data.app,
+                  cluster: data.cluster,
+                  isWaypoint: data.isWaypoint,
+                  name: data.name,
+                  service: data.service,
+                  workload: data.workload
+                };
+              })
+              .filter(n => n.cluster === cluster && n.isWaypoint === true);
+
+            Cypress.log({
+              name: 'waypointNodeNotFound',
+              message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
+            });
+          }
+
+          expect(matches.length).to.be.at.least(1);
+        })
+      );
   }
 );
 

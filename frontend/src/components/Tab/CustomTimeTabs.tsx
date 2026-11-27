@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import type { TabProps } from '@patternfly/react-core';
 import { UserSettingsActions } from 'actions/UserSettingsActions';

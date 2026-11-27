@@ -64,11 +64,6 @@ rstest.mock('../CustomTooltip', () => {
   };
 });
 
-rstest.mock('regression', () => ({
-  __esModule: true,
-  default: { linear: () => ({ predict: () => [0, 0] }) }
-}));
-
 import { KChart } from '../KChart';
 import { CHART_LEGEND_GAP, LEGEND_HEIGHT } from '../ChartWithLegend';
 

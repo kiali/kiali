@@ -274,26 +274,6 @@ func NewRoutes(
 			handlers.TracingDiagnose(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
-		// swagger:route POST /tracing/check tracing tracingCheck
-		//
-		// Endpoint to test a specific configuration for tracing
-		//
-		// Produces:
-		// - application/json
-		//
-		// Schemes: http, https
-		//
-		// Responses:
-		//    500: internalError
-		//    200: configurationValidation
-		{
-			"Tracing check",
-			log.TracingLogName,
-			"POST",
-			"/api/tracing/check",
-			handlers.TracingConfigurationCheck(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
-			true,
-		},
 		// swagger:route GET /config kiali getConfig
 		//
 		// Endpoint to get the config of Kiali

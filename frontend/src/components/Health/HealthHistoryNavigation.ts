@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import { URLParam } from 'app/History';
 import type { BoundsInMilliseconds } from 'types/Common';
 import { GraphType } from 'types/Graph';

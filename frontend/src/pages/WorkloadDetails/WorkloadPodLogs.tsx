@@ -31,7 +31,6 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -75,6 +74,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { classes } from 'typestyle';
 import { editorStyle } from 'styles/EditorStyle';
 import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import { filterLogEntries, getLogFilterRegexError, type WorkloadPodLogEntry } from './WorkloadPodLogsFilter';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -115,12 +115,7 @@ type ContainerOption = {
   name: string;
 };
 
-type Entry = {
-  logEntry?: LogEntry;
-  span?: Span;
-  timestamp: string;
-  timestampUnix: TimeInSeconds;
-};
+type Entry = WorkloadPodLogEntry;
 
 interface WorkloadPodLogsState {
   accessLogModals: Map<string, AccessLog>;
@@ -229,6 +224,10 @@ const checkInfoIcon = kialiStyle({
 
 const toolbarTail = kialiStyle({
   marginTop: '0.125rem'
+});
+
+const errorStyle = kialiStyle({
+  color: PFColors.Danger
 });
 
 const logsDiv = kialiStyle({
@@ -364,58 +363,16 @@ const tabStyle = kialiStyle({
 
 export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private readonly logsRef: React.RefObject<any>;
+  private filteredLogEntriesCache: {
+    entries: Entry[];
+    hideLogValue: string;
+    result: Entry[];
+    showLogValue: string;
+    useRegex: boolean;
+  } | null = null;
   private podOptions: string[] = [];
   private promises: PromisesRegistry = new PromisesRegistry();
-
-  // filteredEntries is a memoized function which returns the set of entries that should be visible in the
-  // logs pane, given the values of show and hide filter, and given the "use regex" configuration.
-  // When the function is called for the first time with certain combination of parameters, the set of filtered
-  // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
-  // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
-  // set is discarded.
-  private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
-    let filteredEntries = entries;
-
-    if (!!showValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(showValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
-
-          if (!!this.state.showError) {
-            this.setState({ showError: undefined });
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ showError: `Show: ${e.message}` });
-          }
-        }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
-      }
-    }
-
-    if (!!hideValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(hideValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
-
-          if (!!this.state.hideError) {
-            this.setState({ hideError: undefined });
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ hideError: `Hide: ${e.message}` });
-          }
-        }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
-      }
-    }
-
-    return filteredEntries;
-  });
+  private readonly visibleLogEntriesRef: React.MutableRefObject<Entry[]> = { current: [] };
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -569,7 +526,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               id="log_show"
                               name="log_show"
                               style={{ width: '10em' }}
-                              validated={isValid(this.state.showLogValue ? !this.state.showError : undefined)}
+                              validated={isValid(
+                                this.state.showError ? false : this.state.showLogValue ? true : undefined
+                              )}
                               autoComplete="on"
                               type="text"
                               onKeyDown={this.checkSubmitShow}
@@ -592,7 +551,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               id="log_hide"
                               name="log_hide"
                               style={{ width: '10em' }}
-                              validated={isValid(this.state.hideLogValue ? !this.state.hideError : undefined)}
+                              validated={isValid(
+                                this.state.hideError ? false : this.state.hideLogValue ? true : undefined
+                              )}
                               autoComplete="on"
                               type="text"
                               onKeyDown={this.checkSubmitHide}
@@ -609,21 +570,18 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 </Button>
                               </Tooltip>
                             )}
+                          </ToolbarItem>
 
-                            {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
-                            {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
-
-                            <ToolbarItem style={{ alignSelf: 'center' }}>
-                              <Tooltip
-                                key="show_hide_log_help"
-                                position="top"
-                                content={t(
-                                  'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
-                                )}
-                              >
-                                <KialiIcon.Info className={infoStyle} />
-                              </Tooltip>
-                            </ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
+                            <Tooltip
+                              key="show_hide_log_help"
+                              position="top"
+                              content={t(
+                                'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
+                              )}
+                            >
+                              <KialiIcon.Info className={infoStyle} />
+                            </Tooltip>
                           </ToolbarItem>
 
                           {this.props.tracingIntegration && (
@@ -657,6 +615,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>
+
+                        {this.state.showError && <div className={errorStyle}>{this.state.showError}</div>}
+                        {this.state.hideError && <div className={errorStyle}>{this.state.hideError}</div>}
                       </Toolbar>
                     )}
                     {this.getLogsDiv()}
@@ -827,13 +788,39 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
-  private renderLogLine = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
-    const e = this.filteredEntries(
-      this.state.entries,
-      this.state.showLogValue,
-      this.state.hideLogValue,
-      this.state.useRegex
-    )[index];
+  private getFilteredLogEntries = (): Entry[] => {
+    if (!this.state.entries) {
+      return [];
+    }
+
+    const { entries, hideLogValue, showLogValue, useRegex } = this.state;
+    const cached = this.filteredLogEntriesCache;
+
+    if (
+      cached &&
+      cached.entries === entries &&
+      cached.hideLogValue === hideLogValue &&
+      cached.showLogValue === showLogValue &&
+      cached.useRegex === useRegex
+    ) {
+      return cached.result;
+    }
+
+    const result = filterLogEntries(entries, showLogValue, hideLogValue, useRegex);
+    this.filteredLogEntriesCache = { entries, hideLogValue, result, showLogValue, useRegex };
+
+    return result;
+  };
+
+  private renderLogLineForList = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
+    return this.renderLogLine({ index, style }, this.visibleLogEntriesRef.current);
+  };
+
+  private renderLogLine = (
+    { index, style }: { index: number; style: React.CSSProperties },
+    logEntries: Entry[]
+  ): React.ReactNode => {
+    const e = logEntries[index];
 
     if (e.span) {
       return (
@@ -989,9 +976,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       </MenuGroup>
     ];
 
-    const logEntries = this.state.entries
-      ? this.filteredEntries(this.state.entries, this.state.showLogValue, this.state.hideLogValue, this.state.useRegex)
-      : [];
+    const logEntries = this.getFilteredLogEntries();
+    this.visibleLogEntriesRef.current = logEntries;
 
     return (
       <div key="logsDiv" id="logsDiv" className={logsDiv}>
@@ -1079,7 +1065,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 ref={this.logsRef}
                 rowHeight={22}
                 rowCount={logEntries.length}
-                rowRenderer={this.renderLogLine}
+                rowRenderer={this.renderLogLineForList}
                 height={height}
                 width={width}
                 scrollToIndex={logEntries.length - 1}
@@ -1256,8 +1242,29 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState({ showToolbar: !this.state.showToolbar, kebabOpen: false });
   };
 
+  private syncLogFilterInputValue = (elementId: string, value: string): void => {
+    const htmlInputElement = document.getElementById(elementId) as HTMLInputElement | null;
+
+    if (htmlInputElement !== null) {
+      htmlInputElement.value = value;
+    }
+  };
+
   private handleToggleUseRegex = (): void => {
-    this.setState({ useRegex: !this.state.useRegex, kebabOpen: false });
+    const { hideLogValue, showLogValue, useRegex } = this.state;
+    const nextUseRegex = !useRegex;
+
+    this.syncLogFilterInputValue('log_show', showLogValue);
+    this.syncLogFilterInputValue('log_hide', hideLogValue);
+
+    this.setState({
+      hideError: getLogFilterRegexError(hideLogValue, nextUseRegex, 'Hide'),
+      kebabOpen: false,
+      showClearHideLogButton: !!hideLogValue,
+      showClearShowLogButton: !!showLogValue,
+      showError: getLogFilterRegexError(showLogValue, nextUseRegex, 'Show'),
+      useRegex: nextUseRegex
+    });
   };
 
   private setLogLevel = (level: LogLevel): void => {
@@ -1277,9 +1284,16 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (event.key === 'Enter') {
       event.preventDefault();
 
-      this.setState({
-        showClearShowLogButton: !!(event.target as HTMLInputElement).value,
-        showLogValue: (event.target as HTMLInputElement).value
+      const value = (event.target as HTMLInputElement).value;
+
+      this.setState(prevState => {
+        const showError = getLogFilterRegexError(value, prevState.useRegex, 'Show');
+
+        return {
+          showClearShowLogButton: !!value,
+          showError,
+          showLogValue: showError ? prevState.showLogValue : value
+        };
       });
     }
   };
@@ -1309,9 +1323,16 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (event.key === 'Enter') {
       event.preventDefault();
 
-      this.setState({
-        showClearHideLogButton: !!(event.target as HTMLInputElement).value,
-        hideLogValue: (event.target as HTMLInputElement).value
+      const value = (event.target as HTMLInputElement).value;
+
+      this.setState(prevState => {
+        const hideError = getLogFilterRegexError(value, prevState.useRegex, 'Hide');
+
+        return {
+          hideError,
+          hideLogValue: hideError ? prevState.hideLogValue : value,
+          showClearHideLogButton: !!value
+        };
       });
     }
   };

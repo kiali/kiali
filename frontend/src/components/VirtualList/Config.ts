@@ -1,5 +1,5 @@
 import * as React from 'react';
-import deepFreeze from 'deep-freeze';
+import { deepFreeze } from '../../utils/deepFreeze';
 import { PopoverPosition } from '@patternfly/react-core';
 import type { Th } from '@patternfly/react-table';
 import type { AppListItem } from '../../types/AppList';

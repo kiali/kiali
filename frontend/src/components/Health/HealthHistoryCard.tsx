@@ -1,4 +1,3 @@
-// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@patternfly/react-core';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';

@@ -92,6 +92,11 @@ export default defineConfig({
         __dirname,
         'node_modules/monaco-editor/esm/vs/editor/editor.api.js'
       );
+      // monaco-editor 0.56+ moved YAML under languages/definitions; package exports do not expose deep paths.
+      config.resolve.alias['monaco-editor/esm/vs/languages/definitions/yaml/register.js'] = resolve(
+        __dirname,
+        'node_modules/monaco-editor/esm/vs/languages/definitions/yaml/register.js'
+      );
       // PatternFly 6.5+ imports useId from React for SSR-safe IDs; React 17 does not
       // export useId but PF handles that at runtime. Disable static export checks.
       config.module = config.module || {};

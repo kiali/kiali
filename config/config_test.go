@@ -278,7 +278,17 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "my-token"
 
+	const headerName, headerValue = "X-Example-Header", "my-sensitive-header-value"
+	conf.ExternalServices.Tracing.CustomHeaders = map[string]string{headerName: headerValue}
+	conf.ExternalServices.Prometheus.CustomHeaders = map[string]string{headerName: headerValue}
+	conf.ExternalServices.CustomDashboards.Prometheus.CustomHeaders = map[string]string{headerName: headerValue}
+
 	printed := fmt.Sprintf("%v", conf)
+	assert.NotContains(t, printed, headerValue)
+	assert.Contains(t, printed, headerName)
+	assert.Equal(t, headerValue, conf.ExternalServices.Tracing.CustomHeaders[headerName])
+	assert.Equal(t, headerValue, conf.ExternalServices.Prometheus.CustomHeaders[headerName])
+	assert.Equal(t, headerValue, conf.ExternalServices.CustomDashboards.Prometheus.CustomHeaders[headerName])
 
 	assert.NotContains(t, printed, "my-certfile")
 	assert.NotContains(t, printed, "my-keyfile")

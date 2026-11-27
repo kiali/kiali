@@ -99,7 +99,7 @@ func (jc TempoGRPCClient) GetServices(ctx context.Context) (bool, error) {
 	return err == nil, err
 }
 
-// GetServices Test an empty search to check if the service is available
+// GetServicesList reads the service names from a search that must finish successfully.
 func (jc TempoGRPCClient) GetServicesList(ctx context.Context) ([]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
@@ -109,8 +109,7 @@ func (jc TempoGRPCClient) GetServicesList(ctx context.Context) ([]string, error)
 	if err != nil {
 		return nil, err
 	}
-	services, err := processServices(ctx, result)
-	return services, err
+	return processServices(ctx, result)
 }
 
 // processStream
@@ -147,12 +146,10 @@ func processServices(ctx context.Context, stream tempopb.StreamingQuerier_Search
 
 	for received, err := stream.Recv(); err != io.EOF; received, err = stream.Recv() {
 		if err != nil {
-			if status.Code(err) == codes.DeadlineExceeded {
-				zl.Trace().Msg("[gRPC Tempo] client timeout")
-				break
-			}
-			zl.Error().Msgf("[gRPC Tempo] stream error: %v", err)
-			return nil, fmt.Errorf("[gRPC Tempo] Tracing gRPC client, stream error: %v", err)
+			zl.Trace().Msgf("[gRPC Tempo] service probe ended with status %s", status.Code(err))
+			// Discovery distinguishes a failed probe from a successful empty stream
+			// and uses the terminal status to recognize authentication failures.
+			return nil, err
 		}
 		for _, trace := range received.Traces {
 			services = append(services, trace.RootTraceName)

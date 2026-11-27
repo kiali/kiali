@@ -1,7 +1,5 @@
 package cache
 
-// Assisted-by: Claude Code
-
 import (
 	"context"
 	"net/http"

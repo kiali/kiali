@@ -330,6 +330,16 @@ func TestMeshGraph(t *testing.T) {
 	}
 
 	globalInfo.IstioStatusGetter = &fakeMeshStatusGetter{}
+	globalInfo.Conf.ExternalServices.Prometheus.CustomHeaders = map[string]string{"X-Metrics-Token": "test-metrics-token"}
+	tracing := &globalInfo.Conf.ExternalServices.Tracing
+	tracing.CustomHeaders = map[string]string{"Authorization": "Bearer test-tracing-token", "X-Trace-Tenant": "test-tenant"}
+	tracing.InternalURL = "http://fixture-url-user:fixture-url-secret@tracing.istio-system:16685/jaeger?token=fixture-url-secret"
+	tracing.ExternalURL = "https://tracing.example/jaeger?token=fixture-url-secret#fixture-url-secret"
+	tracing.HealthCheckUrl = "https://readiness.example/ready?token=fixture-url-secret"
+	tracing.Auth.OAuth2.TokenURL = "https://issuer.example/token?extra=fixture-url-secret"
+	tracing.XInClusterURL = "http://tracing.istio-system:16685/jaeger?token=fixture-url-secret"
+	tracing.XURL = "https://tracing.example/%bad-url-%?token=fixture-url-secret"
+	originalTracing := *tracing
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/mesh/graph", func(w http.ResponseWriter, r *http.Request) {
@@ -346,6 +356,9 @@ func TestMeshGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
+	assert.NotContains(t, string(actual), "fixture-url-user")
+	assert.NotContains(t, string(actual), "fixture-url-secret")
+	assert.Equal(t, originalTracing, *tracing)
 	t.Logf("Actual response body: %s", string(actual)) // Print the actual variable
 	expectedFilename := "testdata/test_mesh_graph.expected"
 	expected, _ := os.ReadFile(expectedFilename)

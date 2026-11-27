@@ -610,7 +610,7 @@ export class MeshPage extends BasePage {
     const diagnosePromise = this.page
       .waitForResponse(response => response.url().includes('/api/tracing/diagnose') && response.ok())
       .catch(() => undefined);
-    await this.page.getByRole('button', { name: 'Configuration Tester' }).click();
+    await this.page.getByRole('button', { name: 'Configuration Discovery' }).click();
     await expect(this.page.getByRole('dialog')).toBeVisible();
     await diagnosePromise;
   }
@@ -618,12 +618,7 @@ export class MeshPage extends BasePage {
   async expectTraceConfigurationModal(): Promise<void> {
     const dialog = this.page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    await expect(this.page.getByRole('heading', { name: 'Configuration Tester' })).toBeVisible();
-  }
-
-  async expectTraceConfigTabs(): Promise<void> {
-    await expect(this.page.getByRole('tab', { name: 'Discovery' })).toBeVisible();
-    await expect(this.page.getByRole('tab', { name: 'Tester' })).toBeVisible();
+    await expect(this.page.getByRole('heading', { name: 'Configuration Discovery' })).toBeVisible();
   }
 
   async expectTraceConfigFooterActions(): Promise<void> {
@@ -644,85 +639,12 @@ export class MeshPage extends BasePage {
   }
 
   async expectDiscoveryInformation(): Promise<void> {
-    const discovery = this.page.locator('#discovery-tab-content');
+    const discovery = this.page.locator('#tracing-discovery-content');
     await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
     await expect(discovery).toContainText('Possible configuration(s) found');
     await expect(discovery.locator('#valid-configurations')).toContainText('Provider:');
     await expect(discovery).toContainText('Logs');
     await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
     await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
-  }
-
-  async switchToTesterTab(): Promise<void> {
-    await this.page.getByRole('tab', { name: 'Tester' }).click();
-  }
-
-  async toggleTracingProviderInTester(): Promise<void> {
-    await expect(this.getBySel('tracing-config-editor').locator('.monaco-editor')).toBeVisible();
-    await this.page.evaluate(() => {
-      const win = window as Window & {
-        tracingConfigEditor?: {
-          getModel: () => { getFullModelRange: () => unknown };
-          getValue: () => string;
-          executeEdits: (s: string, e: unknown[]) => void;
-        };
-      };
-      const editor = win.tracingConfigEditor;
-      if (!editor) {
-        throw new Error('Tracing config Monaco editor not found');
-      }
-      const editorText = editor.getValue();
-      let replacer = 'tempo';
-      let provider = 'jaeger';
-      if (editorText.includes('tempo')) {
-        replacer = 'jaeger';
-        provider = 'tempo';
-      }
-      const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
-      const model = editor.getModel();
-      const fullRange = model.getFullModelRange();
-      editor.executeEdits('playwright', [{ range: fullRange, text: newText }]);
-    });
-  }
-
-  async toggleUseGrpcInTester(): Promise<void> {
-    await this.page.evaluate(() => {
-      const win = window as Window & {
-        tracingConfigEditor?: {
-          getModel: () => { getFullModelRange: () => unknown };
-          getValue: () => string;
-          executeEdits: (s: string, e: unknown[]) => void;
-        };
-      };
-      const editor = win.tracingConfigEditor;
-      if (!editor) {
-        throw new Error('Tracing config Monaco editor not found');
-      }
-      const editorText = editor.getValue();
-      let currentValue: string | null = null;
-      let targetValue = 'true';
-      if (/useGRPC\s*:\s*true/i.test(editorText)) {
-        currentValue = 'true';
-        targetValue = 'false';
-      } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
-        currentValue = 'false';
-        targetValue = 'true';
-      }
-      if (currentValue !== null) {
-        const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
-        const model = editor.getModel();
-        const fullRange = model.getFullModelRange();
-        editor.executeEdits('playwright', [{ range: fullRange, text: newText }]);
-      }
-    });
-  }
-
-  async clickTestConfiguration(): Promise<void> {
-    await this.getBySel('modal-configuration-tester').getByText('Test Configuration').click();
-  }
-
-  async expectTesterResult(result: 'correct' | 'incorrect'): Promise<void> {
-    const icon = result === 'incorrect' ? 'icon-error-validation' : 'icon-correct-validation';
-    await expect(this.getBySel('modal-configuration-tester').getByTestId(icon)).toBeVisible();
   }
 }

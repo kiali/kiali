@@ -1691,9 +1691,8 @@ func TestChatUsage_Weekly_MissingParamsDefaults(t *testing.T) {
 	promClient := new(prometheustest.PromClientMock)
 	promClient.On("API").Return(promAPI)
 
-	// The default window is the last 12 weeks ending now, so the fixture must
-	// use the current ISO week; a hard-coded week ages out of that window.
-	year, week := time.Now().ISOWeek()
+	// Default missing from/since uses the last 12 weeks ending at time.Now(); anchor mock labels on the current week.
+	year, week := time.Now().UTC().ISOWeek()
 
 	ret := model.Vector{
 		&model.Sample{
