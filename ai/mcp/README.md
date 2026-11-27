@@ -20,6 +20,7 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
   - [list_or_get_resources](#10-list_or_get_resources)
   - [manage_istio_config_read](#11-manage_istio_config_read)
   - [manage_istio_config](#12-manage_istio_config)
+  - [get_troubleshooting_snapshot](#13-get_troubleshooting_snapshot)
 - [Tool Definitions (YAML)](#tool-definitions-yaml)
 - [Tool Execution Flow](#tool-execution-flow)
   - [ExcludedToolNames](#excludedtoolnames)
@@ -359,6 +360,36 @@ Without these permissions, the AI assistant will return a message indicating tha
 
 ---
 
+### 13. `get_troubleshooting_snapshot`
+
+Returns one time-scoped troubleshooting snapshot for a workload or service. The tool calls Kiali's internal business, graph, tracing, log, and Envoy proxy services directly, aggregating the target's logs and Istio metrics, namespace traffic topology, distributed traces, and a current Envoy config dump. Metrics, topology, and traces are included only when their corresponding backends are enabled; traces are omitted when tracing is disabled. This is the preferred first tool for workload and service diagnostics.
+
+**Parameters**:
+- `namespace` (string, required): Namespace of the target.
+- `since` (string, optional): Start of an explicit window, in RFC3339 format. Omit both `since` and `to` to use `durationSeconds`.
+- `to` (string, optional): End of an explicit window, in RFC3339 format. Omit both `since` and `to` to use `durationSeconds`.
+- `durationSeconds` (integer, optional): Length of a current window ending now. Defaults to `900`.
+- `workloadName` (string, optional): Target workload. Provide exactly one of `workloadName` or `serviceName`.
+- `serviceName` (string, optional): Target service. Provide exactly one of `workloadName` or `serviceName`.
+- `clusterName` (string, optional): Cluster name.
+- `graphType` (string, optional): `"versionedApp"` (default), `"app"`, `"service"`, or `"workload"`.
+- `includeLogs`, `includeMetrics`, `includeGraph`, `includeTraces`, `includeEnvoyConfigDump` (boolean, optional): Source selectors. All default to `true`.
+- `maxLogPods`, `maxEnvoyConfigDumps` (integer, optional): Bounds for high-cardinality targets. Defaults are `3` and `1`.
+
+**Returns**: A structured snapshot with `target`, per-source status, and the collected data. Envoy config dumps come from the live proxy admin endpoint and therefore represent the current proxy state, not a historical state at `to`; the response includes this limitation as a warning.
+
+**Example**:
+```json
+{
+  "namespace": "bookinfo",
+  "serviceName": "productpage",
+  "since": "2026-01-01T10:00:00Z",
+  "to": "2026-01-01T11:00:00Z"
+}
+```
+
+---
+
 ## Tool Definitions (YAML)
 
 Tool definitions are described in YAML files under `ai/mcp/tools/`. Each file defines a single tool (or a list with exactly one tool). The loader reads all `*.yaml`/`*.yml` files and registers them by name.
@@ -416,6 +447,7 @@ The AI model calls tools based on user queries:
 - Resource metrics → `get_metrics`
 - CPU/memory analysis → `get_pod_performance`
 - Distributed traces (list) → `list_traces`; drill-down by id → `get_trace_details`
+- Time-scoped incident troubleshooting → `get_troubleshooting_snapshot`
 - List/detail resources → `list_or_get_resources`
 - List accessible clusters → `list_clusters`
 - List/get Istio config → `manage_istio_config_read`

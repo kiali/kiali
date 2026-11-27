@@ -23,6 +23,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcp/get_trace_details"
+	"github.com/kiali/kiali/ai/mcp/get_troubleshooting_snapshot"
 	"github.com/kiali/kiali/ai/mcp/list_clusters"
 	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/list_traces"
@@ -82,6 +83,12 @@ func IsTraceTool(name string) bool {
 
 func IsAmbientTool(name string) bool {
 	_, ok := AmbientToolNames[name]
+	return ok
+}
+
+// IsExternalMCPTool reports whether name is registered for POST /api/chat/mcp without the Kiali-UI header.
+func IsExternalMCPTool(name string) bool {
+	_, ok := MCPToolHandlers[name]
 	return ok
 }
 
@@ -208,6 +215,12 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return get_referenced_docs.Execute(kialiInterface, args)
 	case "get_metrics":
 		return get_metrics.Execute(kialiInterface, args)
+	case "get_troubleshooting_snapshot":
+		resp, errMsg, code := get_troubleshooting_snapshot.Execute(kialiInterface, args)
+		if errMsg != "" {
+			return errMsg, code
+		}
+		return resp, code
 	default:
 		return nil, http.StatusNotFound
 	}
