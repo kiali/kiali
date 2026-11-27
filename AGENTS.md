@@ -283,9 +283,13 @@ make cypress-gui
 # Run Cypress tests headlessly
 make cypress-run
 
-# Run performance tests
+# Run performance tests (Cypress)
 make perf-tests-gui
 make perf-tests-run
+
+# Run performance tests (Playwright)
+make playwright-perf-tests-gui
+make playwright-perf-tests-run
 ```
 
 **Cypress Environment Variables:**
@@ -366,6 +370,20 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `frontend-tempo` | Frontend tracing tests with Tempo |
 | `local` | Runs Kiali locally (not in-cluster) with smoke Cypress tests |
 | `offline` | Runs Kiali in offline mode with must-gather data |
+| `playwright-smoke` | Playwright smoke suite (KinD + in-cluster Kiali) |
+| `playwright-core-1` | Playwright core test group 1 (KinD + in-cluster Kiali) |
+| `playwright-core-2` | Playwright core test group 2 (KinD + in-cluster Kiali) |
+| `playwright-core-caching` | Playwright core-caching suite (KinD + in-cluster Kiali with cache enabled) |
+| `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
+| `playwright-ambient` | Playwright ambient then waypoint+waypoint-tracing (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
+| `playwright-ambient-multi-primary` | Playwright ambient multi-primary suite (KinD east/west + Sail ambient + in-cluster Kiali) |
+| `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
+| `playwright-primary-remote` | Playwright primary-remote multicluster suite (KinD east/west + in-cluster Kiali) |
+| `playwright-multi-primary` | Playwright multi-primary suite (KinD east/west + Sail sidecar + in-cluster Kiali) |
+| `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
+| `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
+| `playwright-tempo` | Playwright tracing suite (KinD + Tempo + in-cluster Kiali via MetalLB) |
+| `playwright-multi-mesh` | Playwright multi-mesh suite (KinD + extra Istio installs in `istio-system-31` / `istio-system-31-1`) |
 
 #### The `local` Suite (Recommended for Local Development)
 
@@ -437,19 +455,74 @@ make cypress-selected   # Runs @selected tagged tests (tag a scenario with @sele
 | Tag | Description | Suite |
 |-----|-------------|-------|
 | `@smoke` | Quick smoke tests (~30 scenarios) | `local` |
-| `@core-1` | Core UI tests group 1 (~130 scenarios) | `frontend-core-1` |
-| `@core-2` | Core UI tests group 2 (~155 scenarios) | `frontend-core-2` |
+| `@core-1` | Core UI tests group 1 (119 scenarios) | `frontend-core-1` |
+| `@core-2` | Core UI tests group 2 (37 scenarios) | `frontend-core-2` |
 | `@crd-validation` | CRD validation tests | `frontend-core-optional` |
 | `@perses` | Perses dashboard tests | `frontend-core-optional` |
 | `@multi-cluster` | Primary-remote multicluster tests | `frontend-primary-remote` |
 | `@multi-primary` | Multi-primary multicluster tests | `frontend-multi-primary` |
 | `@multi-mesh` | Multi-mesh tests | `frontend-multi-mesh` |
 | `@ambient` | Ambient mesh tests | `frontend-ambient` |
+| `@waypoint` | Waypoint tests (run after ambient in the same CI job) | `frontend-ambient` |
+| `@waypoint-tracing` | Waypoint tracing tests | `frontend-ambient` |
 | `@tracing` | Distributed tracing (Tempo) tests | `frontend-tempo` |
 | `@offline` | Offline mode tests | `offline` |
 | `@selected` | Manual selection for debugging | N/A |
 
 **Tip:** To debug a single scenario, add the `@selected` tag to it in the `.feature` file, then run `make cypress-selected`.
+
+#### Playwright e2e (Cypress migration — #9712)
+
+**Before adding or porting Playwright tests, read [`frontend/e2e/README.md`](./frontend/e2e/README.md).** It is the living migration plan (conventions, CI, follow-ups). Work happens on `epic/playwright-migration` until cutover.
+
+**AI agents — do not repeat these mistakes:**
+
+1. **No Cypress retry patterns** — no `robustClick`, `retryOnError`, `waitForTimeout`, or manual click loops. Use `locator.click()` and `await expect(…)` (Playwright auto-waits; `actionTimeout: 40_000`).
+2. **Upgrade selectors when porting** — do not copy Cypress verbatim. No `:nth-child`, `li[role="none"]`, or PF internal classes (`pf-v6-*`). Use `getByRole`, `getByTestId`, `data-test`; add `data-test` in source when needed.
+3. **Suite tags** — use Playwright’s native `tag` option via [`frontend/e2e/utils/suite-tags.ts`](./frontend/e2e/utils/suite-tags.ts) (`core1`, `smokeAndCoreCaching`, …), not `@smoke` embedded only in titles. Run with `yarn playwright:run:smoke` / `yarn playwright:run:core1` or `--project=`.
+4. **Auth** — `getAuthStrategy(page)` from `/api/auth/info`, never `process.env` from setup. OpenShift-only tests: `test.skip(strategy !== 'openshift')`. Logout spec uses empty `storageState` so it does not invalidate shared `AUTH_FILE`.
+5. **OSSMC** — `page.route('**/api/…')`, [`linkSelector()`](./frontend/e2e/utils/linkSelector.ts) for navigation links.
+6. **Health table tooltips** — hover `td[data-label="Health"] .pf-v6-c-icon__content`; assert `getByRole('tooltip').toContainText(status)` (failure/degraded tooltips have multiple `<strong>` nodes).
+7. **Filters** — `getByRole('option', { name, exact: true })`; open dropdown once to assert all options; do not loop open/close per option.
+8. **CI** — do not run `playwright test --last-failed` before blob merge (Jenkins JUnit under-reports). Copy patterns from existing `frontend/e2e/` specs and page objects before inventing new helpers.
+9. **No Cypress in Playwright comments** — do not add comments in `frontend/e2e/` that mention Cypress (e.g. “matches Cypress”, “Cypress only asserts”). Port behavior from Cypress when needed, but comments and test code should stand on their own; migration context belongs in `AGENTS.md` / `e2e/README.md`, not inline.
+
+**Commands:**
+
+```bash
+cd frontend
+yarn playwright:install chromium
+yarn playwright:run:smoke
+yarn playwright:run:core1
+yarn playwright:run:core2
+yarn playwright:run:core-caching
+yarn playwright:run:core-optional
+yarn playwright:run:ambient
+yarn playwright:run:waypoint
+yarn playwright:run:ambient-multi-primary
+yarn playwright:run:external-kiali
+yarn playwright:run:multi-cluster
+yarn playwright:run:multi-primary
+yarn playwright:run:tracing
+yarn playwright:run:multi-mesh
+yarn playwright:run:perf   # page-load timings, separate playwright-perf.config.ts
+hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
+hack/run-integration-tests.sh --test-suite playwright-core-1
+hack/run-integration-tests.sh --test-suite playwright-core-2
+hack/run-integration-tests.sh --test-suite playwright-core-caching
+hack/run-integration-tests.sh --test-suite playwright-core-optional
+hack/run-integration-tests.sh --test-suite playwright-ambient
+hack/run-integration-tests.sh --test-suite playwright-ambient-multi-primary
+hack/run-integration-tests.sh --test-suite playwright-external-kiali # KinD multicluster + in-cluster Kiali (OpenID)
+hack/run-integration-tests.sh --test-suite playwright-primary-remote # KinD primary-remote east/west
+hack/run-integration-tests.sh --test-suite playwright-multi-primary # KinD multi-primary east/west
+hack/run-integration-tests.sh --test-suite playwright-offline
+hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
+hack/run-integration-tests.sh --test-suite playwright-tempo
+hack/run-integration-tests.sh --test-suite playwright-multi-mesh
+```
+
+**Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`; the perf suite lives in `frontend/e2e/perf/` with `frontend/playwright-perf.config.ts`. Cypress remains in `frontend/cypress/` until cutover.
 
 #### Debugging Cypress Tests with Playwright MCP
 

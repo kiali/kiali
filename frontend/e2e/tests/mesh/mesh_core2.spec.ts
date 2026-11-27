@@ -1,0 +1,66 @@
+import { test } from '../../fixtures/kialiFixtures';
+import { hasGrafanaDeployment, hasSailIstioCr } from '../../utils/kialiConfig';
+import { kubectlScaleDeployment } from '../../utils/kubectl';
+import { applySharedMeshConfig, restoreSharedMeshConfig } from '../../utils/sharedMeshConfig';
+import { core2 } from '../../utils/suite-tags';
+
+/**
+ * Grafana scale and shared-mesh Sail patches both touch istio-system; run serially so
+ * parallel workers do not race on control-plane state (Jenkins OSSM).
+ */
+test.describe('Mesh page core-2', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test.afterEach(() => {
+    try {
+      kubectlScaleDeployment('istio-system', 'grafana', 1);
+    } catch {
+      // Best-effort restore of default Grafana replicas after the upscale test.
+    }
+  });
+
+  test('Grafana Infra unreachable', core2, async ({ meshPage }) => {
+    test.setTimeout(180_000);
+    test.skip(!hasGrafanaDeployment(), 'Grafana deployment is not installed in istio-system');
+
+    await meshPage.open();
+    await meshPage.enableKialiInfraDiscovery();
+    await meshPage.selectMeshNodeByLabel('Grafana');
+    await meshPage.expectNodeSidePanel('Grafana');
+    test.skip(
+      await meshPage.usesLocalGrafanaPortForward(),
+      'Grafana uses a local port-forward URL; scaling the deployment does not make it unreachable locally'
+    );
+
+    kubectlScaleDeployment('istio-system', 'grafana', 0);
+    await meshPage.refreshPage();
+    await meshPage.syncInfraHealthToUi('Grafana', health => health !== 'Healthy');
+    await meshPage.selectNodeAndExpectSidePanelIcon('Grafana', 'error');
+    await meshPage.expectSidePanelContains('Version: unknown');
+
+    kubectlScaleDeployment('istio-system', 'grafana', 1);
+    await meshPage.refreshPage();
+    await meshPage.syncInfraHealthToUi('Grafana', health => health === 'Healthy');
+    await meshPage.selectNodeAndExpectSidePanelIcon('Grafana', 'correct');
+    await meshPage.expectNoSidePanelIcon('error');
+    await meshPage.expectNoSidePanelIcon('warning');
+  });
+
+  test('Shared mesh config is seen on istiod panel', core2, async ({ meshPage, request }) => {
+    test.skip(!hasSailIstioCr(), 'Sail Istio CR is required for shared mesh config (@shared-mesh-config)');
+    test.setTimeout(240_000);
+
+    await applySharedMeshConfig(request);
+    try {
+      await meshPage.open();
+      await meshPage.selectMeshNodeByLabel('istiod');
+      await meshPage.expectControlPlaneSidePanel();
+      await meshPage.expectConfigTabs('effective,standard,shared');
+      await meshPage.expectConfigTabContains('effective', 'mode: REGISTRY_ONLY');
+      await meshPage.expectConfigTabContains('shared', 'mode: REGISTRY_ONLY');
+      await meshPage.expectConfigTabNotContains('standard', 'mode: REGISTRY_ONLY');
+    } finally {
+      restoreSharedMeshConfig();
+    }
+  });
+});

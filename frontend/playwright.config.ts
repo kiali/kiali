@@ -1,0 +1,227 @@
+import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
+import { AUTH_FILE } from './e2e/utils/auth';
+import { OFFLINE_PROJECT_NAME } from './e2e/utils/projects';
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001';
+const isCI = !!process.env.CI;
+
+/** Jenkins / local video override: on | off | retain-on-failure (default). */
+const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
+
+/**
+ * Yarn scripts set PLAYWRIGHT_BLOB_NAME per suite so chained Jenkins runs
+ * (run:junit / run:all) keep one zip and one junit XML each — same idea as
+ * Cypress results-[hash].xml. combine:reports then jrm-merges the XMLs
+ * (and optionally merge-reports the blobs). Never overwrite a shared
+ * junit-results.xml across suites or Jenkins only sees the last suite.
+ * Each suite also gets its own blob and test-results directory: Playwright
+ * clears those directories at the start of a run, so sibling suites sharing
+ * one would keep only the last suite's zip / failure artifacts.
+ */
+const suiteReportName = process.env.PLAYWRIGHT_BLOB_NAME ?? 'results';
+const junitOutputFile = `playwright/results/junit-${suiteReportName}.xml`;
+const emitBlob = isCI || !!process.env.PLAYWRIGHT_BLOB_NAME;
+
+const reporters: ReporterDescription[] = [
+  ['list'],
+  ...(emitBlob
+    ? ([
+        [
+          'blob',
+          {
+            fileName: `${suiteReportName}.zip`,
+            outputDir: `playwright/blob-report/${suiteReportName}`
+          }
+        ]
+      ] as ReporterDescription[])
+    : ([['html', { open: 'never', outputFolder: 'playwright/report' }]] as ReporterDescription[])),
+  ['junit', { outputFile: junitOutputFile }]
+];
+
+/**
+ * Projects mirror hack/run-integration-tests.sh suites.
+ * Suite membership is controlled by Playwright test tags (e.g. `{ tag: '@smoke' }`).
+ * Project `grep` matches those tags (and titles if tags are embedded there).
+ * Overlapping tags use negative lookaheads (e.g. @waypoint vs @waypoint-tracing).
+ */
+export default defineConfig({
+  testDir: './e2e/tests',
+  // Failure artifacts (screenshots, videos, traces) under playwright/ like Cypress
+  // outputs. Per-suite for the same reason as the blob dir (see suiteReportName).
+  outputDir: `playwright/test-results/${suiteReportName}`,
+  fullyParallel: true,
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  failOnFlakyTests: isCI,
+  // Jenkins shared runners have limited CPU/memory; cap at 2 to avoid OOM and
+  // flaky timeouts under contention. Local runs use Playwright's cpu/2 default.
+  workers: isCI ? 2 : undefined,
+  timeout: 60_000,
+  expect: {
+    timeout: 40_000
+  },
+  reporter: reporters,
+  grep: process.env.PLAYWRIGHT_GREP ? new RegExp(process.env.PLAYWRIGHT_GREP) : undefined,
+  grepInvert: process.env.PLAYWRIGHT_GREP_INVERT ? new RegExp(process.env.PLAYWRIGHT_GREP_INVERT) : undefined,
+  use: {
+    baseURL,
+    // OpenShift routes / CRC often use custom or self-signed certs
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === '1' || baseURL.startsWith('https://'),
+    // Kiali interactive elements use data-test (not Playwright's default data-testid)
+    testIdAttribute: 'data-test',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: videoMode,
+    viewport: { width: 1920, height: 1080 },
+    actionTimeout: 40_000,
+    navigationTimeout: 90_000
+  },
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      testDir: './e2e/global-setup'
+    },
+    {
+      name: 'caching-setup',
+      testMatch: /caching\.setup\.ts/,
+      testDir: './e2e/global-setup',
+      // Must run after auth: enabling cache restarts in-cluster Kiali; parallel auth hits ECONNREFUSED.
+      dependencies: ['setup']
+    },
+    {
+      name: 'smoke',
+      grep: /@smoke/,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_FILE
+      }
+    },
+    {
+      name: 'core-1',
+      grep: /@core-1/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'core-2',
+      grep: /@core-2/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'core-caching',
+      grep: /@core-caching/,
+      dependencies: ['caching-setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'crd-validation',
+      grep: /@crd-validation/,
+      dependencies: ['setup'],
+      // CRD tests mutate shared namespaces (sleep, istio-system, bookinfo); run sequentially.
+      fullyParallel: false,
+      timeout: 180_000,
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'perses',
+      grep: /@perses/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'ambient',
+      grep: /@ambient(?!-)/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'waypoint-setup',
+      testMatch: /waypoint\.setup\.ts/,
+      testDir: './e2e/global-setup',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'waypoint',
+      grep: /@waypoint(?!-)/,
+      dependencies: ['waypoint-setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'waypoint-tracing',
+      grep: /@waypoint-tracing/,
+      dependencies: ['waypoint-setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'ambient-multi-primary',
+      grep: /@ambient-multi-primary/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'waypoint-multicluster',
+      grep: /@waypoint-multicluster/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'multi-cluster',
+      grep: /@multi-cluster(?!-mutations)/,
+      grepInvert: /@multi-primary/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'multi-cluster-mutations',
+      grep: /@multi-cluster-mutations/,
+      // Scales istiod/grafana to 0 on east, breaking istio writes cluster-wide.
+      // Projects share workers and interleave freely, so only the multi-cluster
+      // dependency guarantees no overlap with that suite's tests still running
+      // on the other worker.
+      dependencies: ['setup', 'multi-cluster'],
+      fullyParallel: false,
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'multi-primary',
+      grep: /@multi-primary/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'multi-mesh',
+      grep: /@multi-mesh/,
+      dependencies: ['setup'],
+      timeout: 180_000,
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'external-kiali',
+      grep: /@external-kiali/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'tracing',
+      grep: /(?<!waypoint-)@tracing/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: OFFLINE_PROJECT_NAME,
+      grep: /@offline/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
+      name: 'ai-chatbot',
+      grep: /@ai-chatbot/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    }
+  ]
+});

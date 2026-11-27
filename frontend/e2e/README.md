@@ -1,0 +1,355 @@
+# Playwright e2e
+
+Living guide for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)).
+
+> **Companion files (temporary):** Detailed porting conventions live in [`AGENTS.md`](AGENTS.md);
+> progress tracking and checklists in [`MIGRATION-PLAN.md`](MIGRATION-PLAN.md). Both are deleted
+> before merging to `master`.
+
+## Quick reference
+
+- Native Playwright Test (not `playwright-bdd`)
+- Suite tags: `e2e/utils/suite-tags.ts` (`smokeAndCoreCaching`, `core1`, …) — use Playwright's native `tag` option, not tags in titles
+- `testIdAttribute: 'data-test'` in `playwright.config.ts`
+- Auth: `storageState` from `e2e/global-setup/auth.setup.ts`; strategy via `getAuthStrategy(page)` (`/api/auth/info`)
+- Page objects extend `BasePage` (`getBySel`, `waitForLoad`) — no custom click/retry helpers
+- OSSMC: `page.route('**/api/...')`, `linkSelector()` for kiosk `<button data-href>`
+- List pages with toggles: `gotoListPage()` rewrites `/api/config` `showIncludeToggles`
+
+---
+
+## Migration conventions (required)
+
+These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) plan and review feedback on PRs #10174, #10195, #10217, #10220. Do not re-introduce Cypress patterns when porting.
+
+### Comments — no Cypress references in Playwright code
+
+Do **not** add comments in `frontend/e2e/` that mention Cypress (e.g. “matches Cypress”, “Cypress only asserts”). When porting, mirror Cypress behavior in the test, but keep comments and assertions self-contained. Migration notes belong here or in `AGENTS.md`, not inline in specs or page objects.
+
+### Playwright mechanics — trust auto-wait
+
+- **No `page.waitForTimeout()`** — Playwright auto-waits on every action (`actionTimeout: 40_000` in config).
+- **No `robustClick` / `retryOnError` / manual click loops** — `locator.click()` already retries for actionability (visible, stable, not covered). If a PF overlay blocks the target, wait for it to disappear: `await expect(overlay).not.toBeVisible()` then click.
+- **No stale-element retries** — Playwright locators re-query the DOM; Cypress-style retry loops add latency and hide real errors.
+- Prefer **web-first assertions** (`await expect(locator).…`) over `innerText()` + raw `expect()`.
+
+### Selectors — upgrade when porting, do not copy Cypress verbatim
+
+| Avoid | Use instead |
+|-------|-------------|
+| `li[role="none"]`, structural PF nodes | `getByRole('menuitem', { name })`, `getByRole('option', { name, exact: true })` |
+| `#foo > :nth-child(n)`, positional indices | `getByRole`, `getByTestId`, or add `data-test` in source |
+| PF classes (`pf-v6-c-*`, `pf-m-*`) for interaction | `data-test` or ARIA roles (classes change across PF versions) |
+| `input[placeholder="…"]` | `getByTestId` on the input (placeholders break under i18n) |
+| Bare `#filter_select_value` long term | Prefer `data-test` on `StatefulFilters` (see follow-ups below) |
+
+**OSSMC:** `linkSelector()` matches standalone `<a href>` and kiosk `<button data-href>`.
+
+**Namespace dropdown:** `getByRole('checkbox', { name: namespace })` instead of `input[value=…]`.
+
+**Modals:** `getByRole('heading', { name, level: 1 })` instead of `h1.pf-v6-c-modal-box__title`.
+
+### Filters and dropdowns
+
+- **Exact option names** — e.g. `Present` vs `Not Present`, `Valid` vs `Not Validated` (`exact: true` on `getByRole('option')`).
+- **Open once, assert all, close once** — do not loop open/close per option (Cypress `optionCheck` anti-pattern).
+- **Apply filters by name**, not by nth-child index in dropdown lists.
+- **LabelGroup overflow:** PF renders overflow text as `"${n} more"` (no `+` prefix). Use `filterSelection().getByRole('button', { name: /\d+ more/ })` — not PF overflow classes.
+
+### Assertions — positive over negative lists
+
+- Do not assert validity by listing what a value is **not** (`not.toEqual('unknown')`, `not.toContainText('undefined')`, etc.).
+- Use **positive** checks: `toHaveText(/^v?\d+\.\d+\.\d+/)` for semver fields, `toMatch(…)` for structured text, `toBeGreaterThan(n)` for counts.
+
+### Suite tags and projects
+
+- Put suite membership in the Playwright **`tag` option** via exports in `e2e/utils/suite-tags.ts` (e.g. `test('…', core1, async () => { … })`).
+- **Do not** embed `@smoke` / `@core-1` only in the title string — reports stay clean and tags stay typed.
+- A tag in the title with **no matching project `grep`** is a no-op (e.g. use `annotation` for cluster preconditions like "Prometheus disabled", not a fake `@prometheus-disabled` project tag).
+- Run suites with **`--project=`** / `yarn playwright:run:smoke` / `yarn playwright:run:core1`. If using `PLAYWRIGHT_GREP` (Jenkins `TEST_TAGS`), run auth setup first — `authenticate` has no suite tag. `yarn playwright:run:test-group:junit` handles that.
+
+### Auth
+
+- **Never** rely on `process.env` set in the setup worker — workers do not inherit it. Use `getAuthStrategy(page)` or `request.get('/api/auth/info')`.
+- **OpenShift-only** login/logout/cookie/session tests: `test.skip(strategy !== 'openshift', '…')` on KinD/Jenkins anonymous CI — **skip**, do not fail the suite.
+- **Logout** must use `test.use({ storageState: { cookies: [], origins: [] } })` so `/api/logout` does not invalidate `AUTH_FILE` for later projects.
+- Unimplemented strategies (`token`): prefer failing setup with JUnit output (empty `storageState` + `expect(implemented).toContain(strategy)`) over a bare `throw` that skips all projects with no report. `openid` (Keycloak) and `openshift` are implemented.
+
+### Health indicators in tables
+
+Cypress hovers the first-column icon and checks tooltip text. Playwright equivalent:
+
+1. Hover **`row.locator('td[data-label="Health"] .pf-v6-c-icon__content')`** (PF6 does not put `aria-label` on a row descendant for the trigger).
+2. Assert **`await expect(page.getByRole('tooltip')).toContainText(healthStatus)`** — not `tooltip.locator('strong')` alone: failure/degraded tooltips include multiple `<strong>` nodes (status + traffic legend).
+3. Bulk "all healthy" checks: scope to `tbody td[data-label="Health"]`, not unscoped icons.
+4. Retry via refresh + `waitForLoadingComplete`, not long hover timeouts only.
+
+### Sidebar
+
+Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVisible()` — not `aria-hidden` alone (can diverge from CSS visibility during PF transitions).
+
+### CI and Jenkins
+
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-primary-remote`, `playwright-multi-primary`, `playwright-offline`, `playwright-ai-chatbot`, `playwright-tempo`, `playwright-multi-mesh`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional/external-kiali/primary-remote/multi-primary/ai-chatbot/tempo/multi-mesh, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **primary-remote** uses KinD east/west (`@multi-cluster` and not `@multi-primary`). **multi-primary** uses KinD multi-primary Sail (sidecar, anonymous). **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). **ai-chatbot** enables `chat_ai` via Helm (`--enable-ai`) and installs demos with `--install-errorrates-beta false`. **tempo** installs Sail Tempo and deploys in-cluster Kiali with Tempo provider URLs (parity with Cypress `frontend-tempo`). **multi-mesh** is one KinD cluster plus extra Istio installs (`istio-system-31` / `istio-system-31-1`), matching Cypress `frontend-multi-mesh`. One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching) — same scope as Cypress Jenkins `cypress:run:junit`. `playwright:run:all` is an alias of that set (does **not** include smoke/perses/tracing/ai-chatbot; those stay GitHub KinD suites or dedicated `TEST_SET`s). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds). Chained suites set unique `PLAYWRIGHT_BLOB_NAME` and continue on failure (`|| r=1`); each suite writes `junit-<name>.xml` plus a blob zip; `playwright:combine:reports` **jrm**-merges the XMLs into `combined-report.xml` (and merges blobs for HTML). Do not overwrite one shared `junit-results.xml` or Jenkins only counts the last suite. No Jenkinsfile change required.
+- **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `playwright/blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
+- **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
+- Local `kiali run --port-forward-grafana` without `external_services.grafana` in config: **WARN** on `/api/status` (`grafana URL is not set`) is expected and does not fail tests.
+
+### PR slicing (incremental migration)
+
+- Port **one feature area** (or one `.feature` file's tag scope) per PR; state deferred tags in the PR body (e.g. `@multi-cluster` / `@core-caching` apps scenarios left in Cypress until their phase).
+- `@core-1` across the repo is **much larger** than apps + column management — graph, istio config details, etc. remain Cypress until ported.
+- Coexistence: Cypress stays until cutover gate (2+ green full Playwright runs on all suites).
+
+---
+
+## Coverage
+
+### Smoke (`yarn playwright:run:smoke`)
+
+Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters. On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session). The mesh “Local-kiali” scenario **skips on in-cluster** CI (requires `kiali run` on localhost).
+
+### Core-1 (`yarn playwright:run:core1`)
+
+Ports all Cypress `@core-1` scenarios (144 tests): graph display, toolbar, legend, find/hide, context menu, side panel, replay; istio config list; apps list, health, app details graph; column management.
+
+### Core-2 (`yarn playwright:run:core2`)
+
+Ports all Cypress `@core-2` scenarios (37 tests, 1:1 with the cypress @core-2 scenario count): mesh, shared mesh, sidecar injection, istio config editor/actions, workload logs, wizards, and related list/detail flows (PR #10269).
+
+### Core-caching (`yarn playwright:run:core-caching`)
+
+Ports Cypress `@core-caching` scenarios: overview health/cache metrics, namespaces/services/workloads/apps list caching, mesh infra, manual refresh, details pages (app/service/workload/namespace), graph cache metrics, istio config wizards/editor, request routing wizard, workload logs. Includes smoke scenarios tagged `smokeAndCoreCaching`.
+
+CI deploys in-cluster Kiali with graph/health cache enabled (demos before Kiali, same order as Cypress). For local debugging against a cache-enabled binary:
+
+```bash
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-cache.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-tracing --enable-tracing \
+  --port-forward-prom --port-forward-grafana --no-browser
+```
+
+Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-caching`.
+
+### Core-optional (`yarn playwright:run:core-optional`)
+
+Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (in-cluster Kiali, bookinfo + sleep, Perses Helm chart in `istio-system` with `external_services.perses` wired via setup).
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-core-optional
+```
+
+### Perses (`yarn playwright:run:perses`)
+
+Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
+
+Requires Perses in the cluster **and** `external_services.perses` in the Kiali config (CI: `hack/run-integration-tests.sh --test-suite playwright-core-optional`). For local binary debugging, use `hack/ci-yaml/ci-test-config-perses.yaml` and port-forward Perses to `localhost:4000` so both `external_url` and `internal_url` resolve.
+
+### Ambient (`yarn playwright:run:ambient`)
+
+Ports `@ambient` scenarios. KinD setup matches Cypress `frontend-ambient` (ambient Sail, demos
+including `install-waypoints.sh`, **in-cluster Kiali** via MetalLB; anonymous auth).
+
+Waypoint enrollment mutates bookinfo, so CI runs **ambient first**, then `yarn playwright:run:waypoint`
+(`waypoint` + `waypoint-tracing`). Bookinfo enrollment and gateway traces readiness run in
+`waypoint-setup` / helpers. `@waypoint-tracing` covers mesh waypoints/ztunnel, details trace/span UI,
+workload log spans, and graph Traces tab (tooltip heat maps deferred). Multicluster waypoint coverage
+runs under `playwright-ambient-multi-primary`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-ambient
+# locally after the ambient cluster is up:
+cd frontend
+yarn playwright:run:ambient
+yarn playwright:run:waypoint
+```
+
+### Ambient multi-primary (`yarn playwright:run:ambient-multi-primary`)
+
+Ports `@ambient-multi-primary` (7 tests) and `@waypoint-multicluster` (5 tests). KinD **multi-primary**
+ambient Sail with `--waypoint true` (baseline `bookinfo` without namespace enrollment plus
+`bookinfo-waypoints` for L7), **in-cluster** Kiali via MetalLB, anonymous auth.
+
+CI runs ambient-multi-primary first, then `yarn playwright:run:waypoint-multicluster` (unique
+`PLAYWRIGHT_BLOB_NAME`, combined reports) — same chain as Cypress `cypress:run:ambient-multi-primary`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-ambient-multi-primary
+# locally after the cluster is up:
+cd frontend
+yarn playwright:run:ambient-multi-primary
+yarn playwright:run:waypoint-multicluster
+```
+
+### External Kiali (`yarn playwright:run:external-kiali`)
+
+Ports mesh page `@external-kiali` scenarios (mgmt + mesh clusters). CI uses KinD multicluster `external-kiali`, OpenID/Keycloak (`kiali`/`kiali`), and **in-cluster** Kiali (not the local binary).
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-external-kiali
+# or setup once, then:
+hack/run-integration-tests.sh --test-suite playwright-external-kiali --setup-only true
+hack/run-integration-tests.sh --test-suite playwright-external-kiali --tests-only true
+```
+
+### Primary-remote multi-cluster (`yarn playwright:run:multi-cluster`)
+
+Ports `@multi-cluster` scenarios that are **not** dual-tagged `@multi-primary` (lists, details, graph, mesh, traffic policies, wizards). CI uses KinD primary-remote (east/west), anonymous auth, and in-cluster Kiali. Set `PLAYWRIGHT_CLUSTER1_CONTEXT` / `PLAYWRIGHT_CLUSTER2_CONTEXT` (defaults `kind-east` / `kind-west`).
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-primary-remote
+# or setup once, then:
+hack/run-integration-tests.sh --test-suite playwright-primary-remote --setup-only true
+hack/run-integration-tests.sh --test-suite playwright-primary-remote --tests-only true
+```
+
+### Multi-primary (`yarn playwright:run:multi-primary`)
+
+Ports the Cypress `@multi-primary` scenarios: mesh topology (dataplane/controlplane per cluster, namespace panel donut/badge, no ambient badge on sidecar istiod), request routing / traffic policies / Istio config editor on west, Gateway create in both clusters, graph context-menu and side-panel traffic routing for remote services, the Istio config list cluster column, and the `@authorization` limited-user RBAC + restricted remote-namespace graph scenarios. CI uses KinD **multi-primary** Sail (sidecar, no ambient), **openid/Keycloak** auth (the RBAC scenarios need a non-admin user; they skip on anonymous), and in-cluster Kiali.
+
+Everything that mutates `bookinfo/ratings` traffic routing lives in one serial block in `wizards.spec.ts` — Playwright schedules sibling spec *files* in parallel, so a second file deleting the same VirtualService mid-test is a flake source. The limited-user specs run with empty `storageState` so the admin's Keycloak SSO session does not suppress the login form.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-multi-primary
+```
+
+### Offline (`yarn playwright:run:offline`)
+
+Most offline coverage is **dual-tagged**: the same scenarios run in their live-cluster suite
+(core-1, core-2, core-caching, ambient) and again in the `offline` project against must-gather
+data, via the `core1AndOffline` / `core2AndOffline` / `coreCachingAndOffline` /
+`ambientAndOffline` helpers in `e2e/utils/suite-tags.ts` (mirroring Cypress scenarios tagged
+e.g. `@core-1 @offline`). Together with the `@offline`-only scenarios — status icon on
+overview, minigraph offline state on workload details, graph context-menu / side-panel
+view-only traffic actions, and Istio Config list Name/Namespace/Type (no Cluster column) —
+this gives the offline project ~167 tests.
+
+CI uses `hack/run-integration-tests.sh --test-suite playwright-offline`: it sets up the KinD
+cluster with demo apps, records a must-gather (`kiali gather`, plus a seeded fault-injection
+VirtualService), then starts `kiali run offline --data-path <must-gather>` on port 20001 and
+points Playwright at it. The cluster stays up during the run, but demo-app install hooks
+(`ensureDemoApp`) are skipped in the offline project, so the suite also runs locally against
+a pre-built must-gather with no live cluster.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-offline
+```
+
+### AI chatbot (`yarn playwright:run:ai-chatbot`)
+
+Covers toggle/theme, messaging, navigation actions, new chat/provider, tools, YAML attachments, and
+errors/interaction modes. Chat SSE is mocked via `page.route`; YAML create/patch/delete hit real
+Istio APIs against bookinfo. CI deploys **in-cluster** Kiali with `chat_ai` enabled (`--enable-ai`).
+For local binary debugging, use `hack/ci-yaml/ci-test-config-ai.yaml`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
+```
+
+### Tempo / tracing (`yarn playwright:run:tracing`)
+
+App/service/workload Traces tab, graph side panel traces list, and workload logs spans.
+KinD setup installs Sail + Tempo and deploys **in-cluster** Kiali via MetalLB with the Tempo
+provider. For local binary debugging, use `hack/ci-yaml/ci-test-config-tempo.yaml` with
+`--port-forward-tracing`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-tempo
+```
+
+### Multi-mesh (`yarn playwright:run:multi-mesh`)
+
+Ports Cypress `@multi-mesh` scenarios from `mesh.feature` (4 tests): expected mesh infra (dual-tagged with `@core-caching` on the existing mesh spec), mesh tab count, dataplane namespace summary, and control-plane cluster names. CI uses one KinD cluster plus extra Istio control planes in `istio-system-31` and `istio-system-31-1`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-multi-mesh
+```
+
+### Perf (`yarn playwright:run:perf`)
+
+Page-load timings, not assertions. Ports the Cypress perf suite (`cypress-perf.config.ts`,
+`cypress/perf/`) to `e2e/perf/` with its own `playwright-perf.config.ts`: overview, graph (including
+the issue #8524 appender combinations), namespaces, and the apps / services / workloads / istio
+config list and details pages.
+
+The suite is **not** part of `playwright.config.ts` — measurements need a single worker, no retries,
+and no trace/video instrumentation, and nothing fails on a slow page. Each measured page is loaded
+`PERF_VISITS` (default 5) times; the average is compared against `e2e/perf/fixtures/baselines.json`
+and written to `playwright/results/performance.txt` by `e2e/perf/perfReporter.ts`:
+
+```
+[Graph page]
+
+All Namespaces Graph load time: 3.8421 sec, baseline: 4 sec, difference: -0.15790 sec
+```
+
+Readiness per page type (`e2e/perf/utils/measure.ts`): graph waits on
+`#pft-graph[data-ready="true"]`, lists on `filter-toolbar`, details on `#basic-tabs`, and every visit
+also waits out `#loading_kiali_spinner`. Timing is `performance.now()` evaluated in the loaded
+document, i.e. elapsed time since that navigation started.
+
+```bash
+yarn playwright:run:perf                              # headless, writes the text report
+yarn playwright:perf                                  # UI mode runner
+PERF_VISITS=1 yarn playwright:run:perf                # quick check
+make playwright-perf-tests-run                        # from the repo root
+```
+
+Environment knobs: `PERF_VISITS`, `PERF_READY_TIMEOUT` (default 300000 ms), `PERF_TEST_TIMEOUT`,
+`PERF_REPORT_FILE`, `PERF_PARAMS_FILE` and `PERF_BASELINES_FILE` (point at your own fixture copies to
+measure a different environment).
+
+The measured Kiali must serve a UI built from this branch: released images (e.g.
+`quay.io/kiali/kiali:v2.31`) have neither `data-ready` on `#pft-graph` nor `data-test="filter-toolbar"`,
+so the graph and list measurements wait out `PERF_READY_TIMEOUT` instead of timing a load.
+
+## Local run
+
+Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
+
+```bash
+cd frontend
+yarn playwright:install chromium   # once, after yarn install
+yarn playwright:run:smoke
+yarn playwright:run:core1
+yarn playwright:run:core2
+yarn playwright:run:core-caching
+yarn playwright:run:core-optional
+yarn playwright:run:perses
+yarn playwright:run:ambient
+yarn playwright:run:waypoint
+yarn playwright:run:ambient-multi-primary
+yarn playwright:run:waypoint-multicluster
+yarn playwright:run:external-kiali
+yarn playwright:run:multi-cluster
+yarn playwright:run:multi-primary
+yarn playwright:run:offline
+yarn playwright:run:ai-chatbot
+yarn playwright:run:tracing
+yarn playwright:run:multi-mesh
+yarn playwright:run:perf
+yarn playwright:run:smoke --headed
+yarn playwright:ui --project=smoke
+```
+
+Use `yarn playwright:install` — not `yarn playwright install`.
+
+## CI
+
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-primary-remote`, `playwright-multi-primary`, local+offline (`playwright-smoke` + `playwright-offline`), `playwright-ai-chatbot`, `playwright-tempo`, and `playwright-multi-mesh` integration suites (`hack/run-integration-tests.sh`).
+
+Jenkins: `kiali/test-jobs/kiali-playwright-tests` — default `TEST_SET=playwright:run:junit` (or `playwright:run:all`, same suites) with empty `TEST_TAGS` on OpenShift; ambient / multi-cluster / multi-primary via their `:junit` scripts. Smoke/perses/tracing/ai-chatbot are not part of that Jenkins default (GitHub KinD or a dedicated `TEST_SET`).
+
+`playwright:run:all` is an alias of `playwright:run:junit` (crd-validation, core-1, core-2, core-caching) — the same set Jenkins runs on the OpenShift default. All other suites (smoke, core-optional, tracing, ai-chatbot, ambient, ambient-multi-primary, waypoint, external-kiali, multi-cluster, multi-mesh, offline) each have their own dedicated script and GitHub KinD workflow (see the suite sections above).
+
+---
+
+## Follow-ups (from review / not done yet)
+
+- `cleanup` fixture (`cleanup.trackNamespace()`) instead of ad-hoc `afterEach` / kubectl for demo mutations.
+- `page.routeWebSocket()` wherever graph live updates are mocked.
+- `token` auth in `auth.setup.ts` (`openid` supported for external-kiali / Keycloak).
+- OSSMC Playwright sync and Cypress cutover ([#9712](https://github.com/kiali/kiali/issues/9712) later phases).
