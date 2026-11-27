@@ -21,6 +21,9 @@ export const core2 = { tag: '@core-2' as const };
 /** @smoke + @prometheus-disabled */
 export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disabled'] };
 
+/** @smoke + @core-1 */
+export const smokeAndCore1 = { tag: ['@smoke', '@core-1'] };
+
 /** @crd-validation — frontend-core-optional suite */
 export const crdValidationOnly = { tag: '@crd-validation' as const };
 

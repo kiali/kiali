@@ -19,6 +19,11 @@ test.describe('Mesh page core-2', () => {
     }
   });
 
+  test('Kiali and observability are hidden by default', core2, async ({ meshPage }) => {
+    await meshPage.open();
+    await meshPage.expectInfraNodesHiddenByDefault(['kiali', 'grafana', 'metricStore', 'traceStore', 'perses']);
+  });
+
   test('Grafana Infra unreachable', core2, async ({ meshPage }) => {
     test.setTimeout(180_000);
     test.skip(!hasGrafanaDeployment(), 'Grafana deployment is not installed in istio-system');

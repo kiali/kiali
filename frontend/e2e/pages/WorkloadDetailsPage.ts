@@ -380,6 +380,39 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(this.page.getByTestId('metrics-chart').first()).toBeVisible();
   }
 
+  /**
+   * Envoy memory overview: the dashboard is often fetched while the workload Overview tab
+   * renders the Envoy status row and reused from the 5s client cache, so assert on the
+   * rendered content rather than waiting for a second response.
+   */
+  async expectEnvoyMemoryOverview(): Promise<void> {
+    await openDetailsTab(this.page, 'Envoy');
+    await this.openEnvoyTab('Overview');
+    await expect(this.getBySel('envoy-memory-tab')).toBeVisible({ timeout: 60_000 });
+  }
+
+  async expectEnvoyMemoryHealthy(): Promise<void> {
+    const alert = this.getBySel('envoy-memory-status-alert');
+    await expect(alert).toBeVisible({ timeout: 60_000 });
+    await expect(alert).toHaveClass(/pf-m-success/);
+    await expect(alert).toContainText('Within normal range');
+  }
+
+  async expectEnvoyMemorySummaryMetrics(): Promise<void> {
+    const summary = this.getBySel('envoy-memory-summary-metrics');
+    await expect(summary).toBeVisible({ timeout: 60_000 });
+    const clusters = await summary.locator('[data-test="envoy-overview-clusters-link"]').innerText();
+    expect(Number.parseInt(clusters.trim(), 10), `expected active clusters > 0, got "${clusters}"`).toBeGreaterThan(0);
+    await expect(summary).toContainText(/[1-9][0-9]*(\.[0-9]+)?\s*(B|KiB|MiB|GiB)/);
+  }
+
+  async expectEnvoyMemoryChartStatistics(): Promise<void> {
+    const chart = this.getBySel('envoy-memory-overlay-chart');
+    await expect(chart).toBeVisible({ timeout: 60_000 });
+    await expect(chart.getByText('Loading metrics')).toHaveCount(0, { timeout: 120_000 });
+    await expect(chart.locator('[data-test="metrics-chart"]')).not.toHaveCount(0);
+  }
+
   async openWorkloadActions(): Promise<void> {
     if (isOssmc()) {
       await this.page.waitForResponse(

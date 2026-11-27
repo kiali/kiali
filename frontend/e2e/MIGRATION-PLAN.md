@@ -158,6 +158,10 @@ remains as the historical record.
 - [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
 - [x] Perf suite ported (`playwright-perf.config.ts` / `yarn playwright:run:perf`; `e2e/perf/`,
   text report written by `e2e/perf/perfReporter.ts`)
+- [x] Master-drift scenarios ported (2026-11-27): appearance suite (light/dark, contrast modes,
+  project felt theme — `e2e/tests/appearance/`), AI chatbot not-allowed tooltip, workload Envoy
+  memory overview, and the mesh "Kiali and observability hidden by default" check — Cypress
+  scenarios added to master after the epic started that the port had missed
 
 ## CI / pipelines
 
