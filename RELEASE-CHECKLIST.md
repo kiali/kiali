@@ -31,7 +31,9 @@ Release workflows use two credentials; keep each on the operations it is meant f
 
 Git writes should not use `GITHUB_TOKEN` on protected release branches (rulesets block it). **`gh release` and `gh pr` should stay on `GITHUB_TOKEN`**, not the bot PAT, unless a concrete requirement forces otherwise.
 
-**Workflow permissions (all release repos):** each of `release.yml` / `release.yaml`, `bump-release-version.yml`, `tag-release-creator.yml`, and OSSMC `copy-kiali-frontend.yml` sets `permissions: read-all` at workflow level. Jobs that only need read access omit job-level `permissions`. Jobs that call `gh` with `GITHUB_TOKEN` add only the write scopes they need: `contents: write` + `pull-requests: write` on release jobs that run `gh release create` and `gh pr create` (kiali, operator, OSSMC); `pull-requests: write` only on helm-charts release (no `gh release`); `contents: write` only on `tag-release-creator` tag jobs that push tags via `GITHUB_TOKEN`. Git push via **`KIALI_BOT_TOKEN`** does not require `contents: write` on `GITHUB_TOKEN`. If a job sets any `permissions` key, omitted scopes are **none** for that job—not inherited read-all.
+Release workflows default to `permissions: read-all`. Only the jobs that run `gh release` or `gh pr` need extra write scopes on that job (`contents: write` and/or `pull-requests: write`). Git pushes use the bot token, not `GITHUB_TOKEN` write access.
+
+**`KIALI_API_TOKEN`** is separate (community metrics API) and is not part of release automation.
 
 ---
 
