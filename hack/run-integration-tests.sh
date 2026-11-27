@@ -1162,8 +1162,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   fi
 
   ensureKialiServerReady
-  # Wait until Tempo is reachable via Kiali before running tracing tests.
-  ensureKialiTracesReady "false"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
