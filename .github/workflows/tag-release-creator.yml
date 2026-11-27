@@ -13,8 +13,6 @@ permissions: read-all
 
 jobs:
   initialize:
-    permissions:
-      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -79,8 +77,6 @@ jobs:
         fi
 
   bump_version:
-    permissions:
-      contents: read
     name: Bump to Next Version
     needs: [initialize, release_tag]
     # Allow other branches to bump to the next version even if one of the branches failed to create the release tag

@@ -40,8 +40,6 @@ permissions: read-all
 
 jobs:
   initialize:
-    permissions:
-      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -244,8 +242,6 @@ jobs:
       istio_minor_version_offset: 0
 
   build_cross_platform_binaries:
-    permissions:
-      contents: read
     name: Build cross-platform binaries
     if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     runs-on: ubuntu-latest
@@ -282,8 +278,6 @@ jobs:
         retention-days: 30
 
   test_cross_platform_binaries:
-    permissions:
-      contents: read
     name: Test cross-platform binaries
     if: ${{ needs.initialize.outputs.release_type != 'skip' }}
     runs-on: ${{ matrix.os }}

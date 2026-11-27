@@ -417,7 +417,6 @@ jobs:
     name: Update Token Baseline
     needs: [check-trigger, run-evaluation, run-evaluation-multicluster]
     permissions:
-      contents: read
       pull-requests: write
     if: |
       always() &&
