@@ -42,13 +42,6 @@ const resolvePageTitleKey = (path: string): string => {
   return `${basePath.charAt(0).toUpperCase()}${basePath.slice(1)}`;
 };
 
-const titleSuffixStyle = kialiStyle({
-  fontSize: '0.875rem',
-  fontWeight: 400,
-  marginLeft: '0.75rem',
-  color: PFColors.Color200
-});
-
 const containerStyle = kialiStyle({
   borderBottom: `1px solid ${PFColors.BorderColor100}`,
   marginBottom: '1.25rem'
@@ -80,7 +73,6 @@ type Props = {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
-  titleSuffix?: React.ReactNode;
 };
 
 export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
@@ -123,10 +115,7 @@ export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
       </div>
 
       <div className={flexStyle}>
-        <div className={titleStyle}>
-          {title}
-          {props.titleSuffix && <span className={titleSuffixStyle}>{props.titleSuffix}</span>}
-        </div>
+        <div className={titleStyle}>{title}</div>
 
         {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
       </div>

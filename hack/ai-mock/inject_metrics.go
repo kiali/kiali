@@ -40,6 +40,9 @@ const (
 	weeklyBuckets  = 12
 	monthlyBuckets = 12
 
+	requestChat            = "chat"
+	requestTroubleshooting = "troubleshooting"
+
 	maxOutOfOrderWindow = 35 * 24 * time.Hour
 	injectHorizon       = 34 * 24 * time.Hour
 
@@ -115,10 +118,31 @@ func (r *seriesRegistry) addSample(metricName string, extraLabels []prompb.Label
 func (r *seriesRegistry) toSlice() []prompb.TimeSeries {
 	out := make([]prompb.TimeSeries, 0, len(r.series))
 	for _, ts := range r.series {
-		sort.Slice(ts.Samples, func(i, j int) bool {
-			return ts.Samples[i].Timestamp < ts.Samples[j].Timestamp
-		})
+		ts.Samples = collapseSamples(ts.Samples)
 		out = append(out, *ts)
+	}
+	return out
+}
+
+// collapseSamples sorts by time and merges samples that share a timestamp.
+// Request and duration series have no username, so two mock users of the same
+// provider and model write the same series. Prometheus rejects that write when
+// both samples keep the timestamp. Counters are summed.
+func collapseSamples(samples []prompb.Sample) []prompb.Sample {
+	if len(samples) < 2 {
+		return samples
+	}
+	sort.Slice(samples, func(i, j int) bool {
+		return samples[i].Timestamp < samples[j].Timestamp
+	})
+	out := samples[:1:1]
+	for _, sample := range samples[1:] {
+		last := &out[len(out)-1]
+		if last.Timestamp == sample.Timestamp {
+			last.Value += sample.Value
+			continue
+		}
+		out = append(out, sample)
 	}
 	return out
 }
@@ -220,99 +244,27 @@ func main() {
 	var injectedProviders, skippedProviders int
 
 	for _, cfg := range configs {
-		if !*forceFlag {
-			exists, err := providerMetricsExist(client, baseURL, cfg)
-			if err != nil {
-				log.Printf("Warning: could not check existing metrics for %s/%s: %v", cfg.provider, cfg.model, err)
-			} else if exists {
-				fmt.Printf("Skipping %s/%s (%s): metrics already exist in Prometheus\n", cfg.provider, cfg.model, cfg.username)
-				skippedProviders++
-				continue
+		for _, requestKind := range []string{requestChat, requestTroubleshooting} {
+			requestCfg := cfg
+			if requestKind == requestTroubleshooting {
+				requestCfg = scaleProviderConfig(cfg, troubleshootingFactor(cfg))
 			}
-		}
-
-		labelsBase := []prompb.Label{
-			{Name: "username", Value: cfg.username},
-			{Name: "ai_provider", Value: cfg.provider},
-			{Name: "ai_model", Value: cfg.model},
-			{Name: "request", Value: "chat"},
-		}
-		labelsRequest := []prompb.Label{
-			{Name: "ai_provider", Value: cfg.provider},
-			{Name: "ai_model", Value: cfg.model},
-			{Name: "request", Value: "chat"},
-		}
-
-		// 1. Inject cumulative base counters over a recent window ending at now.
-		// Kiali reconstructs usage time series from increase(metric[1h]) over this data.
-		// Prometheus remote-write may reject timestamps too far in the past.
-		samples := injectCumulativeCounters(registry, cfg, labelsBase, labelsRequest, now, *historyHoursFlag, *historyStepFlag)
-
-		// 2. Inject weekly buckets for the last 12 weeks.
-		// Each year/week series is usage for that week only: 0 at week start,
-		// then the week's tokens (not a lifetime running total).
-		for i := 0; i < weeklyBuckets; i++ {
-			t := now.AddDate(0, 0, -7*i)
-			year, week := t.ISOWeek()
-			labelsWeekly := append(append([]prompb.Label{}, labelsBase...),
-				prompb.Label{Name: "year", Value: strconv.Itoa(year)},
-				prompb.Label{Name: "week", Value: strconv.Itoa(week)},
-			)
-			weekStart := isoWeekToTime(year, week)
-			weekEnd := weekStart.Add(7 * 24 * time.Hour)
-			fromOldest := weeklyBuckets - 1 - i
-			fullUsage := periodUsage(cfg.weekStep, fromOldest, weeklyBuckets)
-			step := time.Duration(0)
-			if i == 0 {
-				step = *historyStepFlag
+			if !*forceFlag {
+				exists, err := providerMetricsExist(client, baseURL, requestCfg, requestKind)
+				if err != nil {
+					log.Printf("Warning: could not check existing metrics for %s/%s request=%s: %v", requestCfg.provider, requestCfg.model, requestKind, err)
+				} else if exists {
+					fmt.Printf("Skipping %s/%s (%s) request=%s: metrics already exist in Prometheus\n", requestCfg.provider, requestCfg.model, requestCfg.username, requestKind)
+					skippedProviders++
+					continue
+				}
 			}
-			injectPeriodCounter(
-				registry,
-				metricPromptWeeklyTotal,
-				metricCompletionWeeklyTotal,
-				metricTotalTokensWeeklyTotal,
-				labelsWeekly,
-				weekStart,
-				weekEnd,
-				now,
-				fullUsage,
-				step,
-			)
-		}
 
-		// 3. Inject monthly buckets for the last 12 months.
-		// Each year/month series is usage for that month only and starts at zero.
-		for i := 0; i < monthlyBuckets; i++ {
-			t := now.AddDate(0, -i, 0)
-			monthStart := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
-			monthEnd := monthStart.AddDate(0, 1, 0)
-			labelsMonthly := append(append([]prompb.Label{}, labelsBase...),
-				prompb.Label{Name: "year", Value: strconv.Itoa(monthStart.Year())},
-				prompb.Label{Name: "month", Value: strconv.Itoa(int(monthStart.Month()))},
-			)
-			fromOldest := monthlyBuckets - 1 - i
-			fullUsage := periodUsage(cfg.monthStep, fromOldest, monthlyBuckets)
-			step := time.Duration(0)
-			if i == 0 {
-				step = *historyStepFlag
-			}
-			injectPeriodCounter(
-				registry,
-				metricPromptMonthlyTotal,
-				metricCompletionMonthlyTotal,
-				metricTotalTokensMonthlyTotal,
-				labelsMonthly,
-				monthStart,
-				monthEnd,
-				now,
-				fullUsage,
-				step,
-			)
+			samples := injectProviderRequest(registry, requestCfg, requestKind, now, *historyHoursFlag, *historyStepFlag)
+			fmt.Printf("Prepared metrics for %s/%s (%s) request=%s: %d usage samples, %d weekly buckets, %d monthly buckets\n",
+				requestCfg.provider, requestCfg.model, requestCfg.username, requestKind, samples, weeklyBuckets, monthlyBuckets)
+			injectedProviders++
 		}
-
-		fmt.Printf("Prepared metrics for %s/%s (%s): %d usage samples, %d weekly buckets, %d monthly buckets\n",
-			cfg.provider, cfg.model, cfg.username, samples, weeklyBuckets, monthlyBuckets)
-		injectedProviders++
 	}
 
 	// Inject global store metrics (no labels) over the same history window
@@ -342,51 +294,271 @@ func main() {
 
 	timeseries := registry.toSlice()
 	if len(timeseries) == 0 {
-		fmt.Printf("No new metrics to inject (%d provider(s) skipped).\n", skippedProviders)
+		fmt.Printf("No new metrics to inject (%d series skipped).\n", skippedProviders)
 		return
 	}
 
-	req := &prompb.WriteRequest{Timeseries: timeseries}
+	// Send each request label on its own. A duplicate timestamp in one group used
+	// to reject the whole payload, so troubleshooting never landed.
+	if err := writeSeriesGroups(client, writeURL, timeseries); err != nil {
+		if !strings.Contains(err.Error(), "duplicate sample") {
+			log.Fatalf("Failed to inject metrics: %v\nNote: Make sure Prometheus is started with --web.enable-remote-write-receiver", err)
+		}
+		fmt.Println("Prometheus already has AI samples at these timestamps. Cleaning and retrying once...")
+		cleanMetrics(client, baseURL)
+		if err := writeSeriesGroups(client, writeURL, timeseries); err != nil {
+			log.Fatalf("Failed to inject metrics after clean: %v\nIf this is still a duplicate sample, restart Prometheus so deleted series are gone.", err)
+		}
+	}
+	fmt.Printf("Successfully injected %d time series for %d request series (%d skipped).\n", len(timeseries), injectedProviders, skippedProviders)
+}
 
+func writeSeriesGroups(client *http.Client, writeURL string, timeseries []prompb.TimeSeries) error {
+	// Request and duration series have no username, so several mock users share
+	// one series. Those counters may already be in Prometheus. Keep them in their
+	// own write: a duplicate there must not reject the token series the charts use.
+	groups := map[string][]prompb.TimeSeries{}
+	for _, ts := range timeseries {
+		groups[seriesClass(ts)] = append(groups[seriesClass(ts)], ts)
+	}
+	order := []string{
+		"tokens-" + requestTroubleshooting,
+		"tokens-" + requestChat,
+		"requests",
+		"other",
+	}
+	seen := map[string]bool{}
+	var errs []string
+	writeKind := func(kind string, series []prompb.TimeSeries) {
+		if err := writeSeries(client, writeURL, series); err != nil {
+			if kind == "requests" && strings.Contains(err.Error(), "duplicate sample") {
+				log.Printf("Warning: skipped request/duration series already stored in Prometheus: %v", err)
+				return
+			}
+			errs = append(errs, fmt.Sprintf("%s: %v", kind, err))
+		}
+	}
+	for _, kind := range order {
+		seen[kind] = true
+		writeKind(kind, groups[kind])
+	}
+	for kind, series := range groups {
+		if seen[kind] {
+			continue
+		}
+		writeKind(kind, series)
+	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s", strings.Join(errs, "; "))
+}
+
+func seriesClass(ts prompb.TimeSeries) string {
+	name := ""
+	for _, label := range ts.Labels {
+		if label.Name == "__name__" {
+			name = label.Value
+			break
+		}
+	}
+	if strings.Contains(name, "requests_total") || strings.Contains(name, "duration_seconds") {
+		return "requests"
+	}
+	if request := seriesRequest(ts); request != "" {
+		return "tokens-" + request
+	}
+	return "other"
+}
+
+func seriesRequest(ts prompb.TimeSeries) string {
+	for _, label := range ts.Labels {
+		if label.Name == "request" {
+			return label.Value
+		}
+	}
+	return ""
+}
+
+func requestGroupName(kind string) string {
+	if kind == "" {
+		return "unlabeled"
+	}
+	return kind
+}
+
+func writeSeries(client *http.Client, writeURL string, timeseries []prompb.TimeSeries) error {
+	if len(timeseries) == 0 {
+		return nil
+	}
+	req := &prompb.WriteRequest{Timeseries: timeseries}
 	data, err := proto.Marshal(req)
 	if err != nil {
-		log.Fatalf("Failed to marshal protobuf: %v", err)
+		return fmt.Errorf("marshal protobuf: %w", err)
 	}
-
-	compressed := snappy.Encode(nil, data)
-
-	httpReq, err := http.NewRequest("POST", writeURL, bytes.NewReader(compressed))
+	httpReq, err := http.NewRequest("POST", writeURL, bytes.NewReader(snappy.Encode(nil, data)))
 	if err != nil {
-		log.Fatalf("Failed to create HTTP request: %v", err)
+		return err
 	}
-
 	httpReq.Header.Set("Content-Encoding", "snappy")
 	httpReq.Header.Set("Content-Type", "application/x-protobuf")
 	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
+		return err
 	}
 	defer resp.Body.Close()
-
 	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		fmt.Printf("Successfully injected %d time series for %d provider(s) (%d skipped).\n", len(timeseries), injectedProviders, skippedProviders)
-	} else {
-		log.Fatalf("Failed to inject metrics. HTTP %d: %s\nNote: Make sure Prometheus is started with --web.enable-remote-write-receiver", resp.StatusCode, string(body))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
 	}
+	fmt.Printf("Injected %d time series for request=%s.\n", len(timeseries), requestGroupName(seriesRequest(timeseries[0])))
+	return nil
 }
 
-func providerMetricsExist(client *http.Client, baseURL string, cfg providerConfig) (bool, error) {
+func providerMetricsExist(client *http.Client, baseURL string, cfg providerConfig, request string) (bool, error) {
 	query := fmt.Sprintf(
-		`last_over_time(%s{username=%q,ai_provider=%q,ai_model=%q,request="chat"}[35d])`,
+		`last_over_time(%s{username=%q,ai_provider=%q,ai_model=%q,request=%q}[35d])`,
 		metricTotalTokensTotal,
 		cfg.username,
 		cfg.provider,
 		cfg.model,
+		request,
 	)
 	return prometheusQueryHasResults(client, baseURL, query)
+}
+
+func requestLabels(cfg providerConfig, request string) (labelsBase, labelsRequest []prompb.Label) {
+	labelsBase = []prompb.Label{
+		{Name: "username", Value: cfg.username},
+		{Name: "ai_provider", Value: cfg.provider},
+		{Name: "ai_model", Value: cfg.model},
+		{Name: "request", Value: request},
+	}
+	labelsRequest = []prompb.Label{
+		{Name: "ai_provider", Value: cfg.provider},
+		{Name: "ai_model", Value: cfg.model},
+		{Name: "request", Value: request},
+	}
+	return labelsBase, labelsRequest
+}
+
+func scaleProviderConfig(cfg providerConfig, factor float64) providerConfig {
+	cfg.promptBase *= factor
+	cfg.completionBase *= factor
+	cfg.reqBase *= factor
+	cfg.promptIncrement *= factor
+	cfg.completionIncrement *= factor
+	cfg.reqIncrement *= factor
+	cfg.weekStep *= factor
+	cfg.monthStep *= factor
+	return cfg
+}
+
+// troubleshootingFactor keeps troubleshooting smaller than chat, and different
+// for each provider, so the two request series separate on a chart.
+func troubleshootingFactor(cfg providerConfig) float64 {
+	switch cfg.provider + "/" + cfg.model + "/" + cfg.username {
+	case "openai/gpt-4o/anonymous":
+		return 0.18
+	case "anthropic/claude-sonnet-4-6/anonymous":
+		return 0.42
+	case "openai/gpt-4o/anonymous-shared":
+		return 0.27
+	case "anthropic/claude-sonnet-4-6/anonymous-shared":
+		return 0.55
+	case "anthropic/claude-opus-5/kiali_user":
+		return 0.15
+	case "google/gemini-3.1-pro-preview/kiali_user":
+		return 0.63
+	case "openai/gpt-5.6-sol/kubeadmin":
+		return 0.33
+	case "google/gemini-3.6-flash/kubeadmin":
+		return 0.48
+	default:
+		return 0.3
+	}
+}
+
+func injectProviderRequest(
+	registry *seriesRegistry,
+	cfg providerConfig,
+	request string,
+	now time.Time,
+	historyHours float64,
+	historyStep time.Duration,
+) int {
+	labelsBase, labelsRequest := requestLabels(cfg, request)
+
+	// Cumulative base counters over a recent window ending at now.
+	// Kiali reconstructs usage time series from increase(metric[1h]) over this data.
+	// Prometheus remote-write may reject timestamps too far in the past.
+	samples := injectCumulativeCounters(registry, cfg, labelsBase, labelsRequest, now, historyHours, historyStep)
+
+	// Weekly buckets for the last 12 weeks.
+	// Each year/week series is usage for that week only: 0 at week start,
+	// then the week's tokens (not a lifetime running total).
+	for i := 0; i < weeklyBuckets; i++ {
+		t := now.AddDate(0, 0, -7*i)
+		year, week := t.ISOWeek()
+		labelsWeekly := append(append([]prompb.Label{}, labelsBase...),
+			prompb.Label{Name: "year", Value: strconv.Itoa(year)},
+			prompb.Label{Name: "week", Value: strconv.Itoa(week)},
+		)
+		weekStart := isoWeekToTime(year, week)
+		weekEnd := weekStart.Add(7 * 24 * time.Hour)
+		fromOldest := weeklyBuckets - 1 - i
+		fullUsage := periodUsage(cfg.weekStep, fromOldest, weeklyBuckets)
+		step := time.Duration(0)
+		if i == 0 {
+			step = historyStep
+		}
+		injectPeriodCounter(
+			registry,
+			metricPromptWeeklyTotal,
+			metricCompletionWeeklyTotal,
+			metricTotalTokensWeeklyTotal,
+			labelsWeekly,
+			weekStart,
+			weekEnd,
+			now,
+			fullUsage,
+			step,
+		)
+	}
+
+	// Monthly buckets for the last 12 months.
+	// Each year/month series is usage for that month only and starts at zero.
+	for i := 0; i < monthlyBuckets; i++ {
+		t := now.AddDate(0, -i, 0)
+		monthStart := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+		monthEnd := monthStart.AddDate(0, 1, 0)
+		labelsMonthly := append(append([]prompb.Label{}, labelsBase...),
+			prompb.Label{Name: "year", Value: strconv.Itoa(monthStart.Year())},
+			prompb.Label{Name: "month", Value: strconv.Itoa(int(monthStart.Month()))},
+		)
+		fromOldest := monthlyBuckets - 1 - i
+		fullUsage := periodUsage(cfg.monthStep, fromOldest, monthlyBuckets)
+		step := time.Duration(0)
+		if i == 0 {
+			step = historyStep
+		}
+		injectPeriodCounter(
+			registry,
+			metricPromptMonthlyTotal,
+			metricCompletionMonthlyTotal,
+			metricTotalTokensMonthlyTotal,
+			labelsMonthly,
+			monthStart,
+			monthEnd,
+			now,
+			fullUsage,
+			step,
+		)
+	}
+
+	return samples
 }
 
 func prometheusQueryHasResults(client *http.Client, baseURL, query string) (bool, error) {

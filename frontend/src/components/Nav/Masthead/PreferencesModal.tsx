@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   Button,
   ButtonVariant,
+  Divider,
   Form,
   FormGroup,
   MenuToggle,
@@ -12,13 +13,18 @@ import {
   ModalVariant,
   Select,
   SelectList,
-  SelectOption
+  SelectOption,
+  Switch,
+  Title,
+  Tooltip
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
+import { HelpIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { ColorScheme, ContrastMode, Language, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
+import { ChatAIActions } from 'actions/ChatAIActions';
 import { store } from 'store/ConfigStore';
 import { serverConfig } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -37,13 +43,18 @@ import {
   getKialiTheme,
   isColorScheme,
   isContrastMode,
+  isParentOwnedAppearance,
   persistKialiAppearance
 } from 'utils/AppearanceUtils';
+import { persistAlwaysNavigatePreference, persistReviewPromptBeforeSendPreference } from 'utils/ChatAIPreferences';
 
 type ReduxProps = {
+  alwaysNavigate: boolean;
+  chatEnabled: boolean;
   colorScheme: string;
   contrastMode: string;
   language: string;
+  reviewPromptBeforeSend: boolean;
   theme: string;
 };
 
@@ -81,8 +92,49 @@ const selectStyle = kialiStyle({
   width: '100%'
 });
 
+const sectionTitleStyle = kialiStyle({
+  margin: 0
+});
+
+const helpButtonStyle = kialiStyle({
+  padding: 0
+});
+
+const preferenceLabelStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: '0.35rem'
+});
+
 /** Delay after a selection before applying appearance changes to the document. */
 const PREFERENCE_APPLY_DELAY_MS = 200;
+
+const PreferenceHelpIcon = ({ ariaLabel, content }: { ariaLabel: string; content: string }): React.ReactElement => (
+  <Tooltip content={content}>
+    <Button
+      aria-label={ariaLabel}
+      className={helpButtonStyle}
+      icon={<HelpIcon />}
+      variant={ButtonVariant.plain}
+      onClick={event => event.preventDefault()}
+    />
+  </Tooltip>
+);
+
+const PreferenceSwitchLabel = ({
+  helpAriaLabel,
+  helpContent,
+  label
+}: {
+  helpAriaLabel: string;
+  helpContent: string;
+  label: string;
+}): React.ReactElement => (
+  <span className={preferenceLabelStyle}>
+    {label}
+    <PreferenceHelpIcon ariaLabel={helpAriaLabel} content={helpContent} />
+  </span>
+);
 
 type AppearancePreferences = {
   colorScheme: ColorScheme;
@@ -151,17 +203,21 @@ const PreferenceSelect = <T extends string>({
 };
 
 export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
+  alwaysNavigate,
+  chatEnabled,
   colorScheme: colorSchemeProp,
   contrastMode: contrastModeProp,
   isOpen,
   language: languageProp,
   onClose,
+  reviewPromptBeforeSend,
   theme: themeProp
 }: PreferencesModalProps) => {
   const { t } = useKialiTranslation();
   const colorScheme = isColorScheme(colorSchemeProp) ? colorSchemeProp : getKialiColorScheme();
   const contrastMode = isContrastMode(contrastModeProp) ? contrastModeProp : getKialiContrastMode();
   const language = isLanguagePreference(languageProp) ? languageProp : getDefaultLanguagePreference();
+  const showAppearance = !isParentOwnedAppearance();
   const showLanguageSelector = serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector ?? true;
   const theme = isValidTheme(themeProp) ? themeProp : getKialiTheme();
 
@@ -219,6 +275,16 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
     if (nextLanguage !== language) {
       applyLanguagePreference(nextLanguage);
     }
+  };
+
+  const handleAlwaysNavigateChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean): void => {
+    persistAlwaysNavigatePreference(checked);
+    store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: checked }));
+  };
+
+  const handleReviewPromptBeforeSendChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean): void => {
+    persistReviewPromptBeforeSendPreference(checked);
+    store.dispatch(ChatAIActions.setReviewPromptBeforeSend({ reviewPromptBeforeSend: checked }));
   };
 
   const languageOptions: PreferenceOption<Language>[] = [
@@ -322,38 +388,84 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
       <ModalHeader title={t('Preferences')} />
       <ModalBody>
         <Form className={formStyle}>
-          <p className={introStyle}>
-            {t('Customize how Kiali looks and reads on your device. These settings are saved in your browser.')}
-          </p>
-          <PreferenceSelect
-            id="color-scheme-select"
-            label={t('Color scheme')}
-            onChange={nextColorScheme => updatePreference({ colorScheme: nextColorScheme })}
-            options={colorSchemeOptions}
-            selected={preferences.colorScheme}
-          />
-          <PreferenceSelect
-            id="contrast-mode-select"
-            label={t('Contrast mode')}
-            onChange={nextContrastMode => updatePreference({ contrastMode: nextContrastMode })}
-            options={contrastModeOptions}
-            selected={preferences.contrastMode}
-          />
-          <PreferenceSelect
-            id="theme-select"
-            label={t('Theme')}
-            onChange={nextTheme => updatePreference({ theme: nextTheme })}
-            options={themeOptions}
-            selected={preferences.theme}
-          />
-          {showLanguageSelector && (
-            <PreferenceSelect
-              id="language-select"
-              label={t('Language')}
-              onChange={handleLanguageChange}
-              options={languageOptions}
-              selected={language}
-            />
+          {showAppearance && (
+            <>
+              <p className={introStyle}>
+                {t('Customize how Kiali looks and reads on your device. These settings are saved in your browser.')}
+              </p>
+              <PreferenceSelect
+                id="color-scheme-select"
+                label={t('Color scheme')}
+                onChange={nextColorScheme => updatePreference({ colorScheme: nextColorScheme })}
+                options={colorSchemeOptions}
+                selected={preferences.colorScheme}
+              />
+              <PreferenceSelect
+                id="contrast-mode-select"
+                label={t('Contrast mode')}
+                onChange={nextContrastMode => updatePreference({ contrastMode: nextContrastMode })}
+                options={contrastModeOptions}
+                selected={preferences.contrastMode}
+              />
+              <PreferenceSelect
+                id="theme-select"
+                label={t('Theme')}
+                onChange={nextTheme => updatePreference({ theme: nextTheme })}
+                options={themeOptions}
+                selected={preferences.theme}
+              />
+              {showLanguageSelector && (
+                <PreferenceSelect
+                  id="language-select"
+                  label={t('Language')}
+                  onChange={handleLanguageChange}
+                  options={languageOptions}
+                  selected={language}
+                />
+              )}
+            </>
+          )}
+          {chatEnabled && (
+            <>
+              {showAppearance && <Divider />}
+              <Title headingLevel="h2" size="md" className={sectionTitleStyle}>
+                {t('AI settings')}
+              </Title>
+              <FormGroup fieldId="preferences-always-navigate">
+                <Switch
+                  id="preferences-always-navigate"
+                  data-test="preferences-always-navigate"
+                  label={
+                    <PreferenceSwitchLabel
+                      label={t('Allow Chatbot to navigate')}
+                      helpAriaLabel={t('More information about Allow Chatbot to navigate')}
+                      helpContent={t(
+                        'When enabled, the chatbot can automatically open Kiali pages it suggests during a conversation. When disabled, those suggestions appear as links you can open yourself.'
+                      )}
+                    />
+                  }
+                  isChecked={alwaysNavigate}
+                  onChange={handleAlwaysNavigateChange}
+                />
+              </FormGroup>
+              <FormGroup fieldId="preferences-review-prompt-before-send">
+                <Switch
+                  id="preferences-review-prompt-before-send"
+                  data-test="preferences-review-prompt-before-send"
+                  label={
+                    <PreferenceSwitchLabel
+                      label={t('Review prompts before sending')}
+                      helpAriaLabel={t('More information about Review prompts before sending')}
+                      helpContent={t(
+                        'When enabled, prompts started from Kiali pages (such as Troubleshooting) are placed in the chat input so you can edit them before sending. When disabled, those prompts are sent to the chatbot immediately.'
+                      )}
+                    />
+                  }
+                  isChecked={reviewPromptBeforeSend}
+                  onChange={handleReviewPromptBeforeSendChange}
+                />
+              </FormGroup>
+            </>
           )}
         </Form>
       </ModalBody>
@@ -368,9 +480,12 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
+    alwaysNavigate: state.ai.chat.alwaysNavigate,
+    chatEnabled: Boolean(state.ai.enabled && state.ai.chat.enabled),
     colorScheme: state.globalState.colorScheme,
     contrastMode: state.globalState.contrastMode,
     language: state.globalState.language,
+    reviewPromptBeforeSend: state.ai.chat.reviewPromptBeforeSend,
     theme: state.globalState.theme
   };
 };

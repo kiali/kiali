@@ -70,7 +70,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     return unseenGroups;
   };
 
-  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(getUnseenGroups(props.groups));
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(() => getUnseenGroups(props.groups));
 
   interface ActionsMenu {
     [toggleId: string]: boolean;

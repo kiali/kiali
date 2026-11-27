@@ -19,6 +19,7 @@ import { CheckIcon } from '@patternfly/react-icons/dist/esm/icons/check-icon';
 import { CopyIcon } from '@patternfly/react-icons/dist/esm/icons/copy-icon';
 import { ExternalLinkSquareAltIcon } from '@patternfly/react-icons';
 import type { MessageProps } from '@patternfly/chatbot';
+import { uniqueId } from 'lodash-es';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { writePlainTextToClipboard } from 'utils/ClipboardUtils';
 
@@ -67,8 +68,7 @@ const CodeBlockMessage: React.FC<
   const { t } = useKialiTranslation();
   const [copied, setCopied] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
-  // TODO: replace with React.useId() once the UI is on React 18 (stable unique ids without Math.random).
-  const [tooltipId] = React.useState(() => `chatbot-copy-${Math.random().toString(16).slice(2)}`);
+  const [tooltipId] = React.useState(() => uniqueId('chatbot-copy-'));
   const language = /language-(\w+)/.exec(className || '')?.[1];
   const content = String(children ?? '');
 

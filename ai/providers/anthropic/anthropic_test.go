@@ -64,7 +64,7 @@ func (s *anthropicTestStore) SetConversation(sessionID string, conversationID st
 	return nil
 }
 
-func (s *anthropicTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+func (s *anthropicTestStore) RecordUsage(_ string, _ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 

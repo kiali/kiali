@@ -1,49 +1,110 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
 import { t } from 'utils/I18nUtils';
-import type { Conversation } from '@patternfly/chatbot';
-import { Chatbot, ChatbotToggle } from '@patternfly/chatbot';
+import { Chatbot, ChatbotDisplayMode, ChatbotToggle } from '@patternfly/chatbot';
+import { Drawer, DrawerContent, DrawerContentBody, DrawerPanelContent } from '@patternfly/react-core';
 import '@patternfly/chatbot/dist/css/main.css';
 import { ColorScheme } from 'types/Common';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { ChatBotHeader } from './ChatBotHeader';
-import type { KialiAppState } from 'store/Store';
 import { ChatBotFooter } from './ChatBotFooter';
 import { ChatBotMock } from './ChatBotMock';
-import type { ExtendedMessage } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
-import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-lightbkg.svg';
 import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-darkbkg.svg';
 import { defer } from 'lodash-es';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import * as API from 'services/Api';
+import { kialiStyle } from 'styles/StyleUtils';
 
-const conversationList: { [key: string]: Conversation[] } = {};
-conversationList[CHAT_HISTORY_HEADER] = [];
+const chatDrawerStyle = kialiStyle({
+  display: 'flex',
+  flex: '1 1 auto',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0,
+  minWidth: 0
+});
 
-export const conversationStore: Map<string, ExtendedMessage[]> = new Map();
+// The graph page grows with flex. This body has to be a column flex container so that
+// growth reaches the canvas; overflow stays here so taller pages can still scroll.
+const drawerBodyStyle = kialiStyle({
+  display: 'flex',
+  flex: '1 1 auto',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0,
+  overflow: 'auto'
+});
 
-const resetConversationState = (): void => {
-  conversationList[CHAT_HISTORY_HEADER] = [];
-  conversationStore.clear();
+const panelFillStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0,
+  minWidth: 0,
+  // The chatbot paints the page background, which hides the docked panel in the
+  // page's top and bottom inset. Let the panel surface show through instead.
+  $nest: {
+    '& .pf-chatbot, & .pf-chatbot__content, & .pf-chatbot__footer': {
+      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    }
+  }
+});
+
+// Drawer display mode is still position:fixed in the chatbot stylesheet. Fill the resizable panel instead.
+const drawerChatStyle = kialiStyle({
+  height: '100%',
+  inset: 'auto',
+  maxHeight: '100%',
+  position: 'relative',
+  width: '100%',
+  zIndex: 'auto'
+});
+
+type ChatBotProps = {
+  children: React.ReactNode;
 };
 
-export const ChatBot: React.FC = () => {
-  const dispatch = useDispatch();
+const PANEL_BASIS = '--pf-v6-c-drawer__panel--md--FlexBasis';
+const DOCK_TOP = '--kiali-chatbot-dock-top';
+const DOCK_INLINE_END = '--kiali-chatbot-dock-inline-end';
+const PANEL_WIDTH = '--kiali-chatbot-panel-width';
+
+// The page card is inset from the viewport. Measure the gap between the card content
+// and the window so the chat can cover that space without moving the page content.
+const syncDockInsets = (): void => {
+  const masthead = document.querySelector('.pf-v6-c-masthead');
+  const section = document.querySelector('.pf-v6-c-page__main-section');
+  const top = masthead?.getBoundingClientRect().bottom ?? 0;
+  let inlineEnd = 0;
+
+  if (section) {
+    const paddingRight = parseFloat(getComputedStyle(section).paddingRight) || 0;
+    inlineEnd = window.innerWidth - section.getBoundingClientRect().right + paddingRight;
+  }
+
+  document.documentElement.style.setProperty(DOCK_TOP, `${top}px`);
+  document.documentElement.style.setProperty(DOCK_INLINE_END, `${Math.max(inlineEnd, 0)}px`);
+};
+
+export const ChatBot: React.FC<ChatBotProps> = ({ children }) => {
+  const dispatch = useKialiDispatch();
   const colorScheme = useKialiColorScheme();
   const isDarkTheme = colorScheme === ColorScheme.DARK;
   const ClosedToggleIcon = isDarkTheme ? KialiIconDark : KialiIconLight;
-  const allowedToUseChatbot = useSelector((state: KialiAppState) => state.ai.chat.allowed);
-  const displayMode = useSelector((state: KialiAppState) => state.ai.chat.displayMode);
-  const selectedProvider = useSelector((state: KialiAppState) => state.ai.chat.selectedProvider);
-  const selectedModel = useSelector((state: KialiAppState) => state.ai.chat.selectedModel);
-  const providers = useSelector((state: KialiAppState) => state.ai.chat.providers);
-  const conversationID = useSelector((state: KialiAppState) => state.ai.chat.conversationID);
-  const chatHistory = useSelector((state: KialiAppState) => state.ai.chat.chatHistory);
-  const chatbotVisible = useSelector((state: KialiAppState) => state.ai.chat.chatbotVisible);
+  const allowedToUseChatbot = useKialiSelector(state => state.ai.chat.allowed);
+  const chatbotVisible = useKialiSelector(state => state.ai.chat.visible);
+  const expanded = chatbotVisible && allowedToUseChatbot;
+  const selectedProvider = useKialiSelector(state => state.ai.chat.selectedProvider);
+  const selectedModel = useKialiSelector(state => state.ai.chat.selectedModel);
+  const providers = useKialiSelector(state => state.ai.chat.providers);
+  const conversationID = useKialiSelector(state => state.ai.chat.conversationID);
+  const chatHistory = useKialiSelector(state => state.ai.chat.chatHistory);
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
+  // Includes the dock inset. PatternFly measures this rendered width while dragging.
+  const [panelSize, setPanelSize] = useState(`calc(30rem + var(${DOCK_INLINE_END}, 0px))`);
   const toggleBg = isDarkTheme ? 'var(--pf-t--color--gray--90)' : 'var(--pf-t--color--white)';
   const toggleBorder = isDarkTheme ? 'var(--pf-t--color--white)' : 'var(--pf-t--color--gray--90)';
 
@@ -74,21 +135,6 @@ export const ChatBot: React.FC = () => {
     setSelectedMockConversation(conversation);
     // handleSend(conversation);
   };
-
-  const setDockedSize = useCallback(() => {
-    requestAnimationFrame(() => {
-      const drawer = document.querySelector('.pf-v6-c-page__drawer') as HTMLElement | null;
-      const mainContainer = document.querySelector('.pf-v6-c-page__main-container') as HTMLElement | null;
-      const target = drawer ?? mainContainer;
-
-      if (target) {
-        const { height, width } = target.getBoundingClientRect();
-        document.documentElement.style.setProperty('--kiali-chatbot-docked-height', `${height}px`);
-        document.documentElement.style.setProperty('--kiali-chatbot-fullscreen-height', `${height}px`);
-        document.documentElement.style.setProperty('--kiali-chatbot-fullscreen-width', `${width}px`);
-      }
-    });
-  }, []);
 
   const onSelectProviderModel = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -142,81 +188,135 @@ export const ChatBot: React.FC = () => {
   }, [clearChat, newProvider, newModel, dispatch, setIsNewChatModalOpen]);
 
   useEffect(() => {
-    setDockedSize();
-    window.addEventListener('resize', setDockedSize);
-    return () => {
-      window.removeEventListener('resize', setDockedSize);
-      document.documentElement.style.removeProperty('--kiali-chatbot-docked-height');
-      document.documentElement.style.removeProperty('--kiali-chatbot-fullscreen-height');
-      document.documentElement.style.removeProperty('--kiali-chatbot-fullscreen-width');
+    if (!expanded) {
+      return undefined;
+    }
+
+    syncDockInsets();
+    const onResize = (): void => syncDockInsets();
+    window.addEventListener('resize', onResize);
+
+    const panel = document.querySelector<HTMLElement>('[data-test="ai-chatbot-drawer"]');
+    const publishWidth = (): void => {
+      const basis = panel?.style.getPropertyValue(PANEL_BASIS).trim() || panelSize;
+      document.documentElement.style.setProperty(PANEL_WIDTH, basis);
     };
-  }, [setDockedSize]);
+    publishWidth();
 
-  useEffect(() => {
-    setDockedSize();
-  }, [setDockedSize, displayMode, chatbotVisible]);
+    const observer = panel ? new MutationObserver(publishWidth) : undefined;
+    observer?.observe(panel as HTMLElement, { attributeFilter: ['style'], attributes: true });
 
-  useEffect(
-    () =>
-      // Fired on component mount (componentDidMount)
-      () => {
-        // Anything in here is fired on component unmount (componentWillUnmount)
-        resetConversationState();
-      },
-    []
-  );
+    return () => {
+      window.removeEventListener('resize', onResize);
+      observer?.disconnect();
+    };
+  }, [expanded, panelSize]);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 1000
-      }}
-    >
-      <ChatbotToggle
-        tooltipLabel={
-          allowedToUseChatbot
-            ? chatbotVisible
-              ? t('Minimize')
-              : t('Chat with AI')
-            : t('Chatbot is not allowed for this user')
-        }
-        isChatbotVisible={chatbotVisible}
-        onToggleChatbot={() =>
-          allowedToUseChatbot && dispatch(ChatAIActions.setChatbotVisible({ visible: !chatbotVisible }))
-        }
-        isRound={true}
-        closedToggleIcon={() => (
-          <span data-test={isDarkTheme ? 'ai-chatbot-toggle-icon-dark' : 'ai-chatbot-toggle-icon-light'}>
-            <ClosedToggleIcon style={{ height: '2.5rem', width: '2.5rem' }} />
-          </span>
-        )}
-        style={chatbotToggleStyle}
-        data-test="ai-chatbot-toggle"
-      />
-      <Chatbot isVisible={chatbotVisible} displayMode={displayMode}>
-        <ChatBotHeader
-          onCloseChat={() => dispatch(ChatAIActions.setChatbotVisible({ visible: false }))}
-          onNewChat={() => setIsNewChatModalOpen(true)}
-          onSelectProviderModel={onSelectProviderModel}
+    <div className={chatDrawerStyle}>
+      <Drawer isExpanded={expanded} isInline position="end">
+        <DrawerContent
+          panelContent={
+            <DrawerPanelContent
+              data-test="ai-chatbot-drawer"
+              defaultSize="30rem"
+              isResizable
+              maxSize="60%"
+              minSize="20rem"
+              onResize={(_event, width) => {
+                const size = `${width}px`;
+                setPanelSize(size);
+                document.documentElement.style.setProperty(PANEL_WIDTH, size);
+              }}
+              resizeAriaLabel={t('Resize')}
+              style={
+                expanded
+                  ? ({
+                      [PANEL_BASIS]: panelSize,
+                      '--pf-v6-c-drawer__panel--PaddingBlockEnd': 0,
+                      '--pf-v6-c-drawer__panel--PaddingBlockStart': 0,
+                      borderRadius: 0,
+                      bottom: 0,
+                      height: 'auto',
+                      insetInlineEnd: 0,
+                      maxHeight: 'none',
+                      position: 'fixed',
+                      top: `var(${DOCK_TOP}, 0px)`,
+                      transform: 'none',
+                      width: `var(${PANEL_BASIS}, ${panelSize})`,
+                      zIndex: 250
+                    } as React.CSSProperties)
+                  : undefined
+              }
+            >
+              <div className={panelFillStyle}>
+                {expanded && (
+                  <Chatbot className={drawerChatStyle} displayMode={ChatbotDisplayMode.drawer} isVisible>
+                    <ChatBotHeader
+                      onCloseChat={() => dispatch(ChatAIActions.setChatVisible(false))}
+                      onNewChat={() => setIsNewChatModalOpen(true)}
+                    />
+                    {isMockApi && (
+                      <ChatBotMock
+                        handleSelectMockConversation={handleSelectMockConversation}
+                        selectedMockConversation={selectedMockConversation}
+                      />
+                    )}
+                    <ChatBotContent chatHistoryEndRef={chatHistoryEndRef} />
+                    <ChatBotFooter
+                      isNewChatModalOpen={isNewChatModalOpen}
+                      onConfirm={onConfirm}
+                      onSelectProviderModel={onSelectProviderModel}
+                      providerChanged={newProvider !== '' || newModel !== ''}
+                      scrollIntoView={scrollIntoView}
+                      setIsNewChatModalOpen={setIsNewChatModalOpen}
+                    />
+                  </Chatbot>
+                )}
+              </div>
+            </DrawerPanelContent>
+          }
+        >
+          <DrawerContentBody
+            className={drawerBodyStyle}
+            style={
+              expanded
+                ? { marginInlineEnd: `calc(var(${PANEL_WIDTH}, ${panelSize}) - var(${DOCK_INLINE_END}, 0px))` }
+                : undefined
+            }
+          >
+            {children}
+          </DrawerContentBody>
+        </DrawerContent>
+      </Drawer>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: expanded ? `calc(var(${PANEL_WIDTH}, ${panelSize}) + 1.25rem)` : '20px',
+          zIndex: 1000
+        }}
+      >
+        <ChatbotToggle
+          tooltipLabel={
+            allowedToUseChatbot
+              ? expanded
+                ? t('Minimize')
+                : t('Chat with AI')
+              : t('Chatbot is not allowed for this user')
+          }
+          isChatbotVisible={expanded}
+          onToggleChatbot={() => allowedToUseChatbot && dispatch(ChatAIActions.setChatVisible(!chatbotVisible))}
+          isRound={true}
+          closedToggleIcon={() => (
+            <span data-test={isDarkTheme ? 'ai-chatbot-toggle-icon-dark' : 'ai-chatbot-toggle-icon-light'}>
+              <ClosedToggleIcon style={{ height: '2.5rem', width: '2.5rem' }} />
+            </span>
+          )}
+          style={chatbotToggleStyle}
+          data-test="ai-chatbot-toggle"
         />
-        {isMockApi && (
-          <ChatBotMock
-            handleSelectMockConversation={handleSelectMockConversation}
-            selectedMockConversation={selectedMockConversation}
-          />
-        )}
-        <ChatBotContent chatHistoryEndRef={chatHistoryEndRef} />
-        <ChatBotFooter
-          providerChanged={newProvider !== '' || newModel !== ''}
-          onConfirm={onConfirm}
-          scrollIntoView={scrollIntoView}
-          isNewChatModalOpen={isNewChatModalOpen}
-          setIsNewChatModalOpen={setIsNewChatModalOpen}
-        />
-      </Chatbot>
+      </div>
     </div>
   );
 };

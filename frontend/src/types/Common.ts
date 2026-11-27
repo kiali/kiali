@@ -32,6 +32,8 @@ export const PF_THEME_HIGH_CONTRAST = 'pf-v6-theme-high-contrast';
 export const KIALI_COLOR_SCHEME = 'KIALI_COLOR_SCHEME';
 export const KIALI_CONTRAST_MODE = 'KIALI_CONTRAST_MODE';
 export const KIALI_THEME = 'KIALI_THEME';
+export const KIALI_CHAT_ALWAYS_NAVIGATE = 'KIALI_CHAT_ALWAYS_NAVIGATE';
+export const KIALI_CHAT_REVIEW_PROMPT_BEFORE_SEND = 'KIALI_CHAT_REVIEW_PROMPT_BEFORE_SEND';
 
 export const enum ContrastMode {
   DEFAULT = 'default',

@@ -19,6 +19,7 @@ import type { RouteObject } from 'react-router';
 import { WildcardRoute } from 'routes/WildcardRoute';
 import { NamespaceDetailsRoute } from 'routes/NamespaceDetailsRoute';
 import { AIDashboardPage } from 'pages/AIDashboard/AIDashboardPage';
+import { TroubleshootingPage } from 'pages/Troubleshooting/TroubleshootingPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -39,9 +40,15 @@ const navMenuItems: MenuItem[] = [
   },
   {
     id: 'mesh',
-    separator: true,
     title: t('Mesh'),
     to: `/${Paths.MESH}`
+  },
+  {
+    id: 'troubleshooting',
+    separator: true,
+    title: t('Troubleshooting'),
+    to: `/${Paths.TROUBLESHOOTING}`,
+    pathsActive: [new RegExp(`^/${Paths.TROUBLESHOOTING}(?:\\?.*)?$`)]
   },
   {
     id: 'namespaces',
@@ -91,6 +98,10 @@ const pathRoutes: RouteObject[] = [
   {
     path: `/${Paths.AI}`,
     element: <AIDashboardPage />
+  },
+  {
+    path: `/${Paths.TROUBLESHOOTING}`,
+    element: <TroubleshootingPage />
   },
   {
     path: `/${Paths.OVERVIEW}`,

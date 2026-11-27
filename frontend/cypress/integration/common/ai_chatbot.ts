@@ -24,16 +24,16 @@ const CHATBOT_STOP_BUTTON = '.pf-chatbot__button--stop';
 const CHATBOT_TOGGLE_ICON_LIGHT = '[data-test="ai-chatbot-toggle-icon-light"]';
 const CHATBOT_TOGGLE_ICON_DARK = '[data-test="ai-chatbot-toggle-icon-dark"]';
 const CHATBOT_VISIBLE = '.pf-chatbot.pf-chatbot--visible';
-const CHATBOT_HIDDEN = '.pf-chatbot.pf-chatbot--hidden';
-const CHATBOT_WELCOME_TITLE = '.pf-chatbot__hello';
-const CHATBOT_WELCOME_DESCRIPTION = '.pf-chatbot__question';
+const CHATBOT_HEADER_TITLE = '.pf-chatbot__title';
 const CHATBOT_MESSAGE_INPUT = '[data-testid="chatbot-message-bar-input"]';
 const CHATBOT_TOOL_LABEL = (name: string): string => `[data-test="ai-tool-label-${name}"]`;
 const CHATBOT_TOOL_MODAL = '[data-test="ai-tool-modal"]';
 const CHATBOT_SEND_BUTTON = '.pf-chatbot__button--send';
 const CHATBOT_DANGER_ALERT = '.pf-v6-c-alert.pf-m-danger';
 const CHATBOT_SOURCES = '.pf-chatbot__source';
-const CHATBOT_ALWAYS_NAVIGATE_SWITCH = '[data-testid="chatbot-always-navigate-switch"]';
+const CHATBOT_AI_SETTINGS = '[data-test="chatbot-ai-settings"]';
+const PREFERENCES_MODAL = '[data-test="preferences-modal"]';
+const PREFERENCES_ALWAYS_NAVIGATE = '[data-test="preferences-always-navigate"]';
 const CHATBOT_NAVIGATION_ACTION = '[data-testid="chatbot-navigation-action"]';
 const CHATBOT_NAVIGATION_ACTION_LINK = '[data-testid^="chatbot-navigation-action-link-"]';
 /** PF6 / chatbot: file chip is a clickable button; truncated text omits the extension (e.g. vs-ai-cypress.yaml → vs-ai-cypress). */
@@ -99,7 +99,16 @@ Then('the AI chatbot toggle should show the dark color scheme icon', () => {
 });
 
 When('user clicks the AI chatbot toggle', () => {
-  cy.get(CHATBOT_TOGGLE).click();
+  // The notification drawer panel covers the floating chatbot button when open;
+  // force the click so we can assert mutual exclusion (opening chat closes the drawer).
+  cy.get('body').then($body => {
+    const drawerExpanded = $body.find('.pf-v6-c-page__drawer > .pf-v6-c-drawer.pf-m-expanded').length > 0;
+    if (drawerExpanded) {
+      cy.get(CHATBOT_TOGGLE).click({ force: true });
+    } else {
+      cy.get(CHATBOT_TOGGLE).click();
+    }
+  });
 });
 
 Then('the AI chatbot window should be open', () => {
@@ -107,12 +116,17 @@ Then('the AI chatbot window should be open', () => {
 });
 
 Then('the AI chatbot window should be closed', () => {
-  cy.get(CHATBOT_HIDDEN).should('exist');
+  cy.get(CHATBOT_VISIBLE).should('not.exist');
 });
 
 Then('the AI chatbot should display a welcome message', () => {
-  cy.get(CHATBOT_WELCOME_TITLE).should('be.visible').and('contain.text', 'Welcome to Kiali Chatbot');
-  cy.get(CHATBOT_WELCOME_DESCRIPTION).should('be.visible').and('contain.text', 'How may I help you today?');
+  cy.get(CHATBOT_VISIBLE)
+    .find(CHATBOT_HEADER_TITLE)
+    .should('be.visible')
+    .and('contain.text', 'Welcome to Kiali Chatbot');
+  cy.get(CHATBOT_VISIBLE).should('not.contain.text', 'How may I help you today?');
+  cy.get(CHATBOT_VISIBLE).find('.pf-chatbot__hello').should('not.exist');
+  cy.get(CHATBOT_VISIBLE).find('.pf-chatbot__question').should('not.exist');
 });
 
 When('user sends a message {string}', (message: string) => {
@@ -163,16 +177,36 @@ Then('the AI chatbot should display a sources card', () => {
   });
 });
 
+function openChatAISettings(): void {
+  cy.get('body').then($body => {
+    if ($body.find(PREFERENCES_MODAL).length > 0) {
+      cy.get(PREFERENCES_MODAL).should('be.visible');
+      return;
+    }
+    cy.get(CHATBOT_AI_SETTINGS).should('be.visible').click();
+    cy.get(PREFERENCES_MODAL).should('be.visible');
+  });
+}
+
+function closePreferences(): void {
+  cy.get('[data-test="preferences-close"]').click();
+  cy.get(PREFERENCES_MODAL).should('not.exist');
+}
+
 function toggleAlwaysNavigateSwitch(enable: boolean): void {
   const current = enable ? 'not.be.checked' : 'be.checked';
   const expected = enable ? 'be.checked' : 'not.be.checked';
 
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should('exist').and(current).click({ force: true });
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should(expected);
+  openChatAISettings();
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should('exist').and(current).click({ force: true });
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should(expected);
+  closePreferences();
 }
 
 Then('the always navigate switch should be unchecked', () => {
-  cy.get(CHATBOT_ALWAYS_NAVIGATE_SWITCH).should('exist').and('not.be.checked');
+  openChatAISettings();
+  cy.get(PREFERENCES_ALWAYS_NAVIGATE).should('exist').and('not.be.checked');
+  closePreferences();
 });
 
 When('user enables the always navigate switch', () => {
@@ -421,6 +455,14 @@ Then('the chatbot should be in {string} display mode', (mode: string) => {
   cy.get(`.pf-chatbot.pf-chatbot--${mode}`).should('exist');
 });
 
+Then('the chatbot drawer should be resizable and inline', () => {
+  cy.get('[data-test="ai-chatbot-drawer"]')
+    .closest('.pf-v6-c-drawer')
+    .should('have.class', 'pf-m-inline')
+    .and('have.class', 'pf-m-expanded');
+  cy.get('[data-test="ai-chatbot-drawer"]').find('.pf-v6-c-drawer__splitter').should('exist');
+});
+
 /**
  * Verifies that setDockedSize() ran and wrote --kiali-chatbot-docked-height.
  * setDockedSize is called inside a requestAnimationFrame, so we use cy.document().should()
@@ -457,6 +499,7 @@ const NEW_CHAT_CANCEL = '[data-test="new-chat-cancel"]';
 const NEW_CHAT_MODAL_CLOSE_X = `${NEW_CHAT_MODAL} button[aria-label="Close"]`;
 /** Name injected by the "two AI providers are configured" step. */
 const SECOND_PROVIDER_NAME = 'second-test-provider';
+const SECOND_PROVIDER_MODEL = 'second-test-model';
 
 When('user clicks the new chat button', () => {
   cy.get(CHATBOT_VISIBLE).find(NEW_CHAT_BUTTON).click();
@@ -574,10 +617,7 @@ Given('two AI providers are configured', () => {
     }
 
     const first = realProviders[0];
-    const models: any[] =
-      Array.isArray(first.models) && first.models.length > 0
-        ? first.models
-        : [{ name: 'test-model', model: 'test-model', enabled: true }];
+    const secondModel = { name: SECOND_PROVIDER_MODEL, model: SECOND_PROVIDER_MODEL, enabled: true };
 
     store.dispatch({
       type: 'CHAT_AI_SET_AI_CHAT',
@@ -592,8 +632,8 @@ Given('two AI providers are configured', () => {
             type: first.type ?? 'openai',
             config: first.config ?? 'default',
             enabled: true,
-            defaultModel: models[0].name,
-            models
+            defaultModel: secondModel.name,
+            models: [secondModel]
           }
         ]
       }
@@ -604,8 +644,8 @@ Given('two AI providers are configured', () => {
 /**
  * Simulates the backend marking the current user as not allowed to use ChatAI
  * (e.g. because "allowedUsers" is configured and the user is not in the list).
- * Dispatches the same CHAT_AI_SET_AI_CHAT action the app dispatches after login,
- * but with allowed:false, leaving every other field untouched.
+ * Dispatches CHAT_AI_SET_AI_CHAT with allowed:false so Cypress can flip chat
+ * permission without re-running login; production login uses CHAT_AI_SET_AI.
  */
 Given('the user is not allowed to use the AI chatbot', () => {
   cy.get(CHATBOT_TOGGLE).should('exist');
@@ -633,16 +673,16 @@ Given('the user is not allowed to use the AI chatbot', () => {
 });
 
 Then('the AI chatbot toggle tooltip should say {string}', (tooltip: string) => {
-  cy.get(CHATBOT_TOGGLE).trigger('mouseover', { force: true }).trigger('mouseenter', { force: true });
+  cy.get(CHATBOT_TOGGLE).trigger('mouseover', { force: true });
+  cy.get(CHATBOT_TOGGLE).trigger('mouseenter', { force: true });
   cy.get('.pf-v6-c-tooltip__content', { timeout: 5000 }).should('be.visible').and('contain.text', tooltip);
 });
 
 When('user selects the second AI provider', () => {
-  // Open the selector dropdown.
-  cy.get('.pf-chatbot__header').find('button.pf-v6-c-menu-toggle').first().click();
-  // The provider name is a non-clickable DropdownGroup heading (<h3>); the actual
-  // selectable entries are DropdownItem buttons showing model names underneath it.
-  // Navigate from the group title up to the group container, then click its first item.
+  // The model selector lives in the message bar additional actions.
+  cy.get('[data-test="chatbot-model-selector"]').click();
+  // The provider name is a non-clickable group heading; the selectable entries
+  // are the model names underneath it.
   cy.contains('.pf-v6-c-menu__group-title', SECOND_PROVIDER_NAME)
     .closest('.pf-v6-c-menu__group')
     .find('button.pf-v6-c-menu__item')
@@ -651,8 +691,8 @@ When('user selects the second AI provider', () => {
 });
 
 Then('the AI chatbot header should show the second provider as selected', () => {
-  // The MenuToggle button shows the selected value as its text content
-  cy.get('.pf-chatbot__header').find('button.pf-v6-c-menu-toggle').first().should('contain.text', SECOND_PROVIDER_NAME);
+  // The message bar selector shows the model name only.
+  cy.get('[data-test="chatbot-model-selector"]').should('contain.text', SECOND_PROVIDER_MODEL);
 });
 
 /**
@@ -832,4 +872,32 @@ Then('the interaction mode dropdown should show {string} option', (mode: string)
 
 Then('the interaction mode dropdown should show {string} description', (description: string) => {
   cy.get('.pf-v6-c-menu').should('be.visible').and('contain.text', description);
+});
+
+Then('the AI chatbot should display a mode divider for {string}', (mode: string) => {
+  const modeLabel = mode === 'ask' ? 'Ask' : 'Troubleshoot';
+  cy.get(CHATBOT_VISIBLE)
+    .find('[data-test="chatbot-mode-divider"]')
+    .should('be.visible')
+    .and('contain.text', `New conversation mode: ${modeLabel}`);
+});
+
+// ============================================================
+// Troubleshooting page → chatbot launch (Fix it with AI)
+// Page / menu / Overview coverage lives in troubleshooting.ts
+// ============================================================
+
+When('user clicks Fix it with AI on the first troubleshooting subproblem', () => {
+  lastResponseAlias = 'troubleshootingFixResponse';
+  cy.intercept('POST', '**/api/chat/**/ai', req => {
+    expect(req.body?.interaction_mode).to.equal('troubleshoot');
+    expect(req.body?.query).to.include('Why is productpage returning 5xx errors?');
+    req.reply({
+      statusCode: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+      body: createMockStreamResponse(mockPayload)
+    });
+  }).as('troubleshootingFixResponse');
+
+  cy.get('[data-test="ai-troubleshooting-fix-with-ai"]').first().should('be.visible').and('not.be.disabled').click();
 });
