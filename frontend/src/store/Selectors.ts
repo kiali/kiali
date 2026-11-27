@@ -1,122 +1,58 @@
-import { createSelector } from 'reselect';
 import type { KialiAppState } from './Store';
 import type { TimeRange } from '../types/Common';
 import type { Namespace } from '../types/Namespace';
 import type { MeshCluster } from '../types/Mesh';
-import type { EdgeLabelMode, EdgeMode, GraphType, RankMode, TrafficRate } from '../types/Graph';
+import type { EdgeLabelMode, EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import type { ComponentStatus } from '../types/IstioStatus';
-// These memoized selectors are from Redux Reselect package
 
-type Selector<T> = (state: KialiAppState) => T;
+export const activeNamespacesSelector = (state: KialiAppState): Namespace[] => state.namespaces.activeNamespaces;
 
-const createIdentitySelector = <T>(selector: Selector<T>): Selector<T> => createSelector(selector, (x: T): T => x);
+export const namespacesPerClusterSelector = (state: KialiAppState): Map<string, string[]> =>
+  state.namespaces.namespacesPerCluster;
 
-// select the proper field from Redux State
-const activeNamespaces = (state: KialiAppState): Namespace[] => state.namespaces.activeNamespaces;
+export const activeClustersSelector = (state: KialiAppState): MeshCluster[] => state.clusters.activeClusters;
 
-// Select from the above field(s) and the last function is the formatter
-export const activeNamespacesSelector = createIdentitySelector(activeNamespaces);
+export const durationSelector = (state: KialiAppState): number => state.userSettings.duration;
 
-// select the proper field from Redux State
-const namespacesPerCluster = (state: KialiAppState): Map<string, string[]> => state.namespaces.namespacesPerCluster;
+export const timeRangeSelector = (state: KialiAppState): TimeRange => state.userSettings.timeRange;
 
-// Select from the above field(s) and the last function is the formatter
-export const namespacesPerClusterSelector = createIdentitySelector(namespacesPerCluster);
+export const namespaceFilterSelector = (state: KialiAppState): string => state.namespaces.filter;
 
-// select the proper field from Redux State
-const activeClusters = (state: KialiAppState): MeshCluster[] => state.clusters.activeClusters;
+export const clusterFilterSelector = (state: KialiAppState): string => state.clusters.filter;
 
-// Select from the above field(s) and the last function is the formatter
-export const activeClustersSelector = createIdentitySelector(activeClusters);
+export const edgeLabelsSelector = (state: KialiAppState): EdgeLabelMode[] => state.graph.toolbarState.edgeLabels;
 
-const duration = (state: KialiAppState): number => state.userSettings.duration;
+export const edgeModeSelector = (state: KialiAppState): EdgeMode => state.graph.edgeMode;
 
-export const durationSelector = createIdentitySelector(duration);
+export const findValueSelector = (state: KialiAppState): string => state.graph.toolbarState.findValue;
 
-const timeRange = (state: KialiAppState): TimeRange => state.userSettings.timeRange;
+export const graphTypeSelector = (state: KialiAppState): GraphType => state.graph.toolbarState.graphType;
 
-export const timeRangeSelector = createIdentitySelector(timeRange);
+export const hideValueSelector = (state: KialiAppState): string => state.graph.toolbarState.hideValue;
 
-const namespaceFilter = (state: KialiAppState): string => state.namespaces.filter;
+export const meshFindValueSelector = (state: KialiAppState): string => state.mesh.toolbarState.findValue;
 
-export const namespaceFilterSelector = createIdentitySelector(namespaceFilter);
+export const meshHideValueSelector = (state: KialiAppState): string => state.mesh.toolbarState.hideValue;
 
-const clusterFilter = (state: KialiAppState): string => state.clusters.filter;
+export const namespaceItemsSelector = (state: KialiAppState): Namespace[] | undefined => state.namespaces.items;
 
-export const clusterFilterSelector = createIdentitySelector(clusterFilter);
+export const refreshIntervalSelector = (state: KialiAppState): number => state.userSettings.refreshInterval;
 
-const edgeLabels = (state: KialiAppState): EdgeLabelMode[] => state.graph.toolbarState.edgeLabels;
+export const replayActiveSelector = (state: KialiAppState): boolean => state.userSettings.replayActive;
 
-export const edgeLabelsSelector = createIdentitySelector(edgeLabels);
+export const replayQueryTimeSelector = (state: KialiAppState): number => state.userSettings.replayQueryTime;
 
-const edgeMode = (state: KialiAppState): EdgeMode => state.graph.edgeMode;
+export const showIdleNodesSelector = (state: KialiAppState): boolean => state.graph.toolbarState.showIdleNodes;
 
-export const edgeModeSelector = createIdentitySelector(edgeMode);
+export const trafficRatesSelector = (state: KialiAppState): TrafficRate[] => state.graph.toolbarState.trafficRates;
 
-const findValue = (state: KialiAppState): string => state.graph.toolbarState.findValue;
+export const meshWideMTLSStatusSelector = (state: KialiAppState): string => state.meshTLSStatus.status;
 
-export const findValueSelector = createIdentitySelector(findValue);
+export const minTLSVersionSelector = (state: KialiAppState): string => state.meshTLSStatus.minTLS;
 
-const graphType = (state: KialiAppState): GraphType => state.graph.toolbarState.graphType;
+export const meshWideMTLSEnabledSelector = (state: KialiAppState): boolean => state.meshTLSStatus.autoMTLSEnabled;
 
-export const graphTypeSelector = createIdentitySelector(graphType);
+export const istioStatusSelector = (state: KialiAppState): { [cluster: string]: ComponentStatus[] } =>
+  state.istioStatus;
 
-const hideValue = (state: KialiAppState): string => state.graph.toolbarState.hideValue;
-
-export const hideValueSelector = createIdentitySelector(hideValue);
-
-const meshFindValue = (state: KialiAppState): string => state.mesh.toolbarState.findValue;
-
-export const meshFindValueSelector = createIdentitySelector(meshFindValue);
-
-const meshHideValue = (state: KialiAppState): string => state.mesh.toolbarState.hideValue;
-
-export const meshHideValueSelector = createIdentitySelector(meshHideValue);
-
-const namespaceItems = (state: KialiAppState): Namespace[] | undefined => state.namespaces.items;
-
-export const namespaceItemsSelector = createIdentitySelector(namespaceItems);
-
-const rankBy = (state: KialiAppState): RankMode[] => state.graph.toolbarState.rankBy;
-
-export const rankBySelector = createIdentitySelector(rankBy);
-
-const refreshInterval = (state: KialiAppState): number => state.userSettings.refreshInterval;
-
-export const refreshIntervalSelector = createIdentitySelector(refreshInterval);
-
-const replayActive = (state: KialiAppState): boolean => state.userSettings.replayActive;
-
-export const replayActiveSelector = createIdentitySelector(replayActive);
-
-const replayQueryTime = (state: KialiAppState): number => state.userSettings.replayQueryTime;
-
-export const replayQueryTimeSelector = createIdentitySelector(replayQueryTime);
-
-const showIdleNodes = (state: KialiAppState): boolean => state.graph.toolbarState.showIdleNodes;
-
-export const showIdleNodesSelector = createIdentitySelector(showIdleNodes);
-
-const trafficRates = (state: KialiAppState): TrafficRate[] => state.graph.toolbarState.trafficRates;
-
-export const trafficRatesSelector = createIdentitySelector(trafficRates);
-
-const meshwideMTLSStatus = (state: KialiAppState): string => state.meshTLSStatus.status;
-
-export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);
-
-const minTLSVersion = (state: KialiAppState): string => state.meshTLSStatus.minTLS;
-
-export const minTLSVersionSelector = createIdentitySelector(minTLSVersion);
-
-const meshwideMTLSEnabled = (state: KialiAppState): boolean => state.meshTLSStatus.autoMTLSEnabled;
-
-export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);
-
-const istioStatus = (state: KialiAppState): { [cluster: string]: ComponentStatus[] } => state.istioStatus;
-
-export const istioStatusSelector = createIdentitySelector(istioStatus);
-
-const language = (state: KialiAppState): string => state.globalState.language;
-
-export const languageSelector = createIdentitySelector(language);
+export const languageSelector = (state: KialiAppState): string => state.globalState.language;
