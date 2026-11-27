@@ -7,6 +7,7 @@ import { Action } from 'types/Chatbot';
 import { FileAttachment } from './FileAttachment';
 import { useSelector } from 'react-redux';
 import { Map as ImmutableMap } from 'immutable';
+import { t } from 'utils/I18nUtils';
 
 type ActionsProps = {
   entryIndex: number;
@@ -20,6 +21,8 @@ export const Actions: React.FC<ActionsProps> = ({ entryIndex }) => {
   const entry = entryObject.toJS();
   const fileAction = (entry.actions as Action[]).filter(action => action.kind === 'file');
   const navigationAction = (entry.actions as Action[]).filter(action => action.kind === 'navigation');
+  // An answer that is only a link gets a line saying where it goes.
+  const hasText = typeof entry.text === 'string' && entry.text.trim() !== '';
 
   const renderAction = (actions: Action[]): React.ReactNode => {
     return actions.map(action => (
@@ -37,12 +40,19 @@ export const Actions: React.FC<ActionsProps> = ({ entryIndex }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem 5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}>
+      {/* With "Allow Chatbot to navigate" on, Prompt opens the first navigation action itself, so say where it went. */}
+      {navigationAction.length > 0 && alwaysNavigate && (
+        <span data-test="chatbot-navigation-action-status">
+          {t('Navigating to {{destination}}', { destination: navigationAction[0].title.replace(/^View\s+/i, '') })}
+        </span>
+      )}
       {navigationAction.length > 0 && !alwaysNavigate && (
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}
           data-testid="chatbot-navigation-action"
         >
+          {!hasText && <span data-test="chatbot-navigation-action-intro">{t('Open the view in Kiali:')}</span>}
           {renderAction(navigationAction)}
         </div>
       )}

@@ -43,7 +43,11 @@ rstest.mock('@patternfly/chatbot', () => ({
     <article data-test={dataTest}>
       {name && <span className="message-name">{name}</span>}
       {isLoading ? (
-        <span aria-label="loading" role="progressbar" />
+        <>
+          <span aria-label="loading" role="progressbar" />
+          {/* PF Message renders afterMainContent while loading too. */}
+          {extraContent?.afterMainContent}
+        </>
       ) : (
         <>
           {content && <span className="message-content">{content}</span>}
@@ -324,6 +328,103 @@ describe('EntryChat', () => {
       renderEntryChat(0);
       expect(screen.getByText('Partial answer so far')).toBeInTheDocument();
       expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+  });
+
+  // ── Copy action and answers without text ─────────────────────────────────────
+
+  describe('answers without text', () => {
+    const aiEntry = (overrides: Record<string, unknown>): void => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-entry',
+            who: 'ai',
+            text: '',
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: false,
+            ...overrides
+          }
+        })
+      );
+    };
+    const workloadLink = {
+      title: 'View workload Details',
+      kind: 'navigation',
+      payload: '/namespaces/bookinfo/workloads/echo-service'
+    };
+
+    it('offers copy for an answer with text and copies that text', () => {
+      (writeMarkdownRichToClipboard as Mock).mockResolvedValue(true);
+      aiEntry({ text: 'The workload is healthy.' });
+      renderEntryChat(0);
+      fireEvent.click(screen.getByTestId('stub-chat-copy'));
+      expect(writeMarkdownRichToClipboard).toHaveBeenCalledWith('The workload is healthy.');
+    });
+
+    it('shows a link-only answer with a line saying where the link goes and no copy', () => {
+      aiEntry({ actions: [workloadLink] });
+      renderEntryChat(0);
+      expect(screen.getByTestId('chatbot-navigation-action-intro')).toBeInTheDocument();
+      expect(screen.getByText('View workload Details')).toBeInTheDocument();
+      expect(screen.queryByTestId('stub-chat-copy')).not.toBeInTheDocument();
+      expect(screen.queryByText('No answer was returned.')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('chatbot-navigation-action-status')).not.toBeInTheDocument();
+    });
+
+    describe('when the chatbot navigates by itself', () => {
+      beforeEach(() => {
+        store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: true }));
+      });
+
+      afterEach(() => {
+        store.dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: false }));
+      });
+
+      it('says where a link-only answer went instead of showing an empty message', () => {
+        aiEntry({ actions: [workloadLink] });
+        renderEntryChat(0);
+        const status = screen.getByTestId('chatbot-navigation-action-status');
+        expect(status).toHaveTextContent('Navigating to');
+        expect(status).toHaveTextContent('workload Details');
+        expect(status).not.toHaveTextContent('View');
+        expect(screen.queryByTestId('chatbot-navigation-action')).not.toBeInTheDocument();
+        expect(screen.queryByText('No answer was returned.')).not.toBeInTheDocument();
+      });
+
+      it('names the first link, the one it opens', () => {
+        aiEntry({
+          text: 'Here it is.',
+          actions: [workloadLink, { title: 'View Mesh Graph', kind: 'navigation', payload: '/mesh' }]
+        });
+        renderEntryChat(0);
+        const status = screen.getByTestId('chatbot-navigation-action-status');
+        expect(status).toHaveTextContent('Navigating to');
+        expect(status).toHaveTextContent('workload Details');
+        expect(status).not.toHaveTextContent('View');
+        expect(status).not.toHaveTextContent('Mesh Graph');
+      });
+    });
+
+    it('does not add the line when the answer has text above the link', () => {
+      aiEntry({ text: 'Here it is.', actions: [workloadLink] });
+      renderEntryChat(0);
+      expect(screen.getByText('View workload Details')).toBeInTheDocument();
+      expect(screen.queryByTestId('chatbot-navigation-action-intro')).not.toBeInTheDocument();
+    });
+
+    it('says no answer was returned instead of showing only a copy button', () => {
+      aiEntry({});
+      renderEntryChat(0);
+      expect(screen.getByText('No answer was returned.')).toBeInTheDocument();
+      expect(screen.queryByTestId('stub-chat-copy')).not.toBeInTheDocument();
+    });
+
+    it('does not say no answer was returned while the answer is still streaming', () => {
+      aiEntry({ isStreaming: true });
+      renderEntryChat(0);
+      expect(screen.queryByText('No answer was returned.')).not.toBeInTheDocument();
     });
   });
 
