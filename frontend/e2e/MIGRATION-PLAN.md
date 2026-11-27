@@ -5,6 +5,27 @@
 > to `master`. Porting conventions live in `AGENTS.md` (also temporary); the permanent user guide is
 > `README.md`.
 
+## Landing strategy (updated 2026-11-27)
+
+The migration lands on `master` via **`epic/playwright-migration-rebased`** — a branch created
+from current `master` with the full migration as a single commit on top (real delta vs master:
+227 files, no backend `.go` changes outside test hooks). Sequence:
+
+1. PR into `epic/playwright-migration-rebased` — runs **Playwright CI**
+   (`playwright-ci.yml`, base-branch filter on the rebased branch).
+2. PR `epic/playwright-migration-rebased` → `master` — runs **Kiali CI** (`kiali-ci.yml`,
+   unmodified: backend + all Cypress suites, coexistence validation) **and** Playwright CI
+   (`playwright-ci.yml` also triggers on base `master`).
+3. Cutover PR — remove Cypress + Cypress devDependencies, delete this file and `e2e/AGENTS.md`,
+   consolidate CI.
+
+Why a new branch: kiali/kiali only allows **squash** PR merges. The earlier rebase PRs
+(#10435/#10497/#10575) were squash-merged into `epic/playwright-migration`, so the epic carried
+master's content but never master's *ancestry* — an epic→master PR showed a 1194-file diff
+crediting ~4 months of master's own work to the migration. A branch based directly on current
+`master` needs no ancestry repair and squash is harmless there. `epic/playwright-migration`
+remains as the historical record.
+
 ## Acceptance criteria (from #9712)
 
 - [x] Decision made on Cucumber BDD vs native Playwright — **native Playwright Test** (PR #10174)
@@ -20,8 +41,10 @@
 - [x] `@smoke` tests pass (~32 scenarios, PR #10174)
 - [x] `@core-1` and `@core-2` tests pass — core-1 done (144 tests, PR #10195/#10220); core-2 done
   (PR #10269)
-- [ ] `@core-caching` tests pass — ported on epic branch (playwright-core-caching CI)
-- [ ] Multi-cluster and ambient test suites pass
+- [x] `@core-caching` tests pass — ported on epic branch (playwright-core-caching CI); green in the
+  2026-11-25 all-gate runs
+- [x] Multi-cluster and ambient test suites pass — all suites green in the 2026-11-25 all-gate runs
+  (PR #10575, two consecutive all-green full runs)
 - [ ] OSSMC plugin mode tested and working
 - [ ] Equivalent-or-better failure investigation tooling is available versus Cypress
 - [x] Failed Playwright tests automatically capture screenshots and preserve videos in CI artifacts
@@ -45,8 +68,8 @@
 - [x] React fiber policy documented: prefer `data-test` / DOM assertions; no new `page.evaluate()`
   fiber walking without a TODO. `data-ready` DOM attribute demonstrated on MiniGraphCard.
   (PR #10217, PR #10220)
-- [ ] CI strategy documented: **coexistence on `master` first**; LTS/supported branches after master
-  cutover
+- [x] CI strategy documented: **coexistence on `master` first**; LTS/supported branches after master
+  cutover (see "Landing strategy" above)
 - [ ] Private pipelines (Jenkins) included in cutover acceptance — not GitHub Actions only
 - [ ] Epic broken into sub-issues (Phase 0 spike, migration skill, smoke, core-1, core-2, specialized,
   OSSMC, Jenkins, Cypress removal)
@@ -109,8 +132,8 @@
 - [x] `@core-1` suite passes (144 tests, PR #10195 + #10220)
 - [x] `@core-2` suite passes (PR #10269; colliding K8s Gateway wizard on `issue9712_missing_merged_e2e`)
 - [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
-- [x] `@crd-validation` suite ported (28 tests; `playwright-core-optional` CI; run `yarn playwright:run:core-optional`; CI green still pending)
-- [x] `@perses` suite ported (2 tests; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`; CI green still pending)
+- [x] `@crd-validation` suite ported (28 tests; `playwright-core-optional` CI; run `yarn playwright:run:core-optional`; green in the 2026-11-25 gate runs)
+- [x] `@perses` suite ported (2 tests; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`; green in the 2026-11-25 gate runs)
 - [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
 - [x] `@waypoint` suite ported (PR #10365; full `waypoint.feature` + waypoint logs;
   `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
@@ -119,7 +142,7 @@
 - [x] `@ambient-multi-primary` suite ported (`playwright-ambient-multi-primary` CI; KinD multi-primary ambient)
 - [x] `@waypoint-multicluster` suite ported (PR #10390; 5 scenarios;
   `playwright-ambient-multi-primary` CI sets `--waypoint true`, then runs ambient-multi-primary + waypoint-multicluster)
-- [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
+- [x] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`; green in the 2026-11-25 gate runs)
 - [x] `@multi-primary` suite ported (PR #10389 + #10408; `playwright-multi-primary` CI on
   openid/Keycloak; mesh, west
   wizards incl. graph context menu / side panel, istio config list, `@authorization` limited-user
@@ -152,8 +175,8 @@
   (PR #10174, #10220; core-caching, external-kiali, offline, AI chatbot, and tempo Playwright workflows)
 - [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
   removal
-- [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
-  removed
+- [x] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
+  removed — met 2026-11-25 (PR #10575, two consecutive all-green full runs)
 
 ## OSSMC
 

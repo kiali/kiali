@@ -1,5 +1,6 @@
-# Playwright-only CI for the Cypress → Playwright migration rebased branch.
-# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration-rebased.
+# Playwright-only CI for the Cypress → Playwright migration.
+# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration-rebased
+# (landing PRs) and master (coexistence: Kiali CI runs Cypress, this runs Playwright).
 name: Playwright CI
 
 on:
@@ -7,6 +8,7 @@ on:
     types: [opened, synchronize, reopened]
     branches:
     - epic/playwright-migration-rebased
+    - master
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
