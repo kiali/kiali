@@ -1,0 +1,83 @@
+import type { APIRequestContext } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { kubectlExec } from './kubectl';
+import { hasSailIstioCr } from './kialiConfig';
+import { kialiUrl } from './kialiUrl';
+
+const istioSharedMeshConfigMap = `
+apiVersion: v1
+data:
+  mesh: |-
+    outboundTrafficPolicy:
+      mode: REGISTRY_ONLY
+kind: ConfigMap
+metadata:
+  name: istio-user
+  namespace: istio-system
+`;
+
+const restorePatch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
+const applyPatch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
+
+function restoreSharedMeshConfigResources(): void {
+  kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`, false);
+  kubectlExec(`kubectl patch istio default --type='merge' -p '${restorePatch}'`, false);
+}
+
+async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName: string): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(kialiUrl('/api/mesh/graph'));
+        if (!response.ok()) {
+          // Return false (not throw) so expect.poll retries: transient non-200s are
+          // expected while istiod restarts after the SHARED_MESH_CONFIG patch.
+          return false;
+        }
+        const body = await response.json();
+        const istiodNode = body.elements?.nodes?.find(
+          (node: { data?: { infraType?: string; infraData?: { config?: { sharedConfig?: unknown } } } }) =>
+            node.data?.infraType === 'istiod'
+        );
+        return istiodNode?.data?.infraData?.config?.sharedConfig !== undefined;
+      },
+      { timeout: 45_000, intervals: [3_000] }
+    )
+    .toBe(true);
+
+  // On OSSM/Sail the old pod may still be running while Kiali already reports sharedConfig —
+  // wait for the pre-patch pod delete when possible; do not fail setup on this alone.
+  const podStillExists = kubectlExec(`kubectl get pod/${istiodPodName} -n istio-system`, false).exitCode === 0;
+  if (podStillExists) {
+    kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, false);
+  }
+}
+
+export async function applySharedMeshConfig(request: APIRequestContext): Promise<void> {
+  if (!hasSailIstioCr()) {
+    throw new Error('Sail Istio CR (istio default) is not installed — shared mesh config test requires Sail operator');
+  }
+
+  const podResult = kubectlExec(
+    `kubectl get pods -l app=istiod -n istio-system -o jsonpath="{.items[0].metadata.name}"`,
+    true
+  );
+  const podName = podResult.stdout;
+
+  // The mutations must not leak past a failure: the caller (mesh_core2.spec.ts) invokes
+  // applySharedMeshConfig before its try block, so its finally-restore never runs if we
+  // throw here. Restore and rethrow so the mesh is not left with REGISTRY_ONLY outbound
+  // policy for the rest of the CI job.
+  try {
+    kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`, true);
+    kubectlExec(`kubectl patch istio default --type='merge' -p '${applyPatch}'`, true);
+    await waitForSharedMeshConfig(request, podName);
+  } catch (e) {
+    restoreSharedMeshConfigResources();
+    throw e;
+  }
+}
+
+export function restoreSharedMeshConfig(): void {
+  restoreSharedMeshConfigResources();
+}

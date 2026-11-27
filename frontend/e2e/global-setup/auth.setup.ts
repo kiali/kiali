@@ -1,0 +1,54 @@
+import { test as setup, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import { AUTH_FILE } from '../utils/auth';
+import { kialiUrl } from '../utils/kialiUrl';
+import { loginOpenId } from '../utils/openid-auth';
+import { loginOpenShift, playwrightCredentials } from '../utils/openshift-auth';
+
+type AuthInfo = {
+  strategy?: string;
+};
+
+/**
+ * Auth setup project — detects strategy from /api/auth/info and persists
+ * storageState for suite projects.
+ *
+ * Supports anonymous (local), openshift (Jenkins OCP htpasswd), and openid (Keycloak).
+ * Token remains for later phases.
+ */
+setup('authenticate', async ({ page, request }) => {
+  fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
+
+  const authResponse = await request.get(kialiUrl('/api/auth/info'));
+  expect(authResponse.ok()).toBeTruthy();
+  const authInfo = (await authResponse.json()) as AuthInfo;
+  const strategy = authInfo.strategy ?? 'anonymous';
+
+  if (strategy === 'anonymous') {
+    await page.goto(kialiUrl('/console/overview?refresh=0'));
+    const status = await request.get(kialiUrl('/api/status'));
+    expect(status.ok()).toBeTruthy();
+  } else if (strategy === 'openshift') {
+    const { username, password, authProvider } = playwrightCredentials();
+    await loginOpenShift(page, {
+      authProvider,
+      password,
+      username
+    });
+  } else if (strategy === 'openid') {
+    const { username, password } = playwrightCredentials();
+    await loginOpenId(page, { password, username });
+  } else {
+    // Write empty storageState before failing so dependent projects produce JUnit
+    // output (skipped) instead of crashing with zero results, which breaks Jenkins.
+    fs.writeFileSync(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
+    const implemented = ['anonymous', 'openid', 'openshift'];
+    expect(
+      implemented,
+      `Auth strategy "${strategy}" is not implemented in auth.setup.ts — add support or switch to: ${implemented.join(', ')}`
+    ).toContain(strategy);
+  }
+
+  await page.context().storageState({ path: AUTH_FILE });
+});

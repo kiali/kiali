@@ -1,0 +1,262 @@
+# Cypress → Playwright migration plan
+
+> **Temporary file.** Progress tracker for the Cypress→Playwright e2e migration, seeded from issue
+> [#9712](https://github.com/kiali/kiali/issues/9712). Delete this file before merging the migration
+> to `master`. Porting conventions live in `AGENTS.md` (also temporary); the permanent user guide is
+> `README.md`.
+
+## Acceptance criteria (from #9712)
+
+- [x] Decision made on Cucumber BDD vs native Playwright — **native Playwright Test** (PR #10174)
+- [x] Playwright installed and configured with projects matching current test suites (PR #10174)
+- [ ] All existing Cypress tests migrated to Playwright
+- [x] JUnit reporting preserved for CI integration (PR #10174)
+- [x] CI workflows updated (`hack/run-integration-tests.sh` and GitHub Actions) — all 13 Playwright
+  suites have `hack/run-integration-tests.sh` branches and GitHub Actions workflows
+- [x] AGENTS.md and developer documentation updated (root `AGENTS.md`, `e2e/AGENTS.md`, and
+  `e2e/README.md` reviewed and brought current in the branch review; cutover-time doc updates
+  remain, tracked under "Cutover & docs")
+- [ ] Cypress and all Cypress-specific devDependencies removed
+- [x] `@smoke` tests pass (~32 scenarios, PR #10174)
+- [x] `@core-1` and `@core-2` tests pass — core-1 done (144 tests, PR #10195/#10220); core-2 done
+  (PR #10269)
+- [ ] `@core-caching` tests pass — ported on epic branch (playwright-core-caching CI)
+- [ ] Multi-cluster and ambient test suites pass
+- [ ] OSSMC plugin mode tested and working
+- [ ] Equivalent-or-better failure investigation tooling is available versus Cypress
+- [x] Failed Playwright tests automatically capture screenshots and preserve videos in CI artifacts
+  (PR #10174/#10220)
+- [x] Playwright traces are retained on failure (or first retry) and are viewable from archived
+  artifacts (PR #10174/#10220)
+- [x] CI archives actionable test reports/logs (`combined-report.xml` and test result artifacts)
+- [x] CI continues to archive Kiali server and operator logs for cluster-side failure diagnosis
+  (verified in branch review: all 13 Playwright integration workflows run `hack/ci-get-debug-info.sh`
+  on failure)
+- [ ] Environment snapshot capture remains available for downstream reporting/debugging workflows
+
+## Decisions & tracking
+
+- [x] Decision documented: GitHub Playwright smoke/core suites use **in-cluster** Kiali (MetalLB,
+  `web_root=/kiali`, anonymous until token auth.setup), matching Cypress frontend fidelity and
+  ambient; local `kiali run` remains for interactive debug / Cypress `local` suite. Offline stays on
+  `kiali run offline`.
+- [x] Decision documented: **Native Playwright Test** (not `playwright-bdd`) — self-contained
+  `.spec.ts` + Page Object Models; no third-party Gherkin dependency. (PR #10174)
+- [x] React fiber policy documented: prefer `data-test` / DOM assertions; no new `page.evaluate()`
+  fiber walking without a TODO. `data-ready` DOM attribute demonstrated on MiniGraphCard.
+  (PR #10217, PR #10220)
+- [ ] CI strategy documented: **coexistence on `master` first**; LTS/supported branches after master
+  cutover
+- [ ] Private pipelines (Jenkins) included in cutover acceptance — not GitHub Actions only
+- [ ] Epic broken into sub-issues (Phase 0 spike, migration skill, smoke, core-1, core-2, specialized,
+  OSSMC, Jenkins, Cypress removal)
+- [x] Suite tags: use Playwright's native `tag` option via centralized exports in
+  `e2e/utils/suite-tags.ts`, not title-only strings. Non-project conditions (e.g.
+  `@prometheus-disabled`) are additional `tag` values combined with the suite tag (e.g.
+  `smokeAndPrometheusDisabled`); such tests mock the condition themselves (e.g. `page.route` on
+  `/api/config`) and run in the normal suite — no `annotation` API usage.
+  (PR #10174 review, PR #10195, PR #10217)
+- [x] Test-migration PR scope: only `data-test` attributes and `aria-label` additions in source code.
+  No ESLint fixes, refactors, or production behavioral changes — those go to dedicated PRs targeting
+  `master`. (PR #10217 — StatefulFilters revert)
+- [x] Auth setup failure handling: write empty `storageState` then fail via `expect().toContain()`,
+  not `throw`. Hard throws produce zero JUnit output; `expect` produces 1 FAILED + 18 SKIPPED.
+  (PR #10217)
+- [x] `playwright:run:last-failed` removed — `--last-failed` overwrites `playwright/blob-report/` and produces
+  misleading Jenkins failure counts. CI reports reflect the full first pass only. (PR #10195)
+- [x] Decision documented: **`@offline` port is an intentional subset** — 13 Playwright tests cover
+  the offline-specific scenarios (status icon, minigraph offline state, graph view-only traffic
+  actions under fault injection, offline Istio Config list). The remaining ~150 Cypress `@offline`
+  scenario instances were re-runs of core suite scenarios (graph display/toolbar, workloads,
+  column management, apps, etc.) against a must-gather archive, not offline-specific coverage.
+  Re-running the core Playwright suites against must-gather data is a follow-up in
+  [#9712](https://github.com/kiali/kiali/issues/9712), gated on validating the graph/metrics
+  helpers against archived data first.
+- [x] Decision documented: **the 2 unported `@openshift` login scenarios are deferred** — "Openshift
+  login shows error message when code exchange fails" and "Login to two different openshift
+  clusters" require live OpenShift OAuth (the second needs two OCP clusters), which the KinD CI
+  suites cannot provide. They stay in Cypress until OSSMC/OCP e2e infra exists; file a follow-up
+  issue when that work starts.
+
+## Phase 0 — Infrastructure
+
+- [x] `@playwright/test` ≥1.48 installed in `frontend/` (pin documented, e.g. v1.61.x)
+- [x] `playwright.config.ts` with projects matching CI suites via `grep` tags
+- [x] `BasePage` with `getBySel()`, `waitForLoad` — **no** `robustClick` / `retryOnError` (PR #10174)
+- [x] `auth.setup.ts` / `storageState` handles: `anonymous`, `openshift`, `openid` (Keycloak).
+  Unimplemented `token` fails gracefully via `expect().toContain()`. (PR #10174, #10217)
+- [ ] `cleanup` fixture established (replaces `@clean-istio-namespace-resources-after`-style hooks)
+- [x] Shared utils ported: navigation, table, `linkSelector`, transition, namespace, suite-tags
+  (PR #10174, #10195, #10217)
+- [x] JUnit reporter configured (built-in Playwright reporter — no Cypress multi-reporter stack)
+  (PR #10174)
+- [x] `yarn playwright:run:smoke` passes headless (PR #10174)
+- [ ] Playwright MCP (`@playwright/mcp`) produces a valid `browser_snapshot` of the Kiali UI
+- [ ] Kiali-specific migration skill added (adapted from
+  [openshift/console#16315](https://github.com/openshift/console/pull/16315)): auth strategies, graph
+  WebSocket mocking, OSSMC proxy patterns, vendored-code boundary
+- [ ] At least one smoke path verified OSSMC-safe: `linkSelector()` + `**/api/**` route patterns
+
+## Migration completeness
+
+- [ ] All existing Cypress Gherkin scenarios migrated to Playwright `.spec.ts` + Page Object Models
+  under `frontend/e2e/`
+- [ ] `page.routeWebSocket()` used alongside `page.route()` wherever graph/watch APIs are mocked
+- [ ] React fiber usages (`getReact` / `waitForReact` / `getCurrentState` / `getProps`) replaced with
+  `data-test` or DOM assertions (no residual Cypress React helpers). Graph topology fiber reads remain
+  with TODO (PR #10220).
+- [x] `@smoke` suite passes (~32 scenarios, PR #10174)
+- [x] `@core-1` suite passes (144 tests, PR #10195 + #10220)
+- [x] `@core-2` suite passes (PR #10269; colliding K8s Gateway wizard on `issue9712_missing_merged_e2e`)
+- [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
+- [x] `@crd-validation` suite ported (28 tests; `playwright-core-optional` CI; run `yarn playwright:run:core-optional`; CI green still pending)
+- [x] `@perses` suite ported (2 tests; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`; CI green still pending)
+- [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
+- [x] `@waypoint` suite ported (PR #10365; full `waypoint.feature` + waypoint logs;
+  `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
+- [x] `@waypoint-tracing` suite ported (PR #10388; `playwright-ambient` → `yarn playwright:run:waypoint`;
+  heatmap hover scenarios deferred)
+- [x] `@ambient-multi-primary` suite ported (`playwright-ambient-multi-primary` CI; KinD multi-primary ambient)
+- [x] `@waypoint-multicluster` suite ported (PR #10390; 5 scenarios;
+  `playwright-ambient-multi-primary` CI sets `--waypoint true`, then runs ambient-multi-primary + waypoint-multicluster)
+- [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
+- [x] `@multi-primary` suite ported (PR #10389 + #10408; `playwright-multi-primary` CI on
+  openid/Keycloak; mesh, west
+  wizards incl. graph context menu / side panel, istio config list, `@authorization` limited-user
+  RBAC and restricted remote-namespace graphs)
+- [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
+- [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
+- [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
+- [x] `@offline` suite fully ported — all 146 Cypress `@offline` scenarios covered: 139
+  dual-tagged `<suite> @offline` reruns across 18 specs (core-1/core-2/core-caching/ambient
+  tests that also run in the offline project, mirroring Cypress dual tags) plus the
+  offline-specific specs (graph wizard locks, status icon, istio config); run
+  `yarn playwright:run:offline`
+- [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
+- [x] Perf suite ported (`playwright-perf.config.ts` / `yarn playwright:run:perf`; `e2e/perf/`,
+  text report written by `e2e/perf/perfReporter.ts`)
+
+## CI / pipelines
+
+- [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
+  (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
+- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
+  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
+  `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-primary-remote`,
+  `playwright-multi-primary`, `playwright-offline`, `playwright-ai-chatbot`, `playwright-tempo`, and
+  `playwright-multi-mesh` suites
+  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; multi-mesh #10370; multi-primary #10389;
+  AI chatbot + tempo on epic branch)
+- [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
+- [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
+  (PR #10174, #10220; core-caching, external-kiali, offline, AI chatbot, and tempo Playwright workflows)
+- [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
+  removal
+- [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
+  removed
+
+## OSSMC
+
+- [ ] `hack/copy-frontend-src-to-ossmc.sh` updated to sync Playwright e2e (and stop syncing Cypress
+  once cut over)
+- [ ] OSSMC-specific tests migrated (`sidebar_navigation`, any non-vendored support: visit/request
+  rewriting, Console login, guided tour)
+- [ ] OSSMC plugin mode verified: Console proxy API paths + `linkSelector` (kiosk `<button data-href>`)
+  work under Playwright
+- [ ] OSSMC Cypress test image / Dockerfile updated or replaced for Playwright
+
+## Cutover & docs
+
+- [ ] Cypress and all Cypress-specific `devDependencies` removed from `frontend/package.json` (and
+  OSSMC `plugin/package.json`)
+- [ ] Cypress configs, support, feature files, and Cucumber preprocessor config removed
+- [ ] `.mcp.json` / `AGENTS.md`: Playwright MCP debugging guidance replaces
+  `CYPRESS_REMOTE_DEBUGGING_PORT=9222` Cypress CDP section
+- [ ] Zero Cypress e2e references remaining in Kiali and OSSMC codebases (perf suite migrated or
+  explicitly deferred with follow-up issue)
+- [ ] LTS/supported-branch backport strategy executed or explicitly deferred with a tracked follow-up
+- [ ] Delete temporary `MIGRATION-PLAN.md` and `AGENTS.md`; fold any lasting guidance into `README.md`
+
+## Open questions
+
+- **Graph topology DOM hooks:** PR #10220 uses `page.evaluate()` to walk React's fiber tree for graph
+  topology assertions. A TODO marks this for migration to DOM/`data-test`. What `data-test` attributes
+  or DOM hooks should graph components expose? (raised by hhovsepy, acknowledged by jshaughn)
+
+## Action items
+
+- [ ] Replace remaining React fiber reads in `graphTopology.ts` with `data-test` / DOM attributes
+  (PR #10220 TODO)
+- [ ] Extract the duplicated React-fiber boilerplate (`getReactFiber` / `getComponentName` /
+  `getStateFromFiber`, ~120 lines in `graphTopology.ts` and `meshTopology.ts`) into a shared
+  `utils/reactFiber.ts`. **Deferred**: `page.evaluate()` only accepts one serializable argument,
+  so the helpers cannot be passed in — a `page.addInitScript()`-attached `window.__kialiFiber`
+  (or similar) is needed; bundle with the DOM-hook migration above so it is written once.
+- [ ] Implement `token` auth strategy in `auth.setup.ts` (`openid` done for external-kiali)
+- [ ] Create `cleanup` fixture (`cleanup.trackNamespace()`) for demo mutation teardown (PR #10195
+  pattern)
+- [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations
+  deferred from PR #10217
+- [ ] Port OSSMC-specific suites — all standalone suites are ported (core-2 #10269, ambient
+  #10319, waypoint 37 tests on `issue9712_waypoint`, multi-cluster `0a19cbda5`); remaining: OSSMC
+  `sidebar_navigation` and other non-vendored support (see "OSSMC")
+- [ ] Add `page.routeWebSocket()` where graph live updates are mocked
+- [ ] Verify TextInputGroupMain `data-test` scoping — PF renders `data-test` on outer `<div>`, not
+  inner `<input>`; assess if PF should be patched or if `getByTestId().locator('input')` is sufficient
+  (PR #10217)
+- [ ] Add `data-test` on `StatefulFilters` overflow button area — verify `collapsedTextProps` in PF6
+  LabelGroup (PR #10174 review)
+- [ ] OSSMC Playwright sync and Cypress cutover ([#9712](https://github.com/kiali/kiali/issues/9712)
+  later phases)
+
+## Waypoint port plan (`@waypoint`)
+
+**CI:** Reuse `playwright-ambient` (same KinD ambient Sail + demos as Cypress `frontend-ambient`).
+Run ambient to completion, then `yarn playwright:run:waypoint` (`waypoint` + `waypoint-tracing`).
+Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
+
+**Specs (`frontend/e2e/tests/waypoint/`):**
+| File | Coverage |
+|------|----------|
+| `waypoint.spec.ts` | Setup/enrollment, bookinfo list/details/ztunnel/logs/graph/istio/namespaces |
+| `waypoint_demo_graph.spec.ts` | `waypoint-*` demo-NS graph matrix |
+| `waypoint_demo_details.spec.ts` | Demo-NS Waypoint tab / L7 links |
+| `waypoint_sidecar_ambient.spec.ts` | Sidecar↔ambient graph, config issues, Add to Ambient |
+| `waypoint_tracing_*.spec.ts` | `@waypoint-tracing` mesh/details/logs/graph/tooltip heat maps |
+| `waypoint_multicluster.spec.ts` | `@waypoint-multicluster` on ambient multi-primary (`bookinfo-waypoints`) |
+
+**Separate tags (not the single-cluster `@waypoint` port):** `@waypoint-tracing`, `@waypoint-multicluster`
+
+## Waypoint-tracing port (`@waypoint-tracing`)
+
+**CI:** Same `playwright-ambient` job; after ambient, `yarn playwright:run:waypoint` runs
+`--project=waypoint` then `--project=waypoint-tracing` (depends on `waypoint-setup`).
+
+**Ported:** mesh waypoints + ztunnel side panels; workload/service/app trace + span UI; workload logs
+spans; graph side-panel Traces tab; tooltip heat-map hover scenarios (reviews app/service/workload,
+`waypoint_tracing_heatmap.spec.ts`) via `hoverTraceScatterplotWithMinSpans`.
+
+**Softened:** span-details tests assert `Duration` only (`expectSpanDetails({ expectMetricsLoaded: false })`):
+ambient waypoint spans often keep the "Load statistics" button because Prometheus stats queries don't
+match waypoint traffic (see `StatsComparison` gating in `SpanTable.tsx`). The strict metrics-loaded
+assertion remains the default for the `@tracing` (Tempo) suite. Revisit if/when waypoint stats
+queries match.
+
+## Waypoint multicluster (`@waypoint-multicluster`)
+
+**CI:** Same job as `@ambient-multi-primary` (`playwright-ambient-multi-primary`). Setup uses
+`--waypoint true` so baseline `bookinfo` stays L4 and `bookinfo-waypoints` is enrolled for L7.
+Run ambient-multi-primary, then `yarn playwright:run:waypoint-multicluster` with unique blob names.
+
+**Divergence:** the traces scenario uses `reviews-v1` (east) instead of the ported cypress
+scenario's `productpage-v1`: both are east-only workloads in the `bookinfo-waypoints` split, and
+`reviews-v1` traces proved stable under waypoint L7 attribution in this environment.
+
+### Learned lessons (converting ambient → waypoint)
+
+1. **Same CI cluster as ambient** — no separate KinD job; enrollment is test-time (`istio.io/use-waypoint`).
+2. **Traces Background ≠ Tempo** — poll gateway/workload traces on ambient (Jaeger-style); deep UI is `@waypoint-tracing`.
+3. **Graph edge counts are floors** — use `expectTrafficEdgesAtLeast` / Prometheus-inclusive helper.
+4. **Reuse ambient POM** — extend `GraphPage` / `WorkloadDetailsPage` / `NamespaceDetailPage`.
+5. **Serial `beforeAll` is expensive** — one readiness wait per describe file; demo NSs share ambient install.
+6. **No Cypress mentions in `frontend/e2e/`** — keep conversion notes here / in `README.md`.

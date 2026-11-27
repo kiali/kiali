@@ -28,6 +28,20 @@ FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
 MCP_TOOLS="false"
 OFFLINE="offline"
+PLAYWRIGHT_CORE_1="playwright-core-1"
+PLAYWRIGHT_CORE_2="playwright-core-2"
+PLAYWRIGHT_CORE_CACHING="playwright-core-caching"
+PLAYWRIGHT_CORE_OPTIONAL="playwright-core-optional"
+PLAYWRIGHT_AMBIENT="playwright-ambient"
+PLAYWRIGHT_AMBIENT_MULTI_PRIMARY="playwright-ambient-multi-primary"
+PLAYWRIGHT_EXTERNAL_KIALI="playwright-external-kiali"
+PLAYWRIGHT_PRIMARY_REMOTE="playwright-primary-remote"
+PLAYWRIGHT_MULTI_PRIMARY="playwright-multi-primary"
+PLAYWRIGHT_OFFLINE="playwright-offline"
+PLAYWRIGHT_AI_CHATBOT="playwright-ai-chatbot"
+PLAYWRIGHT_SMOKE="playwright-smoke"
+PLAYWRIGHT_TEMPO="playwright-tempo"
+PLAYWRIGHT_MULTI_MESH="playwright-multi-mesh"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KIALI_VERSION=""
@@ -57,8 +71,37 @@ cleanup_offline_seeded_traffic_routing() {
 
 cleanup_kiali() {
   cleanup_offline_seeded_traffic_routing
+  if [ -n "${PERSES_PF_PID}" ]; then
+    kill "${PERSES_PF_PID}" 2>/dev/null || true
+  fi
   if [ -n "${KIALI_PID}" ]; then
+    # Kill port-forward / child processes first, then the local kiali binary.
+    pkill -P "${KIALI_PID}" 2>/dev/null || true
     kill "${KIALI_PID}" 2>/dev/null || true
+    wait "${KIALI_PID}" 2>/dev/null || true
+    KIALI_PID=""
+  fi
+}
+
+start_perses_port_forward() {
+  if kubectl get svc perses -n istio-system &>/dev/null; then
+    infomsg "Starting Perses port-forward on localhost:4000"
+    kubectl port-forward -n istio-system svc/perses 4000:8080 &
+    PERSES_PORT_FORWARD_PID=$!
+    for _ in $(seq 1 30); do
+      if curl -s --fail "http://localhost:4000/api/v1/health" > /dev/null 2>&1; then
+        infomsg "Perses port-forward is ready"
+        return 0
+      fi
+      sleep 1
+    done
+    infomsg "WARNING: Perses port-forward may not be ready"
+  fi
+}
+
+stop_perses_port_forward() {
+  if [ -n "${PERSES_PORT_FORWARD_PID}" ]; then
+    kill "${PERSES_PORT_FORWARD_PID}" 2>/dev/null || true
   fi
 }
 
@@ -202,8 +245,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}' or '${OFFLINE}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_TEMPO}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_MULTI_MESH}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_AMBIENT}', '${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}', '${PLAYWRIGHT_EXTERNAL_KIALI}', '${PLAYWRIGHT_PRIMARY_REMOTE}', '${PLAYWRIGHT_MULTI_PRIMARY}', '${PLAYWRIGHT_OFFLINE}', '${PLAYWRIGHT_AI_CHATBOT}', '${PLAYWRIGHT_SMOKE}', '${PLAYWRIGHT_TEMPO}' or '${PLAYWRIGHT_MULTI_MESH}'"
         exit 1
       fi
       shift;shift
@@ -289,7 +332,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_AMBIENT}|${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}|${PLAYWRIGHT_EXTERNAL_KIALI}|${PLAYWRIGHT_PRIMARY_REMOTE}|${PLAYWRIGHT_MULTI_PRIMARY}|${PLAYWRIGHT_OFFLINE}|${PLAYWRIGHT_AI_CHATBOT}|${PLAYWRIGHT_SMOKE}|${PLAYWRIGHT_TEMPO}|${PLAYWRIGHT_MULTI_MESH}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -420,11 +463,18 @@ detectRaceConditions() {
   local kubecontext=$1
 
   local context_arg=${kubecontext:+--context ${kubecontext}}
-  if ! kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"; then
+  local kiali_logs
+  kiali_logs="$(kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system 2>/dev/null)"
+  if [ -z "${kiali_logs}" ]; then
+    # Kubelet rotates container logs (10MB by default); a busy Kiali under a full
+    # Playwright run can rotate right at test end, leaving an empty log. An empty
+    # log proves nothing either way, so warn and skip rather than fail.
+    echo "WARN: Kiali logs are empty (possibly rotated); skipping data race detection"
+  elif grep -q "WARNING: DATA RACE" <<< "${kiali_logs}"; then
     echo "ERROR: Data race detected in Kiali logs!"
     echo "Showing a preview of Kiali logs with data race warnings:"
     echo "=========================================="
-    kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -A5 -B5 "WARNING: DATA RACE" || true
+    echo "${kiali_logs}" | grep -A5 -B5 "WARNING: DATA RACE" || true
     echo "=========================================="
     echo "Integration tests failed due to a data race in Kiali."
     echo "Download and review the Kiali server logs for more details."
@@ -442,6 +492,17 @@ ensureCypressReady() {
   fi
   infomsg "Validating Gherkin feature files..."
   yarn lint:gherkin
+  cd -
+}
+
+ensurePlaywrightReady() {
+  cd "${SCRIPT_DIR}"/../frontend
+  if ! yarn exec playwright --version &> /dev/null; then
+    echo "playwright was not detected. Did you install the frontend directory? Before running the Playwright tests you must run 'yarn install' in frontend/."
+    exit 1
+  fi
+  infomsg "Installing Playwright Chromium browser (if needed)..."
+  yarn playwright:install chromium
   cd -
 }
 
@@ -480,37 +541,60 @@ ensureKialiTracesReady() {
   local end_time
   local multicluster=$1
   local traces_date
+  local http_code
+  local body
+  local result
   start_time=$(date +%s)
-  end_time=$((start_time + 120))
+  # Fresh Tempo installs often need several minutes before query-frontend returns data.
+  end_time=$((start_time + 300))
 
-  # Get traces from the last 5m
-  traces_date=$((($(date +%s) - 300) * 1000))
-  local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
-  if [ "$multicluster" == "true" ]; then
-    echo "Multicluster request"
-    trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
-  fi
-  infomsg "Traces url: ${trace_url}"
   set +o pipefail
   while true; do
-    result=$(curl -k -s --fail "$trace_url" \
-        -H 'Accept: application/json, text/plain, */*' \
-        -H 'Content-Type: application/json' | jq -r '.data')
+    # Refresh the lookback window each attempt.
+    traces_date=$((($(date +%s) - 300) * 1000))
+    local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+    if [ "$multicluster" == "true" ]; then
+      echo "Multicluster request"
+      trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
+    fi
+    infomsg "Traces url: ${trace_url}"
 
-    if [ -z "$result" ] || [ "$result" == "[]" ]; then
-      local now
-      now=$(date +%s)
-      if [ "${now}" -gt "${end_time}" ]; then
-        echo "Timed out waiting for Kiali to get any trace. Examine open telemetry collector logs below:"
-        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=-1 --context kind-west -n istio-system
-        exit 1
-      fi
-      sleep 10
-    else
+    # Generate a little bookinfo traffic so Tempo has something to ingest.
+    kubectl exec -n bookinfo deploy/productpage-v1 -- \
+      curl -s -o /dev/null -w '' http://localhost:9080/productpage >/dev/null 2>&1 || true
+
+    body=$(mktemp)
+    http_code=$(curl -k -s -o "${body}" -w '%{http_code}' "$trace_url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' || echo "000")
+    result=$(jq -r '.data // empty' "${body}" 2>/dev/null || true)
+
+    if [ "${http_code}" = "200" ] && [ -n "$result" ] && [ "$result" != "[]" ] && [ "$result" != "null" ]; then
+      rm -f "${body}"
       echo "Got traces."
       break
     fi
 
+    infomsg "Traces not ready yet (http=${http_code}, data=$(head -c 120 "${body}" | tr '\n' ' '))"
+    rm -f "${body}"
+
+    local now
+    now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Timed out waiting for Kiali to get any trace."
+      echo "Tempo pods:"
+      kubectl get pods -n tempo -o wide 2>/dev/null || true
+      echo "OpenTelemetry collector logs:"
+      if [ "$multicluster" == "true" ]; then
+        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=200 --context kind-west -n istio-system 2>/dev/null || true
+      else
+        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=200 -n istio-system 2>/dev/null || true
+      fi
+      echo "Kiali logs (tail):"
+      kubectl logs -l app=kiali -n istio-system --tail=100 2>/dev/null || true
+      exit 1
+    fi
+    sleep 10
   done
   set -o pipefail
 }
@@ -539,6 +623,34 @@ ensureBookinfoGraphReady() {
         -H 'Content-Type: application/json' -b cookies.txt | jq -r '.elements.nodes')
 
     if [ "$result" == "[]" ]; then
+      local now
+      now=$(date +%s)
+      if [ "${now}" -gt "${end_time}" ]; then
+        echo "Timed out waiting for Kiali to get any graph data"
+        break
+      fi
+      sleep 1
+    else
+      sleep 30
+      break
+    fi
+
+  done
+}
+
+ensureBookinfoGraphReadyAnonymous() {
+  infomsg "Waiting for Kiali to have graph data (anonymous auth)"
+  local start_time
+  local end_time
+  start_time=$(date +%s)
+  end_time=$((start_time + 120))
+
+  local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
+  infomsg "Graph url: ${graph_url}"
+  while true; do
+    result=$(curl -s --fail "$graph_url" | jq -r '.elements.nodes')
+
+    if [ "$result" == "[]" ] || [ "$result" == "null" ]; then
       local now
       now=$(date +%s)
       if [ "${now}" -gt "${end_time}" ]; then
@@ -1050,6 +1162,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   fi
 
   ensureKialiServerReady
+  # Wait until Tempo is reachable via Kiali before running tracing tests.
+  ensureKialiTracesReady "false"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
@@ -1073,9 +1187,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
 
   fi
 
@@ -1160,6 +1274,553 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:smoke
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_SMOKE}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster (MetalLB), same fidelity as Cypress frontend / ambient.
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:smoke
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Full demo apps (bookinfo, sleep, error-rates) — same as Cypress frontend-core-1
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:core1
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Demo apps without error-rates beta namespace — same as Cypress frontend-core-2
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:core2
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Set up the cluster and Istio but skip Kiali deployment so that demo
+    # apps are present before Kiali starts. This lets the health cache
+    # pre-compute bookinfo health on its first refresh (same as Cypress).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --deploy-kiali false
+
+    # Bookinfo only — the only demo app needed by @core-caching scenarios
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+
+    # Reuse the helm charts dir from the first setup invocation so we
+    # don't have to clone and build again.
+    if [ -z "${HELM_CHARTS_DIR_ARG}" ] && [ -f /tmp/kiali-helm-charts-dir ]; then
+      HELM_CHARTS_DIR_ARG="--helm-charts-dir $(cat /tmp/kiali-helm-charts-dir)"
+    fi
+
+    # Deploy Kiali in-cluster with caching enabled after demos are present.
+    # Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous ${HELM_CHARTS_DIR_ARG} --enable-cache "true" --kiali-only
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:core-caching
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster with Perses (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
+
+    # Same demos as Cypress frontend-core-optional (crd-validation/perses; skip error-rates/loggers).
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+    "${SCRIPT_DIR}"/istio/install-sleep-demo.sh -c kubectl
+    kubectl rollout status deployment/sleep -n sleep --timeout=120s
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:core-optional
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster (MetalLB), same fidelity as Cypress frontend-ambient.
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --ambient true --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Same demos as Cypress frontend-ambient (ambient bookinfo + travel agency; sleep via install-testing-demos).
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
+    "${SCRIPT_DIR}"/istio/install-travel-agency-demo.sh -c kubectl -ai false -di travel-control,travel-agency,travel-portal -w true
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+  ensureBookinfoGraphReadyAnonymous
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  # Ambient must finish before waypoint enrollment mutates bookinfo.
+  # Unique blob names + stash: a second Playwright run may wipe blob-report/.
+  blob_dir="${SCRIPT_DIR}/../frontend/playwright/blob-report"
+  blob_stash="${SCRIPT_DIR}/../frontend/playwright/blob-stash"
+  mkdir -p "${blob_stash}"
+  set +e
+  PLAYWRIGHT_BLOB_NAME=ambient yarn run playwright:run:ambient
+  AMBIENT_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  PLAYWRIGHT_BLOB_NAME=waypoint yarn run playwright:run:waypoint
+  WAYPOINT_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  mkdir -p "${blob_dir}"
+  if ls "${blob_stash}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_stash}"/*.zip "${blob_dir}/"
+  fi
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  if [ ${AMBIENT_EXIT} -ne 0 ] || [ ${WAYPOINT_EXIT} -ne 0 ]; then
+    exit 1
+  fi
+  exit 0
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # KinD east/west multi-primary ambient + bookinfo-waypoints (--waypoint true),
+    # in-cluster Kiali (MetalLB), anonymous auth — same layout as Cypress ambient-multi-primary.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy anonymous --ambient true --sail true --waypoint true ${HELM_CHARTS_DIR_ARG}
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+  ensureBookinfoGraphReadyAnonymous
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+  export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-east"
+  export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-west"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  # Ambient multi-primary then waypoint-multicluster (bookinfo-waypoints L7).
+  # Unique blob names + stash: a second Playwright run may wipe blob-report/.
+  blob_dir="${SCRIPT_DIR}/../frontend/playwright/blob-report"
+  blob_stash="${SCRIPT_DIR}/../frontend/playwright/blob-stash"
+  mkdir -p "${blob_stash}"
+  set +e
+  PLAYWRIGHT_BLOB_NAME=ambient-multi-primary yarn run playwright:run:ambient-multi-primary
+  AMP_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  PLAYWRIGHT_BLOB_NAME=waypoint-multicluster yarn run playwright:run:waypoint-multicluster
+  WAYPOINT_MC_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  mkdir -p "${blob_dir}"
+  if ls "${blob_stash}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_stash}"/*.zip "${blob_dir}/"
+  fi
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  if [ ${AMP_EXIT} -ne 0 ] || [ ${WAYPOINT_MC_EXIT} -ne 0 ]; then
+    exit 1
+  fi
+  exit 0
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_EXTERNAL_KIALI}" ]; then
+  ensurePlaywrightReady
+
+  if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+      MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+  else
+      MEMORY_LIMIT_ARG=""
+  fi
+  if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+     MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+  else
+     MEMORY_REQUEST_ARG=""
+  fi
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --auth-strategy openid --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+  export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-mgmt"
+  export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-mesh"
+  export PLAYWRIGHT_USERNAME="kiali"
+  export PLAYWRIGHT_PASSWD="kiali"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:external-kiali
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions ${PLAYWRIGHT_CLUSTER1_CONTEXT}
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_PRIMARY_REMOTE}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
+  fi
+
+  ensureKialiServerReady
+  ensureMulticlusterApplicationsAreHealthy
+  ensureKialiTracesReady "true"
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+  export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-east"
+  export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-west"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:multi-cluster
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions ${PLAYWRIGHT_CLUSTER1_CONTEXT}
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_PRIMARY}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # KinD east/west multi-primary (sidecar), in-cluster Kiali (MetalLB), openid/Keycloak — matches Cypress multi-primary.
+    if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+        MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+    else
+        MEMORY_LIMIT_ARG=""
+    fi
+    if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+       MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+    else
+       MEMORY_REQUEST_ARG=""
+    fi
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid --sail true ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+  fi
+
+  ensureKialiServerReady
+  # Like the Cypress multi-primary suite: with openid auth the API needs a kiali session
+  # cookie, so the applications-health check happens inside the frontend tests.
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+  export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-east"
+  export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-west"
+  export PLAYWRIGHT_USERNAME="kiali"
+  export PLAYWRIGHT_PASSWD="kiali"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:multi-primary
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions ${PLAYWRIGHT_CLUSTER1_CONTEXT}
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_OFFLINE}" ]; then
+  ensurePlaywrightReady
+
+  GOPATH=$(go env GOPATH)
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+
+  if [ ! -f "${GOPATH}/bin/kiali" ]; then
+    echo "ERROR: Kiali binary not found at ${GOPATH}/bin/kiali. Please build the kiali binary first."
+    exit 1
+  fi
+
+  infomsg "Found kiali binary at ${GOPATH}/bin/kiali"
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+
+    ensureKialiServerReady
+  fi
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET="${SCRIPT_DIR}/../tests/integration/assets/bookinfo-offline-fault-injection-reviews.yaml"
+  infomsg "Seeding offline fault injection config for reviews"
+  kubectl apply -n bookinfo -f "${OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET}"
+
+  # Make a temp dir for the must-gather data
+  MUST_GATHER_DIR=$(mktemp -d)
+
+  # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
+  # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
+  docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+
+  "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
+  cleanup_offline_seeded_traffic_routing
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
+
+  # Start kiali in offline mode in the background
+  infomsg "Starting kiali in offline mode with must-gather data on port ${KIALI_PORT}"
+  "${GOPATH}/bin/kiali" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run offline --log-level debug --data-path "${MUST_GATHER_DIR}" --without-browser &
+  KIALI_PID=$!
+
+  # Trap to ensure we clean up the Kiali process on exit
+  trap cleanup_kiali EXIT
+
+  # Wait for the Kiali server to become ready by polling its health endpoint.
+  # Offline mode can take a while to parse all must-gather data before the HTTP server starts.
+  KIALI_OFFLINE_URL="http://localhost:20001"
+  infomsg "Waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}"
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 120))
+  while true; do
+    if ! ps -p ${KIALI_PID} > /dev/null; then
+      echo "Kiali process is not running. An error must have occurred. Check the logs above."
+      exit 1
+    fi
+    if curl -s --fail "${KIALI_OFFLINE_URL}/healthz" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}/healthz"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Kiali offline server is healthy"
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_OFFLINE_URL}"
+
+  infomsg "Running Playwright tests for offline mode"
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:offline
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AI_CHATBOT}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster with chat_ai enabled (MetalLB ingress).
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    # Perses is not required for chatbot coverage.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --enable-ai "true" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Skip beta error-rates namespace — not needed by chatbot tests
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:ai-chatbot
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Deploy Kiali in-cluster with Tempo (MetalLB).
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+  # Wait until Tempo is reachable via Kiali before running tracing tests.
+  ensureKialiTracesReady "false"
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:tracing
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_MESH}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Single KinD cluster plus extra Istio control planes (istio-system-31 / istio-system-31-1).
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:multi-mesh
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   ensureCypressReady
   

@@ -1,0 +1,327 @@
+import type { APIRequestContext, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import { findMiniGraphNode, nodeInfo, readMiniGraphTopology } from './graphTopology';
+import { kialiUrl } from './kialiUrl';
+import { kubectlExec } from './kubectl';
+
+export const EAST = 'east';
+export const WEST = 'west';
+
+export const cluster1Context = (): string => process.env.PLAYWRIGHT_CLUSTER1_CONTEXT ?? 'kind-east';
+
+export const cluster2Context = (): string => process.env.PLAYWRIGHT_CLUSTER2_CONTEXT ?? 'kind-west';
+
+const TRAFFIC_POLICY_APS = [
+  'deny-all-bookinfo',
+  'details-v1',
+  'productpage-v1',
+  'ratings-v1',
+  'reviews-v1',
+  'reviews-v2',
+  'reviews-v3'
+];
+const TRAFFIC_POLICY_SIDECARS = [
+  'details-v1',
+  'productpage-v1',
+  'ratings-v1',
+  'reviews-v1',
+  'reviews-v2',
+  'reviews-v3'
+];
+
+export const deleteIstioOnClusters = async (
+  request: APIRequestContext,
+  path: string,
+  clusters: string[] = [EAST, WEST]
+): Promise<void> => {
+  for (const cluster of clusters) {
+    await request.delete(kialiUrl(`${path}?clusterName=${cluster}`), { failOnStatusCode: false });
+  }
+};
+
+export const deleteGeneratedTrafficPolicies = async (request: APIRequestContext): Promise<void> => {
+  for (const policy of TRAFFIC_POLICY_APS) {
+    await deleteIstioOnClusters(
+      request,
+      `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}`
+    );
+  }
+  for (const sidecar of TRAFFIC_POLICY_SIDECARS) {
+    await deleteIstioOnClusters(request, `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Sidecar/${sidecar}`);
+  }
+};
+
+export const expectGeneratedTrafficPoliciesOnCluster = async (
+  page: Page,
+  cluster: string,
+  visible: boolean
+): Promise<void> => {
+  for (const policy of TRAFFIC_POLICY_APS) {
+    const row = page.getByTestId(`VirtualItem_Cluster${cluster}_Nsbookinfo_AuthorizationPolicy_${policy}`);
+    if (visible) {
+      await expect(row).toBeVisible();
+    } else {
+      await expect(row).toHaveCount(0);
+    }
+  }
+  for (const sidecar of TRAFFIC_POLICY_SIDECARS) {
+    const row = page.getByTestId(`VirtualItem_Cluster${cluster}_Nsbookinfo_Sidecar_${sidecar}`);
+    if (visible) {
+      await expect(row).toBeVisible();
+    } else {
+      await expect(row).toHaveCount(0);
+    }
+  }
+};
+
+/** Duplicate wizard-created request routing to another cluster (multi-primary graph context menu hack). */
+export const duplicateRequestRoutingToCluster = async (
+  request: APIRequestContext,
+  service: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const virtualService = {
+    apiVersion: 'networking.istio.io/v1',
+    kind: 'VirtualService',
+    metadata: {
+      labels: { kiali_wizard: 'request_routing' },
+      name: service,
+      namespace
+    },
+    spec: {
+      gateways: null,
+      hosts: [`${service}.${namespace}.svc.cluster.local`],
+      http: [
+        {
+          route: [
+            {
+              destination: {
+                host: `${service}.${namespace}.svc.cluster.local`,
+                subset: 'v1'
+              },
+              weight: 100
+            }
+          ]
+        }
+      ]
+    }
+  };
+  const destinationRule = {
+    apiVersion: 'networking.istio.io/v1',
+    kind: 'DestinationRule',
+    metadata: {
+      labels: { kiali_wizard: 'request_routing' },
+      name: service,
+      namespace
+    },
+    spec: {
+      host: service,
+      subsets: [
+        { labels: { version: 'v1' }, name: 'v1' },
+        { labels: { version: 'v2' }, name: 'v2' },
+        { labels: { version: 'v3' }, name: 'v3' }
+      ]
+    }
+  };
+  const vsResponse = await request.post(
+    kialiUrl(`/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService?clusterName=${cluster}`),
+    { data: virtualService }
+  );
+  expect(vsResponse.ok()).toBeTruthy();
+  const drResponse = await request.post(
+    kialiUrl(`/api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule?clusterName=${cluster}`),
+    { data: destinationRule }
+  );
+  expect(drResponse.ok()).toBeTruthy();
+};
+
+export const deleteRequestRoutingOnClusters = async (request: APIRequestContext, service: string): Promise<void> => {
+  await deleteIstioOnClusters(
+    request,
+    `/api/namespaces/bookinfo/istio/networking.istio.io/v1/VirtualService/${service}`
+  );
+  await deleteIstioOnClusters(
+    request,
+    `/api/namespaces/bookinfo/istio/networking.istio.io/v1/DestinationRule/${service}`
+  );
+};
+
+export const deleteGatewayOnClusters = async (request: APIRequestContext, name: string): Promise<void> => {
+  await deleteIstioOnClusters(request, `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${name}`);
+};
+
+/**
+ * Create a minimal AuthorizationPolicy via the Kiali API on a named cluster.
+ * Prefer this over kubectl apply — remote-cluster informer lag can leave Kiali
+ * returning HTTP 404 after an out-of-band create.
+ *
+ * Waits for delete to clear, creates once, then polls GET until Kiali can serve
+ * the object (so openConfigByCluster does not burn its timeout on a cold cache).
+ */
+export const applyAuthorizationPolicyOnCluster = async (
+  request: APIRequestContext,
+  name: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const collectionPath = `/api/namespaces/${namespace}/istio/security.istio.io/v1/AuthorizationPolicy`;
+  const objectPath = `${collectionPath}/${name}`;
+  const objectUrl = kialiUrl(`${objectPath}?clusterName=${cluster}`);
+  const detailsUrl = kialiUrl(`${objectPath}?clusterName=${cluster}&validate=true`);
+
+  await request.delete(objectUrl, { failOnStatusCode: false });
+  await expect(async () => {
+    const gone = await request.get(objectUrl, { failOnStatusCode: false });
+    expect(gone.status()).toBe(404);
+  }).toPass({ intervals: [1_000, 2_000], timeout: 60_000 });
+
+  const createResponse = await request.post(kialiUrl(`${collectionPath}?clusterName=${cluster}`), {
+    data: {
+      apiVersion: 'security.istio.io/v1',
+      kind: 'AuthorizationPolicy',
+      metadata: { name, namespace },
+      spec: {}
+    }
+  });
+  expect(createResponse.ok()).toBeTruthy();
+
+  const bustIstioConfigCache = async (): Promise<void> => {
+    await request.get(kialiUrl(`/api/istio/config?clusterName=${encodeURIComponent(cluster)}&_=${Date.now()}`), {
+      failOnStatusCode: false
+    });
+  };
+
+  // Two successful details GETs in one attempt (not split across toPass retries).
+  await expect(async () => {
+    for (let i = 0; i < 2; i++) {
+      const getResponse = await request.get(detailsUrl, { failOnStatusCode: false });
+      if (getResponse.status() === 404) {
+        await bustIstioConfigCache();
+        throw new Error(`AuthorizationPolicy ${name} not available yet on cluster ${cluster} (HTTP 404)`);
+      }
+      expect(getResponse.status(), `details poll ${i + 1}/2 on ${cluster}`).toBe(200);
+    }
+  }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 180_000 });
+};
+
+export const scaleDeploymentOnContext = (
+  context: string,
+  namespace: string,
+  deployment: string,
+  replicas: number
+): void => {
+  kubectlExec(
+    `kubectl --context ${context} scale -n ${namespace} --replicas=${replicas} deployment/${deployment}`,
+    true
+  );
+  kubectlExec(
+    `kubectl --context ${context} rollout status deployment ${deployment} -n ${namespace} --timeout=120s`,
+    false
+  );
+};
+
+export const expectNoDuplicateNamespaceValues = async (page: Page): Promise<void> => {
+  await page.getByTestId('namespace-dropdown').click();
+  const checkboxes = page.getByTestId('namespace-dropdown-list').locator('input[type="checkbox"][value]');
+  const count = await checkboxes.count();
+  const values: string[] = [];
+  for (let i = 0; i < count; i++) {
+    values.push((await checkboxes.nth(i).getAttribute('value')) ?? '');
+  }
+  await page.getByTestId('namespace-dropdown').click();
+  expect(values.length).toBe(new Set(values).size);
+};
+
+export const ensureTrafficRoutingOnCluster = async (
+  request: APIRequestContext,
+  service: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const getResponse = await request.get(
+    kialiUrl(
+      `/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}?clusterName=${cluster}`
+    ),
+    { failOnStatusCode: false }
+  );
+  if (getResponse.status() !== 404) {
+    return;
+  }
+  const body = {
+    apiVersion: 'networking.istio.io/v1',
+    kind: 'VirtualService',
+    metadata: {
+      labels: { kiali_wizard: 'request_routing' },
+      name: service,
+      namespace
+    },
+    spec: {
+      gateways: null,
+      hosts: [`${service}.${namespace}.svc.cluster.local`],
+      http: [
+        {
+          route: [
+            {
+              destination: {
+                host: `${service}.${namespace}.svc.cluster.local`,
+                subset: 'v1'
+              },
+              weight: 33
+            }
+          ]
+        }
+      ]
+    }
+  };
+  const createResponse = await request.post(
+    kialiUrl(`/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService?clusterName=${cluster}`),
+    { data: body }
+  );
+  expect(createResponse.ok()).toBeTruthy();
+};
+
+export const expectMiniGraphHasClusterNode = async (page: Page, type: string, cluster: string): Promise<void> => {
+  await expect(async () => {
+    const topology = await readMiniGraphTopology(page);
+    const graphType = topology.graphType ?? 'versionedApp';
+    const { isBox, nodeType } = nodeInfo(type, graphType);
+    const matched = topology.nodes.filter(n => {
+      const data = n.data as { cluster?: string; isBox?: string; nodeType?: string };
+      return data.cluster === cluster && data.nodeType === nodeType && data.isBox === isBox;
+    });
+    expect(matched.length).toBeGreaterThan(0);
+  }).toPass({ intervals: [3_000], timeout: 60_000 });
+};
+
+export const clickMiniGraphNode = async (
+  page: Page,
+  name: string,
+  type: 'app' | 'service' | 'workload',
+  cluster: string
+): Promise<void> => {
+  let nodeId = '';
+  await expect(async () => {
+    const topology = await readMiniGraphTopology(page);
+    const node = findMiniGraphNode(topology, name, type, cluster);
+    expect(node).toBeTruthy();
+    nodeId = node!.id;
+  }).toPass({ intervals: [3_000], timeout: 60_000 });
+  // A dispatched click only reaches React handlers when the dispatch target is the handler's
+  // element or one of its (fiber-tree) descendants — React re-dispatches synthetic events along
+  // the component tree, not the DOM path of the [data-id] wrapper, which is an ancestor of the
+  // interactive <g>. Target a descendant of the interactive <g> instead, so the click fires
+  // regardless of what covers the node's bounding-box center (edge paths, the pan surface).
+  // Group nodes (app boxes) portal their interactive content into the groups layer, where the
+  // LayerContainer <g data-id> is a React descendant of the onClick <g>. Plain nodes carry the
+  // badge shape (.pf-topology__node__background) inside the onClick <g>; PF exposes no test
+  // hook on it, a sanctioned last-resort class use (see e2e/AGENTS.md sanctioned exceptions).
+  if (type === 'app') {
+    const group = page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`);
+    await group.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+  } else {
+    const shape = page.locator(`[data-id="${nodeId}"] .pf-topology__node__background`).first();
+    await shape.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
+  }
+};

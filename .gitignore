@@ -130,6 +130,9 @@ frontend/cypress/videos
 frontend/cypress/screenshots
 frontend/cypress/results
 
+# Playwright (auth state, reports, junit, failure artifacts, CI blobs)
+frontend/playwright/
+
 # locales
 frontend/public/locales/en
 

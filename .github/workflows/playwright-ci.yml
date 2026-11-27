@@ -1,0 +1,172 @@
+# Playwright-only CI for the Cypress → Playwright migration epic branch.
+# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration.
+name: Playwright CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+    - epic/playwright-migration
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  initialize:
+    permissions:
+      contents: read
+    name: Initialize
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      target-branch: ${{ github.base_ref || github.ref_name }}
+      build-branch: ${{ env.branch-master || env.branch-pr }}
+    steps:
+    - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
+    - run: |
+        echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.ref_name }}"
+      id: branch-master
+      if: ${{ !github.base_ref }}
+    - run: |
+        echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.base_ref }}"
+      id: branch-pr
+      if: ${{ github.base_ref }}
+
+  test_backend:
+    name: Run backend linters and unit tests
+    uses: ./.github/workflows/test-lint-backend.yml
+    needs: [initialize]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  build_frontend:
+    name: Build frontend
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize, test_backend, build_frontend]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright:
+    name: Run Playwright smoke tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_core_1:
+    name: Run Playwright core 1 tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-core-1.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_core_2:
+    name: Run Playwright core 2 tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-core-2.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_core_caching:
+    name: Run Playwright core caching tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-core-caching.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_core_optional:
+    name: Run Playwright core optional tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-core-optional.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_ambient:
+    name: Run Playwright ambient tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ambient.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_ambient_multi_primary:
+    name: Run Playwright ambient multi-primary tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ambient-multi-primary.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_external_kiali:
+    name: Run Playwright external Kiali tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-external-kiali.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_primary_remote:
+    name: Run Playwright primary-remote tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-primary-remote.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_multi_primary:
+    name: Run Playwright multi-primary tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-multi-primary.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_local_offline:
+    name: Run frontend local and offline mode integration tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-local-offline.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_ai_chatbot:
+    name: Run Playwright AI chatbot tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ai-chatbot.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_tempo:
+    name: Run Playwright tempo / tracing tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-tempo.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_multi_mesh:
+    name: Run Playwright multi-mesh tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-multi-mesh.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
