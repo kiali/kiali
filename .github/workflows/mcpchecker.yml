@@ -416,9 +416,10 @@ jobs:
   update-baseline:
     name: Update Token Baseline
     needs: [check-trigger, run-evaluation, run-evaluation-multicluster]
+    # GITHUB_TOKEN: gh pr create/edit. Git push uses KIALI_BOT_TOKEN.
     permissions:
-      contents: read # git push via KIALI_BOT_TOKEN
-      pull-requests: write # gh pr create/edit
+      contents: read
+      pull-requests: write
     if: |
       always() &&
       (needs.run-evaluation.result == 'success' || needs.run-evaluation-multicluster.result == 'success') &&

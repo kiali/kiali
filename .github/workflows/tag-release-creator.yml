@@ -41,8 +41,9 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   release_tag:
+    # Tag push/delete uses GITHUB_TOKEN.
     permissions:
-      contents: write # tag push/delete via GITHUB_TOKEN
+      contents: write
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
@@ -79,8 +80,9 @@ jobs:
         fi
 
   bump_version:
+    # Reusable workflow; git push uses KIALI_BOT_TOKEN.
     permissions:
-      contents: read # called workflow git push via KIALI_BOT_TOKEN
+      contents: read
     name: Bump to Next Version
     needs: [initialize, release_tag]
     # Allow other branches to bump to the next version even if one of the branches failed to create the release tag
