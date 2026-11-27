@@ -417,8 +417,8 @@ jobs:
     name: Update Token Baseline
     needs: [check-trigger, run-evaluation, run-evaluation-multicluster]
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read # git push via KIALI_BOT_TOKEN
+      pull-requests: write # gh pr create/edit
     if: |
       always() &&
       (needs.run-evaluation.result == 'success' || needs.run-evaluation-multicluster.result == 'success') &&

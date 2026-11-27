@@ -42,7 +42,7 @@ jobs:
 
   release_tag:
     permissions:
-      contents: write
+      contents: write # tag push/delete via GITHUB_TOKEN
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
@@ -80,7 +80,7 @@ jobs:
 
   bump_version:
     permissions:
-      contents: write
+      contents: read # called workflow git push via KIALI_BOT_TOKEN
     name: Bump to Next Version
     needs: [initialize, release_tag]
     # Allow other branches to bump to the next version even if one of the branches failed to create the release tag

@@ -47,7 +47,7 @@ jobs:
 
   bump_version:
     permissions:
-      contents: write
+      contents: read # git push via KIALI_BOT_TOKEN
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
