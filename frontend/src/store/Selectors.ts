@@ -2,7 +2,7 @@ import type { KialiAppState } from './Store';
 import type { TimeRange } from '../types/Common';
 import type { Namespace } from '../types/Namespace';
 import type { MeshCluster } from '../types/Mesh';
-import type { EdgeLabelMode, EdgeMode, GraphType, RankMode, TrafficRate } from '../types/Graph';
+import type { EdgeLabelMode, EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import type { ComponentStatus } from '../types/IstioStatus';
 
 export const activeNamespacesSelector = (state: KialiAppState): Namespace[] => state.namespaces.activeNamespaces;
@@ -35,8 +35,6 @@ export const meshFindValueSelector = (state: KialiAppState): string => state.mes
 export const meshHideValueSelector = (state: KialiAppState): string => state.mesh.toolbarState.hideValue;
 
 export const namespaceItemsSelector = (state: KialiAppState): Namespace[] | undefined => state.namespaces.items;
-
-export const rankBySelector = (state: KialiAppState): RankMode[] => state.graph.toolbarState.rankBy;
 
 export const refreshIntervalSelector = (state: KialiAppState): number => state.userSettings.refreshInterval;
 
