@@ -36,9 +36,9 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
--s|--sail
-    Install Istio with the Sail Operator.
-    Default: <false>
+-s|--sail <true|false>
+    Install Istio with the Sail Operator (true) or istioctl (false).
+    Default: <false> (single-cluster minikube only; external-controlplane requires true)
 HELP
 }
 
@@ -65,7 +65,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -s|--sail)                     SAIL="true";              shift;shift; ;;
+    -s|--sail)
+      SAIL="$2"
+      if [ "${SAIL}" != "true" ] && [ "${SAIL}" != "false" ]; then
+        echo "--sail option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -98,6 +105,7 @@ install_istio() {
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
+SAIL="${SAIL:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -236,7 +244,11 @@ setup_minikube_multicluster() {
   local cluster2_name
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg}
+    if [ "${SAIL}" != "true" ]; then
+      echo "ERROR: external-controlplane on Minikube requires --sail true (istioctl is not supported for this topology)."
+      exit 1
+    fi
+    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg} --sail "${SAIL}"
     cluster1_context="controlplane"
     cluster2_context="dataplane"
     cluster1_name="controlplane"

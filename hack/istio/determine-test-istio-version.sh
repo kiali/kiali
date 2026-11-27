@@ -2,192 +2,181 @@
 
 set -euo pipefail
 
-SOURCE="istio"
-OFFSET="0"
-RETRIES="120"
-RETRY_INTERVAL_SECONDS="60"
+OFFSET=0
+INCLUDE_RC=true
+FORCE_ISTIOCTL=false
+SAIL_GIT_REF=""
+RETRIES=5
+RETRY_INTERVAL_SECONDS=5
+SAIL_HELM_REPO="${SAIL_OPERATOR_HELM_REPO:-https://istio-ecosystem.github.io/sail-operator}"
+SAIL_VERSION_MANIFEST="https://raw.githubusercontent.com/istio-ecosystem/sail-operator"
 
 helpmsg() {
   cat <<'HELP'
-Determine test Istio version for CI/local runs.
+Determine the Istio version and installer for CI.
 
-Usage:
-  determine-test-istio-version.sh [options]
+  --offset <0|1|2>             Select N, N-1, or N-2 (default: N).
+                              Istio releases and RCs define the minor versions.
+  --ga-only                   Ignore RCs (used for PR CI).
+  --force-istioctl            Use istioctl for N even if Sail supports it.
+  --sail-operator-git-ref REF Look up Sail support at this ref instead of a released chart.
+  --retries N                 HTTP attempts per lookup (default: 5).
+  --retry-interval-seconds N  Seconds between attempts (default: 5).
 
-Options:
-  --source <istio|sail>
-    Version source. "istio" reads istio/istio releases.
-    "sail" reads istio-ecosystem/sail-operator releases and uses stable X.Y.Z only.
-    Default: istio
+N uses the latest upstream release and prefers Sail when it supports that
+exact version. N-1 and N-2 use the latest patch supported by the latest
+released Sail chart for their minor. Missing Sail support for an older
+target is an error.
 
-  --offset <n>
-    Minor-version offset from newest candidate set.
-    0 = latest, 1 = previous minor, 2 = two minors back.
-    Negative values are converted to absolute value.
-    Default: 0
-
-  --retries <n>
-    Retry attempts when API fetch fails.
-    Default: 120
-
-  --retry-interval-seconds <n>
-    Seconds to sleep between retries.
-    Default: 60
-
-  -h|--help
-    Show this message.
-
-Output:
-  Prints the selected version to stdout.
+Prints the selected Istio version. When GITHUB_OUTPUT is set, also writes
+istio-version, sail, and sail-operator-source.
 HELP
 }
 
-while [[ $# -gt 0 ]]; do
-  key="$1"
-  case "${key}" in
-    --source)
-      SOURCE="$2"
-      shift; shift
-      ;;
-    --offset)
-      OFFSET="$2"
-      shift; shift
-      ;;
-    --retries)
-      RETRIES="$2"
-      shift; shift
-      ;;
-    --retry-interval-seconds)
-      RETRY_INTERVAL_SECONDS="$2"
-      shift; shift
-      ;;
-    -h|--help)
-      helpmsg
-      exit 0
-      ;;
-    *)
-      echo "ERROR: Unknown argument [${key}]." >&2
-      helpmsg >&2
-      exit 1
-      ;;
+while (( $# > 0 )); do
+  case "$1" in
+    --offset) OFFSET="${2:?Missing offset}"; shift 2 ;;
+    --ga-only) INCLUDE_RC=false; shift ;;
+    --force-istioctl) FORCE_ISTIOCTL=true; shift ;;
+    --sail-operator-git-ref) SAIL_GIT_REF="${2:?Missing Sail ref}"; shift 2 ;;
+    --retries) RETRIES="${2:?Missing retry count}"; shift 2 ;;
+    --retry-interval-seconds) RETRY_INTERVAL_SECONDS="${2:?Missing retry interval}"; shift 2 ;;
+    -h|--help) helpmsg; exit 0 ;;
+    *) echo "ERROR: Unknown option $1." >&2; helpmsg >&2; exit 1 ;;
   esac
 done
 
-if [[ "${SOURCE}" != "istio" && "${SOURCE}" != "sail" ]]; then
-  echo "ERROR: --source must be one of: istio, sail" >&2
+OFFSET="${OFFSET#-}"
+if [[ ! "${OFFSET}" =~ ^[012]$ ]]; then
+  echo "ERROR: --offset must be 0, 1, or 2." >&2
+  exit 1
+fi
+if [[ ! "${RETRIES}" =~ ^[1-9][0-9]*$ || ! "${RETRY_INTERVAL_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: Retry count and interval must be positive integers." >&2
+  exit 1
+fi
+if [[ "${FORCE_ISTIOCTL}" == true && "${OFFSET}" != 0 ]]; then
+  echo "ERROR: N-1 and N-2 require Sail." >&2
   exit 1
 fi
 
-if ! [[ "${OFFSET}" =~ ^-?[0-9]+$ ]]; then
-  echo "ERROR: --offset must be an integer." >&2
-  exit 1
-fi
-OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
-
-if ! [[ "${RETRIES}" =~ ^[0-9]+$ ]] || [ "${RETRIES}" -lt 1 ]; then
-  echo "ERROR: --retries must be a positive integer." >&2
-  exit 1
-fi
-
-if ! [[ "${RETRY_INTERVAL_SECONDS}" =~ ^[0-9]+$ ]] || [ "${RETRY_INTERVAL_SECONDS}" -lt 1 ]; then
-  echo "ERROR: --retry-interval-seconds must be a positive integer." >&2
-  exit 1
-fi
-
-fetch_releases_with_retry() {
-  local url="$1"
-  local label="$2"
-
-  for retry in $(seq 1 "${RETRIES}"); do
-    echo "Attempt ${retry}/${RETRIES}: Fetching ${label} release data..." >&2
-    curl_result="$(curl -s "${url}" || true)"
-    if [ -n "${curl_result}" ] && echo "${curl_result}" | jq -e '.[].tag_name' >/dev/null 2>&1; then
-      echo "Successfully fetched ${label} release data." >&2
-      printf "%s" "${curl_result}"
+fetch() {
+  local url="$1" label="$2" attempt response
+  local headers=()
+  if [[ "${url}" == https://api.github.com/* && -n "${GH_TOKEN:-}" ]]; then
+    headers=(-H "Authorization: Bearer ${GH_TOKEN}")
+  fi
+  for ((attempt = 1; attempt <= RETRIES; attempt++)); do
+    if response="$(curl -fsSL --max-time 15 "${headers[@]}" "${url}")" && [[ -n "${response}" ]]; then
+      printf '%s' "${response}"
       return 0
     fi
-
-    if [ "${retry}" -eq "${RETRIES}" ]; then
-      echo "ERROR: Failed to fetch ${label} release data after ${RETRIES} retries. Giving up." >&2
-      return 1
+    if (( attempt < RETRIES )); then
+      echo "Could not fetch ${label} (attempt ${attempt}/${RETRIES}); retrying." >&2
+      sleep "${RETRY_INTERVAL_SECONDS}"
     fi
-    echo "Failed to fetch valid ${label} release data. Retrying in ${RETRY_INTERVAL_SECONDS} seconds..." >&2
-    sleep "${RETRY_INTERVAL_SECONDS}"
   done
+  echo "ERROR: Could not fetch ${label} after ${RETRIES} attempts." >&2
+  return 1
 }
 
-determine_from_istio_releases() {
-  local curl_result="$1"
-
-  echo "${curl_result}" | jq -r '.[].tag_name' | sort -rV | awk -F'[-.]' '
-    {
-      minor = $1 "." $2
-      is_rc = ($4 == "rc")
-      z = $3
-      rc_ver = is_rc ? $5 : ""
-
-      if (!minor_ga[minor] && !minor_rc[minor]) {
-        if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
-        else { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-      } else if (!is_rc && minor_ga[minor]) {
-        if (z > minor_ga_z[minor]) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-      } else if (!is_rc && !minor_ga[minor]) {
-        minor_ga[minor] = $0; minor_ga_z[minor] = z; delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
-      } else if (is_rc && !minor_ga[minor]) {
-        current_rc_stored = minor_rc[minor]
-        split(current_rc_stored, current_rc_parts, "[-.]")
-        current_rc_num_stored = current_rc_parts[5]
-
-        if (!minor_rc[minor] || z > minor_rc_z[minor] || (z == minor_rc_z[minor] && rc_ver > current_rc_num_stored)) {
-          minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver
-        }
-      }
-    }
-    END {
-      # Historical behavior for Istio-based flow in this workflow.
-      for (m in minor_ga) { split(minor_ga[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
-      for (m in minor_rc) { split(minor_rc[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
-    }' | sort -Vr | sed '/^$/d'
+resolve_upstream() {
+  # Rank numeric components and RC numbers separately so GA wins over its own RCs.
+  jq -r --argjson include_rc "${INCLUDE_RC}" --argjson offset "${OFFSET}" '
+    if type != "array" then error("Expected a list of Istio releases") else . end
+    | [
+        .[]
+        | select(.draft != true)
+        | .tag_name | strings
+        | capture("^(?<version>(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<patch>[0-9]+)(?:-rc\\.(?<rc>[0-9]+))?)$")
+        | select($include_rc or .rc == null)
+        | .major |= tonumber | .minor |= tonumber | .patch |= tonumber
+        | .rc |= (if . == null then null else tonumber end)
+      ]
+    | group_by([.major, .minor]) | reverse
+    | .[$offset] // error("No Istio release for offset \($offset)")
+    | max_by([.patch, (.rc == null), .rc]).version
+  '
 }
 
-determine_from_sail_releases() {
-  local curl_result="$1"
-
-  # Keep only stable X.Y.Z tags and select the highest patch for each minor.
-  echo "${curl_result}" | jq -r '.[].tag_name' | awk '
-    /^[0-9]+\.[0-9]+\.[0-9]+$/ {
-      split($0, parts, ".")
-      minor = parts[1] "." parts[2]
-      if (!(minor in best) || parts[3] > best_patch[minor]) {
-        best[minor] = $0
-        best_patch[minor] = parts[3]
-      }
-    }
-    END {
-      for (m in best) { print best[m] }
-    }' | sort -Vr | sed '/^$/d'
+resolve_sail_chart() {
+  local minor="$1" index rows
+  index="$(fetch "${SAIL_HELM_REPO%/}/index.yaml" "Sail chart index")"
+  rows="$(yq -o=json '.entries."sail-operator"' <<< "${index}" | jq -r --arg minor "${minor}" '
+    if type != "array" or length == 0 then error("Missing Sail charts in Helm index") else . end
+    | [
+        .[]
+        | select(.version | type == "string")
+        | select(.version | startswith($minor + "."))
+        | select(.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))
+        | . + {patch: (.version | split(".") | last | tonumber)}
+      ]
+    | if length == 0 then empty else max_by(.patch) | [.version, .appVersion] | @tsv end
+  ')"
+  printf '%s' "${rows}"
 }
 
-if [ "${SOURCE}" = "sail" ]; then
-  releases_json="$(fetch_releases_with_retry "https://api.github.com/repos/istio-ecosystem/sail-operator/releases" "Sail Operator")"
-  candidates="$(determine_from_sail_releases "${releases_json}")"
-else
-  releases_json="$(fetch_releases_with_retry "https://api.github.com/repos/istio/istio/releases" "Istio")"
-  candidates="$(determine_from_istio_releases "${releases_json}")"
+resolve_sail_versions() {
+  local ref="$1" minor="$2" manifest
+  manifest="$(fetch "${SAIL_VERSION_MANIFEST}/${ref}/pkg/istioversion/versions.yaml" "Istio support for Sail ${ref}")"
+  yq -o=json '.versions' <<< "${manifest}" | jq -r --arg minor "${minor}" '
+    if type != "array" or length == 0 then error("Missing supported Istio versions in Sail manifest") else . end
+    | .[]
+    | select(.eol != true)
+    | .version | strings
+    | select(startswith($minor + "."))
+    | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+(-rc\\.[0-9]+)?$"))
+  '
+}
+
+releases="$(fetch "https://api.github.com/repos/istio/istio/releases?per_page=100" "Istio releases")"
+upstream_version="$(resolve_upstream <<< "${releases}")"
+minor="$(cut -d. -f1-2 <<< "${upstream_version}")"
+selected_version="${upstream_version}"
+sail=false
+sail_source=""
+
+if [[ "${FORCE_ISTIOCTL}" == false ]]; then
+  if [[ -n "${SAIL_GIT_REF}" ]]; then
+    sail_ref="${SAIL_GIT_REF}"
+    candidate_source="git:${SAIL_GIT_REF}"
+  else
+    chart_record="$(resolve_sail_chart "${minor}")"
+    IFS=$'\t' read -r chart_version sail_ref <<< "${chart_record}"
+    candidate_source="chart:${chart_version}"
+    if [[ -n "${chart_version}" && ! "${sail_ref}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "ERROR: Sail chart ${chart_version} has no valid appVersion." >&2
+      exit 1
+    fi
+  fi
+
+  sail_versions=""
+  if [[ -n "${sail_ref}" ]]; then
+    sail_versions="$(resolve_sail_versions "${sail_ref}" "${minor}")"
+  fi
+  if [[ "${OFFSET}" == 0 ]]; then
+    if grep -Fxq "${upstream_version}" <<< "${sail_versions}"; then
+      sail=true
+    fi
+  else
+    selected_version="$(awk '!/-rc\./ && NF' <<< "${sail_versions}" | sort -V | tail -n 1)"
+    if [[ -z "${selected_version}" ]]; then
+      echo "ERROR: N-${OFFSET} targets Istio ${minor}, but the latest Sail release for that minor has no installable stable patch." >&2
+      exit 1
+    fi
+    sail=true
+  fi
+  if [[ "${sail}" == true ]]; then
+    sail_source="${candidate_source}"
+  fi
 fi
 
-if [ -z "${candidates}" ]; then
-  echo "ERROR: No candidate versions were found for source '${SOURCE}'." >&2
-  exit 1
+echo "Offset ${OFFSET} selects Istio ${selected_version} (upstream reference ${upstream_version}, Sail: ${sail_source:-disabled})." >&2
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  {
+    printf 'istio-version=%s\n' "${selected_version}"
+    printf 'sail=%s\n' "${sail}"
+    printf 'sail-operator-source=%s\n' "${sail_source}"
+  } >> "${GITHUB_OUTPUT}"
 fi
-
-selected_version="$(echo "${candidates}" | head -n $((OFFSET + 1)) | tail -n 1)"
-if [ -z "${selected_version}" ]; then
-  echo "ERROR: Unable to determine a version for offset ${OFFSET} from source '${SOURCE}'." >&2
-  exit 1
-fi
-
-echo "Candidate versions for source '${SOURCE}':" >&2
-echo "${candidates}" >&2
-echo "Offset=${OFFSET}, selected version=${selected_version}" >&2
-printf "%s\n" "${selected_version}"
+printf '%s\n' "${selected_version}"

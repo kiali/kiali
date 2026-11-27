@@ -30,8 +30,15 @@ jobs:
     outputs:
       build-branch: ${{ github.sha }}
       ci-full: ${{ steps.labels.outputs.ci-full }}
+      istio-version: ${{ steps.determine-istio-version.outputs.istio-version }}
+      sail: ${{ steps.determine-istio-version.outputs.sail }}
+      sail-operator-source: ${{ steps.determine-istio-version.outputs.sail-operator-source }}
       target-branch: ${{ github.base_ref || github.ref_name }}
     steps:
+    - name: Check out code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
     # Read current labels on every attempt, including "Re-run all jobs". The
     # event payload retains the labels from when the run was first triggered.
     - env:
@@ -46,8 +53,15 @@ jobs:
         echo "ci-full=${ci_full}" >> "$GITHUB_OUTPUT"
         echo "Full CI requested: ${ci_full}"
       shell: bash
+    - name: Determine Istio version (latest GA)
+      id: determine-istio-version
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: bash ./hack/istio/determine-test-istio-version.sh --ga-only
     - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
     - run: echo "build-branch -> ${{ github.sha }}"
+    - run: echo "istio-version -> ${{ steps.determine-istio-version.outputs.istio-version }}"
+    - run: echo "sail -> ${{ steps.determine-istio-version.outputs.sail }}"
 
   test_backend:
     name: Run backend linters and unit tests
@@ -82,6 +96,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_backend_mcp:
     name: Run backend MCP integration tests
@@ -90,6 +107,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_core_1:
     name: Run frontend core-1 integration tests
@@ -98,6 +118,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_core_2:
     name: Run frontend core-2 integration tests
@@ -106,6 +129,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_core_caching:
     name: Run frontend core-caching integration tests
@@ -114,6 +140,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_core_optional:
     name: Run frontend core-optional integration tests
@@ -122,6 +151,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
@@ -130,6 +162,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_ambient_multi_primary:
     name: Run frontend Ambient Multi-Primary integration tests
@@ -138,6 +173,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   # ---------------------------------------------------------------------------
   # Wave 2 gate: Waits for wave 1 to finish, only runs when 'ci-full' label
@@ -173,6 +211,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_local_offline:
     name: Run frontend local and offline mode integration tests
@@ -181,6 +222,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
@@ -189,6 +233,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
@@ -197,6 +244,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
@@ -205,6 +255,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_multicluster_external_kiali:
     name: Run frontend multicluster external-kiali integration tests
@@ -213,6 +266,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_frontend_multi_mesh:
     name: Run frontend multi mesh integration tests
@@ -221,6 +277,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
@@ -229,6 +288,9 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail: ${{ needs.initialize.outputs.sail }}
+      sail_operator_source: ${{ needs.initialize.outputs.sail-operator-source }}
 
   codecov_upload_pr_base:
     if: github.event.pull_request.head.repo.full_name == github.repository

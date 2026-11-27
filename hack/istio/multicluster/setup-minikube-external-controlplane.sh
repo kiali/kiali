@@ -2,6 +2,12 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/env.sh "$@"
 
+if [ "${SAIL}" == "false" ]; then
+  echo "ERROR: Minikube external control plane setup requires Sail (--sail true)."
+  echo "       Istioctl (--sail false) is not supported for this topology; use setup-external-controlplane.sh on KinD instead."
+  exit 1
+fi
+
 set -e
 
 infomsg() {

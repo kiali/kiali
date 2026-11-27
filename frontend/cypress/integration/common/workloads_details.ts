@@ -270,3 +270,12 @@ Then(
     });
   }
 );
+
+// data-test embeds the real workload namespace (istio-system with istioctl, ztunnel with Sail).
+Then('the user cannot see the {string} badge for the ztunnel workload', (badge: string) => {
+  cy.get<string>('@ztunnelNamespace').then(ns => {
+    cy.getBySel('workload-details-card').within(() => {
+      cy.get(`[data-test="${badge}-badge-for-ztunnel-workload-in-${ns}-namespace"]`).should('not.exist');
+    });
+  });
+});

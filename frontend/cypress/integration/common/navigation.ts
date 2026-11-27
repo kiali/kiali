@@ -88,48 +88,72 @@ const getPageDetail = (detail: DetailType): string => {
   }
 };
 
+// Find where a DaemonSet actually lives (Sail: ztunnel/ztunnel, istioctl ambient: istio-system/ztunnel).
+const findDaemonsetNamespace = (daemonsetName: string): Cypress.Chainable<string> => {
+  return cy
+    .exec(
+      `kubectl get daemonset -A -o jsonpath='{range .items[?(@.metadata.name=="${daemonsetName}")]}{.metadata.namespace}{"\\n"}{end}'`,
+      { failOnNonZeroExit: false }
+    )
+    .then(result => {
+      const namespace = result.stdout
+        .trim()
+        .split('\n')
+        .map(ns => ns.trim())
+        .filter(Boolean)[0];
+      if (!namespace) {
+        throw new Error(`DaemonSet "${daemonsetName}" not found in any namespace`);
+      }
+      return namespace;
+    });
+};
+
+const visitDaemonsetDetails = (namespace: string, daemonsetName: string, cluster: string): void => {
+  const isOSSMC = Cypress.env('OSSMC');
+  if (isOSSMC) {
+    cy.exec(`kubectl get pods -n ${namespace} -l app=${daemonsetName} -o jsonpath='{.items[0].metadata.name}'`, {
+      failOnNonZeroExit: false
+    }).then(result => {
+      if (result.exitCode === 0 && result.stdout) {
+        const podName = result.stdout.trim();
+        cy.visit({
+          url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/pods/${podName}`,
+          qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
+        });
+        ensureKialiFinishedLoading();
+      } else {
+        throw new Error(`Failed to get pod name for DaemonSet ${daemonsetName} in namespace ${namespace}`);
+      }
+    });
+    return;
+  }
+
+  cy.visit({
+    url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/workloads/${daemonsetName}`,
+    qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
+  });
+  ensureKialiFinishedLoading();
+};
+
 Given(
   'user is at the details page for the daemonset {string} located in the {string} cluster',
   (namespacedNamed: string, cluster: string) => {
-    // Check if we're in OSSMC environment
-    const isOSSMC = Cypress.env('OSSMC');
-    if (isOSSMC) {
-      // In OSSMC, we need to get the pod name from the DaemonSet
-      const namespaceAndName = namespacedNamed.split('/');
-      const namespace = namespaceAndName[0];
-      const daemonsetName = namespaceAndName[1];
-
-      // Get the pod name from the DaemonSet
-      cy.exec(`kubectl get pods -n ${namespace} -l app=${daemonsetName} -o jsonpath='{.items[0].metadata.name}'`, {
-        failOnNonZeroExit: false
-      }).then(result => {
-        if (result.exitCode === 0 && result.stdout) {
-          const podName = result.stdout.trim();
-
-          // Use the existing function for workload details
-          cy.visit({
-            url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/pods/${podName}`,
-            qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
-          });
-          ensureKialiFinishedLoading();
-        } else {
-          throw new Error(`Failed to get pod name for DaemonSet ${daemonsetName} in namespace ${namespace}`);
-        }
-      });
-    } else {
-      // For non-OSSMC environments, treat DaemonSet as a regular workload
-      const namespaceAndName = namespacedNamed.split('/');
-      const namespace = namespaceAndName[0];
-      const name = namespaceAndName[1];
-
-      cy.visit({
-        url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/workloads/${name}`,
-        qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
-      });
-      ensureKialiFinishedLoading();
-    }
+    const namespaceAndName = namespacedNamed.split('/');
+    const namespace = namespaceAndName[0];
+    const daemonsetName = namespaceAndName[1];
+    cy.wrap(namespace).as('daemonsetNamespace');
+    visitDaemonsetDetails(namespace, daemonsetName, cluster);
   }
 );
+
+// Dual-path: do not hardcode ns — discover where ztunnel is installed, then open that page.
+Given('user is at the details page for the ztunnel daemonset located in the {string} cluster', (cluster: string) => {
+  findDaemonsetNamespace('ztunnel').then(namespace => {
+    cy.wrap(namespace).as('daemonsetNamespace');
+    cy.wrap(namespace).as('ztunnelNamespace');
+    visitDaemonsetDetails(namespace, 'ztunnel', cluster);
+  });
+});
 
 // Then the browser is at the details page for the "<type>" "bookinfo/<name>" located in the "west" cluster
 Given(
