@@ -7,6 +7,7 @@ import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import type { AppListItem } from '../../types/AppList';
 import type { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import type { Namespace } from '../../types/Namespace';
+import { MessageType } from '../../types/NotificationCenter';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import type { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
@@ -158,7 +159,17 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           istioResources: istioResources
         },
         cluster
-      );
+      ).catch(err => {
+        // One cluster's failure (e.g. a partially-revoked namespace) must degrade
+        // the list to that cluster's rows, not blank the page: surface it as a
+        // toast and let the other clusters' results render. Cancellations still
+        // propagate so the registry keeps its semantics.
+        if (err?.isCanceled) {
+          throw err;
+        }
+        addError(`Could not fetch apps list for cluster [${cluster}]`, err, true, MessageType.WARNING);
+        return null;
+      });
     });
 
     this.promises
@@ -167,6 +178,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         let appListItems: AppListItem[] = [];
 
         responses.forEach(response => {
+          if (!response) {
+            return;
+          }
           endPerfTimer(perfKey);
           appListItems = appListItems.concat(AppListClass.getAppItems(response.data));
         });

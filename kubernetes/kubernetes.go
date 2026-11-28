@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"encoding/json"
 	goerrors "errors"
 	"fmt"
 	"io"
@@ -53,15 +54,16 @@ type K8SClientInterface interface {
 	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
 	GetDeployments(namespace string, opts meta_v1.ListOptions) ([]apps_v1.Deployment, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
-	GetNamespace(namespace string) (*core_v1.Namespace, error)
-	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
+	GetNamespace(ctx context.Context, namespace string) (*core_v1.Namespace, error)
+	GetNamespaces(ctx context.Context, labelSelector string) ([]core_v1.Namespace, error)
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
+	GetAccessSweepReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 	ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error)
-	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
+	StreamPodLogs(ctx context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
 }
 
 type K8SUserClientInterface interface {
@@ -140,8 +142,8 @@ func (in *K8SClient) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, e
 
 // GetNamespace fetches and returns the specified namespace definition
 // from the cluster
-func (in *K8SClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	ns, err := in.k8s.CoreV1().Namespaces().Get(in.ctx, namespace, emptyGetOptions)
+func (in *K8SClient) GetNamespace(ctx context.Context, namespace string) (*core_v1.Namespace, error) {
+	ns, err := in.k8s.CoreV1().Namespaces().Get(ctx, namespace, emptyGetOptions)
 	if err != nil {
 		return &core_v1.Namespace{}, err
 	}
@@ -157,7 +159,7 @@ func (in *K8SClient) GetServerVersion() (*version.Info, error) {
 // GetNamespaces returns a list of all namespaces of the cluster.
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
-func (in *K8SClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+func (in *K8SClient) GetNamespaces(ctx context.Context, labelSelector string) ([]core_v1.Namespace, error) {
 	var listOptions meta_v1.ListOptions
 
 	// Apply labelSelector filtering if specified
@@ -167,7 +169,7 @@ func (in *K8SClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, e
 		listOptions = emptyListOptions
 	}
 
-	namespaces, err := in.k8s.CoreV1().Namespaces().List(in.ctx, listOptions)
+	namespaces, err := in.k8s.CoreV1().Namespaces().List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -204,27 +206,86 @@ func (in *K8SClient) GetRoute(ctx context.Context, namespace string, name string
 	return in.routeClient.RouteV1().Routes(namespace).Get(ctx, name, emptyGetOptions)
 }
 
-func (in *K8SClient) IsOpenShift() bool {
+// capabilityProbeBackoff is how long a capability probe (IsOpenShift, IsGatewayAPI, ...)
+// waits before retrying after a transient failure. Without it, a remote that stalls would be
+// re-probed on every call - /api/config alone runs several of these sequentially, and with
+// each failed attempt can cost the full request timeout. It stays hardcoded rather than
+// configurable because no healthy environment needs a different value: it only shapes
+// Kiali's own retry cadence, and lowering it reintroduces the per-request re-probing it
+// exists to prevent.
+const capabilityProbeBackoff = 30 * time.Second
+
+// Coalesce probes for the same capability while allowing other capabilities and
+// callers with shorter deadlines to proceed independently.
+func (in *K8SClient) capabilityProbe(ctx context.Context, name string, memo **bool, run func() (present, transient bool)) bool {
+	in.rwMutex.Lock()
+	if *memo != nil {
+		answer := **memo
+		in.rwMutex.Unlock()
+		return answer
+	}
+	if time.Since(in.probeFailures[name]) < capabilityProbeBackoff || ctx.Err() != nil {
+		in.rwMutex.Unlock()
+		return false
+	}
+	if done := in.probesInFlight[name]; done != nil {
+		in.rwMutex.Unlock()
+		select {
+		case <-ctx.Done():
+			return false
+		case <-done:
+			in.rwMutex.RLock()
+			defer in.rwMutex.RUnlock()
+			return *memo != nil && **memo
+		}
+	}
+	if in.probesInFlight == nil {
+		in.probesInFlight = map[string]chan struct{}{}
+	}
+	done := make(chan struct{})
+	in.probesInFlight[name] = done
+	in.rwMutex.Unlock()
+
+	answer, transient := run()
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()
-	if in.isOpenShift == nil {
-		isOpenShift := false
-		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
-		if err == nil {
-			isOpenShift = true
+	if transient {
+		if in.probeFailures == nil {
+			in.probeFailures = map[string]time.Time{}
 		}
-		in.isOpenShift = &isOpenShift
+		in.probeFailures[name] = time.Now()
+	} else {
+		*memo = &answer
 	}
-	return *in.isOpenShift
+	delete(in.probesInFlight, name)
+	close(done)
+	return answer
+}
+
+func (in *K8SClient) IsOpenShift() bool {
+	return in.capabilityProbe(in.ctx, "openShift", &in.isOpenShift, func() (bool, bool) {
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
+		return err == nil, err != nil && !errors.IsNotFound(err)
+	})
 }
 
 func (in *K8SClient) IsGatewayAPI() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
+	return in.checkIsGatewayAPI(in.ctx)
+}
+
+// IsGatewayAPIContext is IsGatewayAPI under a caller-supplied deadline: a probe stalled on
+// an unreachable cluster is abandoned when ctx is done, so one stalled remote cannot hold a
+// caller that shares its discovery budget across clusters. The answer is then false for
+// this call and retried on the next one (the transient-failure backoff still applies).
+func (in *K8SClient) IsGatewayAPIContext(ctx context.Context) bool {
+	return in.checkIsGatewayAPI(ctx)
+}
+
+func (in *K8SClient) checkIsGatewayAPI(ctx context.Context) bool {
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.isGatewayAPI == nil {
+	return in.capabilityProbe(ctx, "gatewayAPI", &in.isGatewayAPI, func() (bool, bool) {
 		v1Types := map[string]string{
 			K8sGatewayType:      PluralNames[K8sGatewayType],
 			K8sGatewayClassType: PluralNames[K8sGatewayClassType],
@@ -234,115 +295,114 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		v1beta1Types := map[string]string{
 			K8sReferenceGrantType: PluralNames[K8sReferenceGrantType],
 		}
-		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
-		isGatewayAPI := isGatewayAPIV1 && checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
-		in.isGatewayAPI = &isGatewayAPI
-	}
-	return *in.isGatewayAPI
+		present, transient := checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
+		if !present {
+			return false, transient
+		}
+		return checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
+	})
 }
 
-// HasTCPRouteInV1 returns true if TCPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
 func (in *K8SClient) HasTCPRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasTCPRouteInV1 == nil {
-		v1Types := map[string]string{
-			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
-		}
-		hasTCPRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		in.hasTCPRouteInV1 = &hasTCPRoute
-	}
-	return *in.hasTCPRouteInV1
+	return in.capabilityProbe(in.ctx, "tcpRouteV1", &in.hasTCPRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sTCPRouteType: PluralNames[K8sTCPRouteType]}, true)
+	})
 }
-
-// HasUDPRouteInV1 returns true if UDPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
 func (in *K8SClient) HasUDPRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasUDPRouteInV1 == nil {
-		v1Types := map[string]string{
-			K8sUDPRouteType: PluralNames[K8sUDPRouteType],
-		}
-		hasUDPRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		in.hasUDPRouteInV1 = &hasUDPRoute
-	}
-	return *in.hasUDPRouteInV1
+	return in.capabilityProbe(in.ctx, "udpRouteV1", &in.hasUDPRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sUDPRouteType: PluralNames[K8sUDPRouteType]}, true)
+	})
 }
-
-// HasTLSRouteInV1 returns true if TLSRoute exists in gateway.networking.k8s.io/v1 (GW API 1.5+).
 func (in *K8SClient) HasTLSRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasTLSRouteInV1 == nil {
-		v1Types := map[string]string{
-			K8sTLSRouteType: PluralNames[K8sTLSRouteType],
-		}
-		hasTLSRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		in.hasTLSRouteInV1 = &hasTLSRoute
-	}
-	return *in.hasTLSRouteInV1
+	return in.capabilityProbe(in.ctx, "tlsRouteV1", &in.hasTLSRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sTLSRouteType: PluralNames[K8sTLSRouteType]}, true)
+	})
 }
-
 func (in *K8SClient) IsInferenceAPI() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.InferenceAPI() == nil {
 		return false
 	}
-	if in.isInferenceAPI == nil {
-		v1alpha2Types := map[string]string{
-			K8sInferencePoolsType: PluralNames[K8sInferencePoolsType],
-		}
-		isInferenceAPI := checkInferenceAPIs(in, K8sInferenceGroupVersionV1.String(), v1alpha2Types)
-		in.isInferenceAPI = &isInferenceAPI
-	}
-	return *in.isInferenceAPI
+	return in.capabilityProbe(in.ctx, "inferenceAPI", &in.isInferenceAPI, func() (bool, bool) {
+		return checkInferenceAPIs(in.ctx, in, K8sInferenceGroupVersionV1.String(), map[string]string{K8sInferencePoolsType: PluralNames[K8sInferencePoolsType]})
+	})
 }
 
 func (in *K8SClient) IsIstioGateway() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
+	return in.checkIsIstioGateway(in.ctx)
+}
+
+// IsIstioGatewayContext is IsIstioGateway under a caller-supplied deadline; see
+// IsGatewayAPIContext.
+func (in *K8SClient) IsIstioGatewayContext(ctx context.Context) bool {
+	return in.checkIsIstioGateway(ctx)
+}
+
+func (in *K8SClient) checkIsIstioGateway(ctx context.Context) bool {
 	if in.Istio() == nil {
 		return false
 	}
-	if in.isIstioGateway == nil {
-		res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(NetworkingGroupVersionV1.String())
+	return in.capabilityProbe(ctx, "istioGateway", &in.isIstioGateway, func() (bool, bool) {
+		res, err := serverResourcesForGroupVersion(ctx, in, NetworkingGroupVersionV1.String())
 		if err != nil {
-			log.Debugf("Istio Networking CRDs not installed.")
-			return false
+			if !errors.IsNotFound(err) {
+				// Could not tell (timeout, unreachable): not a definitive absence.
+				return false, true
+			}
+			return false, false
 		}
-		isIstioGateway := false
 		for _, r := range res.APIResources {
 			if r.Kind == GatewayType && r.Name == PluralNames[GatewayType] {
-				isIstioGateway = true
-				break
+				return true, false
 			}
 		}
-		if !isIstioGateway {
-			log.Debugf("Istio Ingress Gateway's 'gateways.networking.istio.io' CRD is not installed.")
-		}
-		in.isIstioGateway = &isIstioGateway
-	}
-	return *in.isIstioGateway
+		return false, false
+	})
 }
 
-func checkGatewayAPIs(in *K8SClient, version string, types map[string]string, isExperimental bool) bool {
+// serverResourcesForGroupVersion fetches a group-version's resource list through the
+// discovery REST client under the caller's deadline. Discovery's own
+// ServerResourcesForGroupVersion takes no context, so a stalled peer would otherwise hold
+// the probe (and the client mutex) until the request timeout. The fake discovery client
+// used in tests has no REST client; its (context-free) resource lists are used there.
+func serverResourcesForGroupVersion(ctx context.Context, in *K8SClient, groupVersion string) (*meta_v1.APIResourceList, error) {
+	if rc := in.k8s.Discovery().RESTClient(); rc != nil {
+		body, err := rc.Get().AbsPath("/apis/" + groupVersion).Do(ctx).Raw()
+		if err != nil {
+			return nil, err
+		}
+		list := &meta_v1.APIResourceList{}
+		if err := json.Unmarshal(body, list); err != nil {
+			return nil, err
+		}
+		return list, nil
+	}
+	return in.k8s.Discovery().ServerResourcesForGroupVersion(groupVersion)
+}
+
+// checkGatewayAPIs reports whether the types are present in the group version, and whether
+// the answer is transient (the discovery call failed in a way that is not a definitive
+// "not installed", e.g. a timeout).
+func checkGatewayAPIs(ctx context.Context, in *K8SClient, version string, types map[string]string, isExperimental bool) (present, transient bool) {
 	found := 0
-	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
+	res, err := serverResourcesForGroupVersion(ctx, in, version)
 	if err != nil {
+		if !errors.IsNotFound(err) {
+			// Could not tell (timeout, unreachable): not a definitive absence.
+			return false, true
+		}
 		if !isExperimental {
 			log.Debugf("K8s Gateway API CRDs are not installed. Required K8s Gateway API version: %s. Gateway API will not be used.", version)
 		}
-		return false
+		return false, false
 	}
 	for _, r := range res.APIResources {
 		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
@@ -356,49 +416,51 @@ func checkGatewayAPIs(in *K8SClient, version string, types map[string]string, is
 		}
 		log.Warningf("Not all required K8s Gateway API CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
 	}
-	return found == len(types)
+	return found == len(types), false
 }
 
-func checkInferenceAPIs(in *K8SClient, version string, types map[string]string) bool {
+// checkInferenceAPIs reports whether the types are present in the group version, and whether
+// the answer is transient. See checkGatewayAPIs.
+func checkInferenceAPIs(ctx context.Context, in *K8SClient, version string, types map[string]string) (present, transient bool) {
 	found := 0
-	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)
+	res, err := serverResourcesForGroupVersion(ctx, in, version)
 	if err != nil {
+		if !errors.IsNotFound(err) {
+			return false, true
+		}
 		log.Debugf("K8s Gateway API Inference Extension CRDs are not installed. Required K8s Gateway API Inference Extension version: %s. Gateway API Inference Extension will not be used.", version)
-		return false
+		return false, false
 	}
 	for _, r := range res.APIResources {
 		if name, foundKind := types[r.Kind]; foundKind && r.Name == name {
 			found++
 		}
 	}
-	if found > 0 && found < len(types) {
-		keys := make([]string, 0, len(types))
-		for key := range types {
-			keys = append(keys, key)
-		}
-		log.Warningf("Not all required K8s Gateway API Inference Extension CRDs are installed for version: %s, expected: %s", version, strings.Join(keys, ", "))
-	}
-	return found == len(types)
+	return found == len(types), false
 }
 
 // Is IstioAPI checks whether Istio API is installed or not
 func (in *K8SClient) IsIstioAPI() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
+	return in.checkIsIstioAPI(in.ctx)
+}
+
+// IsIstioAPIContext is IsIstioAPI under a caller-supplied deadline; see IsGatewayAPIContext.
+func (in *K8SClient) IsIstioAPIContext(ctx context.Context) bool {
+	return in.checkIsIstioAPI(ctx)
+}
+
+func (in *K8SClient) checkIsIstioAPI(ctx context.Context) bool {
 	if in.Istio() == nil {
 		return false
 	}
-	if in.isIstioAPI == nil {
-		isIstioAPI := false
-		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/networking.istio.io").Do(in.ctx).Raw()
-		if err == nil {
-			isIstioAPI = true
-		} else if !errors.IsNotFound(err) {
-			log.Warningf("Error checking Istio API configuration: %v", err)
+	return in.capabilityProbe(ctx, "istioAPI", &in.isIstioAPI, func() (bool, bool) {
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/networking.istio.io").Do(ctx).Raw()
+		if err != nil && !errors.IsNotFound(err) {
+			// Could not tell (timeout, unreachable): not a definitive absence.
+			return false, true
 		}
-		in.isIstioAPI = &isIstioAPI
-	}
-	return *in.isIstioAPI
+		return err == nil, false
+	})
 }
 
 // GetDeployment returns the definition of a specific deployment.
@@ -455,7 +517,8 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 	// io.Discard avoids a data race: client-go's portforward library writes to the
 	// output writer from multiple goroutines without synchronization.
 	return httputil.NewPortForwarder(restInterface, in.restConfig,
-		namespace, name, "localhost", portMap, io.Discard)
+		namespace, name, "localhost", portMap, io.Discard,
+		in.conf.KialiInternal.KubernetesClient.PortForwardEstablishTimeout)
 }
 
 // GetPod returns the pod definitions for a given pod name.
@@ -469,10 +532,110 @@ func (in *K8SClient) GetPod(namespace, name string) (*core_v1.Pod, error) {
 }
 
 // StreamPodLogs opens a connection to progressively fetch the logs of a pod. Callers must make sure to properly close the returned io.ReadCloser.
-// It returns an error on any problem.
-func (in *K8SClient) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
-	req := in.k8s.CoreV1().RESTClient().Get().Namespace(namespace).Name(name).Resource("pods").SubResource("log").VersionedParams(opts, scheme.ParameterCodec)
-	return req.Stream(in.ctx)
+// It returns an error on any problem. The stream is served by the timeout-free client (a
+// request timeout would cap the body read and cut logs short); its establishment is
+// bounded by podLogHeaderTimeout (kiali_internal.kubernetes_client.pod_log_header_timeout),
+// and the caller's context still cancels an established stream when the client disconnects.
+func (in *K8SClient) StreamPodLogs(ctx context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+	client, err := in.podLogsClient()
+	if err != nil {
+		return nil, err
+	}
+	req := client.CoreV1().RESTClient().Get().Namespace(namespace).Name(name).Resource("pods").SubResource("log").VersionedParams(opts, scheme.ParameterCodec)
+
+	// Only the stream's establishment is bounded. A plain context.WithTimeout around the
+	// whole call (or the request timeout on the client) would also cap the body read and
+	// cut logs short, so the timer is stopped as soon as the headers arrive. The child
+	// context must then stay alive for the body - client-go ties the response body to the
+	// request context - and is released when the caller closes the stream. The parent
+	// context still cancels an established stream when the caller goes away. A zero or
+	// negative timeout disables the bound (the stream waits for the kernel).
+	podLogHeaderTimeout := in.conf.KialiInternal.KubernetesClient.PodLogHeaderTimeout
+	childCtx, cancel := context.WithCancel(ctx)
+	var timer *time.Timer
+	if podLogHeaderTimeout > 0 {
+		timer = time.AfterFunc(podLogHeaderTimeout, cancel)
+	}
+	body, err := req.Stream(childCtx)
+	if timer != nil {
+		timer.Stop()
+	}
+	if err != nil {
+		cancel()
+		if ctx.Err() == nil && childCtx.Err() != nil {
+			return nil, fmt.Errorf("timed out after %s waiting for the pod log stream to be established: %w", podLogHeaderTimeout, err)
+		}
+		return nil, err
+	}
+	if childCtx.Err() != nil {
+		// The deadline fired concurrently with the headers arriving: the body is already
+		// tied to a cancelled context and would fail on first read; report the timeout.
+		body.Close()
+		cancel()
+		return nil, fmt.Errorf("timed out after %s waiting for the pod log stream to be established", podLogHeaderTimeout)
+	}
+	return &podLogStream{ReadCloser: body, cancel: cancel}, nil
+}
+
+// podLogStream releases the stream's child context when the caller closes the body: the
+// HTTP connection stays tied to that context, so dropping it would leak the connection.
+type podLogStream struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (s *podLogStream) Close() error {
+	err := s.ReadCloser.Close()
+	s.cancel()
+	return err
+}
+
+// authzClientSet lazily builds the rate-limit-free clientset used for SelfSubjectAccess
+// Reviews (see the authzConfig field comment). Identities that never issue an SSAR never
+// pay for the second clientset; concurrent first uses share one build.
+func (in *K8SClient) authzClientSet() (kubernetes.Interface, error) {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.authzClient != nil {
+		return in.authzClient, nil
+	}
+	if in.authzConfig == nil {
+		// A K8SClient built directly (tests) has no authz config: fall back to the main
+		// clientset and its rate limiter.
+		in.authzClient = in.k8s
+		return in.authzClient, nil
+	}
+	client, err := kubernetes.NewForConfigAndClient(in.authzConfig, in.httpClient)
+	if err != nil {
+		return nil, err
+	}
+	in.authzClient = client
+	return client, nil
+}
+
+// podLogsClient lazily builds the timeout-free clientset used for pod log streams. Most
+// identities never request logs, so the second clientset (and its rate limiter) is only
+// paid for on first use; concurrent first uses share one build.
+func (in *K8SClient) podLogsClient() (kubernetes.Interface, error) {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.logsClient != nil {
+		return in.logsClient, nil
+	}
+	if in.logsConfig == nil {
+		// A K8SClient built directly (tests) has no logs config: fall back to the main
+		// clientset, whose timeout is whatever the caller's config carried.
+		in.logsClient = in.k8s
+		return in.logsClient, nil
+	}
+	httpClient := *in.httpClient
+	httpClient.Timeout = 0
+	client, err := kubernetes.NewForConfigAndClient(in.logsConfig, &httpClient)
+	if err != nil {
+		return nil, err
+	}
+	in.logsClient = client
+	return client, nil
 }
 
 func (in *K8SClient) GetCronJobs(namespace string) ([]batch_v1.CronJob, error) {
@@ -499,6 +662,19 @@ func NewNotFound(name, group, resource string) error {
 
 // GetSelfSubjectAccessReview provides information on Kiali permissions
 func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return selfSubjectAccessReview(ctx, in.k8s, namespace, api, resourceType, verbs)
+}
+
+// GetAccessSweepReview uses the service account sweep's independent concurrency budget.
+func (in *K8SClient) GetAccessSweepReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	client, err := in.authzClientSet()
+	if err != nil {
+		return nil, err
+	}
+	return selfSubjectAccessReview(ctx, client, namespace, api, resourceType, verbs)
+}
+
+func selfSubjectAccessReview(ctx context.Context, authz kubernetes.Interface, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
 	if config.IsTracingEnabled() {
 		var span trace.Span
 		ctx, span = otel.Tracer(observability.TracerName()).Start(ctx, "GetSelfSubjectAccessReview",
@@ -518,7 +694,7 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 	errChan := make(chan error)
 	for _, v := range verbs {
 		go func(ctx context.Context, verb string) {
-			res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
+			res, err := authz.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
 				Spec: auth_v1.SelfSubjectAccessReviewSpec{
 					ResourceAttributes: &auth_v1.ResourceAttributes{
 						Namespace: namespace,

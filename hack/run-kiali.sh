@@ -806,6 +806,35 @@ fi
 # the current user may have permissions that are different than the Kiali service account.
 # But the benefit of this is that you do not need to have a Kiali deployment in the cluster.
 REMOTE_SECRET_PATH="${TMP_DIR}/kubeconfig"
+
+# rename_kubeconfig_cluster - renames the single cluster entry (and every reference
+# to it) inside a minified/flatten'ed kubeconfig. Kiali registers a remote-secret
+# cluster under the name of the file it is mounted as, and the loader requires the
+# kubeconfig's cluster entry to carry that same name, so a kubeconfig extracted from
+# a context whose cluster entry is named differently (e.g. an API-server-derived
+# "api-host:6443") must be renamed before it is installed as the secret file. The
+# match is a literal whole-line comparison, so a name that happens to appear inside
+# a server URL or another value is never touched.
+rename_kubeconfig_cluster() {
+  local kubeconfig_file="$1"
+  local old_name="$2"
+  local new_name="$3"
+  local rewritten="${kubeconfig_file}.renamed"
+
+  : > "${rewritten}"
+  local line
+  while IFS= read -r line || [ -n "${line}" ]; do
+    case "${line}" in
+      "  name: ${old_name}")          echo "  name: ${new_name}" ;;
+      "    cluster: ${old_name}")     echo "    cluster: ${new_name}" ;;
+      "    user: ${old_name}")        echo "    user: ${new_name}" ;;
+      "current-context: ${old_name}") echo "current-context: ${new_name}" ;;
+      *)                              echo "${line}" ;;
+    esac >> "${rewritten}"
+  done < "${kubeconfig_file}"
+  mv "${rewritten}" "${kubeconfig_file}"
+}
+
 if [ "${HOME_KUBE_CONTEXT}" != "current" ] && ! ${CLIENT_EXE} config get-contexts "${HOME_KUBE_CONTEXT}" >/dev/null 2>&1; then
   TOKEN_FILE="${TMP_DIR}/token"
   CA_FILE="${TMP_DIR}/ca.crt"
@@ -840,19 +869,21 @@ EOM
   if [ ! -s "${CA_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account ca.crt"; exit 1; fi
   chmod 'u=r,go=' "${TOKEN_FILE}" "${CA_FILE}"
 
-  infomsg "Setting up kubeconfig at [${REMOTE_SECRET_PATH}]"
-  # Embedding the ca cert so we don't have pathing issues.
-  ${CLIENT_EXE} config set-cluster ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" --certificate-authority="${CA_FILE}" --embed-certs
-  ${CLIENT_EXE} config set-credentials ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
-  ${CLIENT_EXE} config set-context ${KUBE_CONTEXT} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${KUBE_CONTEXT} --cluster=${KUBE_CONTEXT} --namespace=${ISTIO_NAMESPACE}
-  ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${KUBE_CONTEXT}
-
-  # Set the cluster name for the secret when not specifying -kc current
+  # The kubeconfig's cluster entry must be named exactly like the file it is
+  # installed as below (Kiali registers the cluster under the file name), so
+  # decide the registered name first and use it for the kubeconfig internals too.
   if [ -z "${CLUSTER_NAME}" ]; then
     CLUSTER_NAME_FOR_SECRET=$KUBE_CONTEXT
   else
     CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
   fi
+
+  infomsg "Setting up kubeconfig at [${REMOTE_SECRET_PATH}]"
+  # Embedding the ca cert so we don't have pathing issues.
+  ${CLIENT_EXE} config set-cluster ${CLUSTER_NAME_FOR_SECRET} --kubeconfig="${REMOTE_SECRET_PATH}" "--server=https://${KUBERNETES_API_HOST}:${KUBERNETES_API_PORT}" --certificate-authority="${CA_FILE}" --embed-certs
+  ${CLIENT_EXE} config set-credentials ${CLUSTER_NAME_FOR_SECRET} --kubeconfig="${REMOTE_SECRET_PATH}" --token="$(cat ${TOKEN_FILE})"
+  ${CLIENT_EXE} config set-context ${CLUSTER_NAME_FOR_SECRET} --kubeconfig="${REMOTE_SECRET_PATH}" --user=${CLUSTER_NAME_FOR_SECRET} --cluster=${CLUSTER_NAME_FOR_SECRET} --namespace=${ISTIO_NAMESPACE}
+  ${CLIENT_EXE} config use-context --kubeconfig="${REMOTE_SECRET_PATH}" ${CLUSTER_NAME_FOR_SECRET}
 else
   # we are using an existing context - extract the specified context info and create a new kubeconfig
   if [ "${HOME_KUBE_CONTEXT}" == "current" ]; then
@@ -868,6 +899,15 @@ else
     CLUSTER_NAME_FOR_SECRET=$(${CLIENT_EXE} config view --kubeconfig="${REMOTE_SECRET_PATH}" -o jsonpath='{.contexts[0].context.cluster}')
   else
     CLUSTER_NAME_FOR_SECRET="${CLUSTER_NAME}"
+  fi
+
+  # The extracted kubeconfig carries the cluster entry name from the user's own
+  # kubeconfig (often the API server host). Rename it to the registered name so
+  # the entry matches the file it is installed as below.
+  extracted_cluster_name="$(${CLIENT_EXE} config view --kubeconfig="${REMOTE_SECRET_PATH}" -o jsonpath='{.clusters[0].name}')"
+  if [ "${extracted_cluster_name}" != "${CLUSTER_NAME_FOR_SECRET}" ]; then
+    infomsg "Renaming cluster [${extracted_cluster_name}] in the kubeconfig to [${CLUSTER_NAME_FOR_SECRET}]"
+    rename_kubeconfig_cluster "${REMOTE_SECRET_PATH}" "${extracted_cluster_name}" "${CLUSTER_NAME_FOR_SECRET}"
   fi
 fi
 

@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 // TestSkipUnavailableCluster covers the degraded-cluster decision the per-cluster list
@@ -226,7 +227,10 @@ func TestClusterWideFetchesListPerNamespace(t *testing.T) {
 
 	// bookinfo is denied while istio-system stays readable: a partial revocation. The
 	// cache is built directly (not via cachetest) so the recording reader can serve it.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+	access := cache.NewClusterAccess(func(_ context.Context, _, _, resource string) (cache.DeniedAccess, error) {
+		if resource == "pods" {
+			return cache.DeniedAccess{Cluster: true}, nil
+		}
 		return cache.DeniedAccess{Namespaces: []string{"bookinfo"}}, nil
 	})
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}
@@ -234,7 +238,25 @@ func TestClusterWideFetchesListPerNamespace(t *testing.T) {
 		map[string]ctrlclient.Reader{config.DefaultClusterID: recording}, *conf, cache.WithClusterAccess(access))
 	require.NoError(t, err)
 	layer := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
+	for _, ns := range []string{"bookinfo", "istio-system"} {
+		clusterCache.SetHealth(config.DefaultClusterID, ns, &models.CachedHealthData{Namespace: ns})
+	}
 	require.False(t, access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments"))
+	_, found := clusterCache.GetHealth(config.DefaultClusterID, "bookinfo", "service")
+	require.False(t, found, "overview must omit stale health")
+	_, found = clusterCache.GetHealth(config.DefaultClusterID, "istio-system", "service")
+	require.True(t, found)
+	hidden := models.IstioValidationKey{Cluster: config.DefaultClusterID, Namespace: "bookinfo", Name: "ratings"}
+	visible := models.IstioValidationKey{Cluster: config.DefaultClusterID, Namespace: "istio-system", Name: "istiod"}
+	clusterCache.Validations().Set(hidden, &models.IstioValidation{Cluster: hidden.Cluster})
+	clusterCache.Validations().Set(visible, &models.IstioValidation{Cluster: visible.Cluster, References: []models.IstioValidationKey{hidden, visible}})
+	validations, err := layer.Validations.GetValidations(t.Context(), config.DefaultClusterID)
+	require.NoError(t, err)
+	require.NotContains(t, validations, hidden)
+	require.Contains(t, validations, visible)
+	require.Equal(t, []models.IstioValidationKey{visible}, validations[visible].References)
+	cached, _ := clusterCache.Validations().Get(visible)
+	require.Len(t, cached.References, 2)
 
 	_, err = layer.IstioConfig.GetIstioConfigList(context.Background(), config.DefaultClusterID, IstioConfigCriteria{IncludeVirtualServices: true})
 	require.NoError(t, err)
@@ -254,7 +276,7 @@ func TestClusterWideFetchesListPerNamespace(t *testing.T) {
 	// fetchWorkloadsInNamespaces's job - so it lists bookinfo, but still never NamespaceAll.
 	_, err = layer.Workload.fetchWorkloadsFromCluster(context.Background(), config.DefaultClusterID, []string{"bookinfo", "istio-system"}, "", nil)
 	require.NoError(t, err)
-	clusterCache.IsAmbientEnabled(config.DefaultClusterID)
+	clusterCache.IsAmbientEnabled(context.Background(), config.DefaultClusterID)
 
 	for _, namespace := range recording.listedNamespaces()[len(listed):] {
 		require.NotEmpty(t, namespace, "no list spans all namespaces")
@@ -273,4 +295,10 @@ func TestClusterWideFetchesListPerNamespace(t *testing.T) {
 		require.NotEmpty(t, namespace, "no list spans all namespaces")
 		require.NotEqual(t, "bookinfo", namespace, "the revoked namespace is never listed")
 	}
+	require.True(t, access.ConfirmRevoked(t.Context(), config.DefaultClusterID, "", "pods"))
+	validations, err = layer.Validations.GetValidations(t.Context(), config.DefaultClusterID)
+	require.NoError(t, err)
+	require.Empty(t, validations, "full revocation must hide even previously readable validations")
+	_, found = clusterCache.GetHealth(config.DefaultClusterID, "istio-system", "service")
+	require.False(t, found)
 }

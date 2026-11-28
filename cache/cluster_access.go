@@ -32,7 +32,9 @@ const (
 // is still marked revoked in full - its data cannot be served completely anyway, and
 // per-resource namespace tracking would multiply the state for little user value.
 type DeniedAccess struct {
-	Cluster    bool
+	Cluster bool
+	// Incomplete requests another review window even before the first namespace denial.
+	Incomplete bool
 	Namespaces []string
 }
 
@@ -46,16 +48,12 @@ type groupResource struct {
 	resource string
 }
 
-// checkVerdict is the outcome of one live access check, shared by the debounce store and
-// the in-flight handoff.
-type checkVerdict struct {
+// Each completed check has a distinct result so a delayed caller cannot publish
+// an older decision after a newer check has finished.
+type accessCheckResult struct {
+	at      time.Time
 	denied  DeniedAccess
 	unknown bool
-}
-
-type accessCheckResult struct {
-	at time.Time
-	checkVerdict
 }
 
 // inFlightKey identifies one running access check.
@@ -69,8 +67,8 @@ type inFlightKey struct {
 // own informer per resource type, so a revocation makes many informers fire the watch error
 // handler at once, and without deduplication each would launch its own full sweep.
 type inFlightCheck struct {
-	checkVerdict
-	done chan struct{}
+	done   chan struct{}
+	result *accessCheckResult
 }
 
 // ClusterAccess decides whether a Forbidden watch error means a cluster's access was really
@@ -84,7 +82,7 @@ type ClusterAccess struct {
 	degraded map[string]time.Time
 	// inFlight dedupes concurrent live checks per cluster and resource.
 	inFlight  map[inFlightKey]*inFlightCheck
-	lastCheck map[string]map[groupResource]accessCheckResult
+	lastCheck map[string]map[groupResource]*accessCheckResult
 	mu        sync.Mutex
 	now       func() time.Time
 	// nsRevoked remembers, per cluster and per resource that found denials, the
@@ -102,7 +100,7 @@ func NewClusterAccess(check AccessCheck) *ClusterAccess {
 		check:     check,
 		degraded:  map[string]time.Time{},
 		inFlight:  map[inFlightKey]*inFlightCheck{},
-		lastCheck: map[string]map[groupResource]accessCheckResult{},
+		lastCheck: map[string]map[groupResource]*accessCheckResult{},
 		now:       time.Now,
 		nsRevoked: map[string]map[groupResource]map[string]struct{}{},
 		revoked:   map[string]map[groupResource]struct{}{},
@@ -121,16 +119,22 @@ func NewClusterAccess(check AccessCheck) *ClusterAccess {
 // serving their last-synced snapshot would show resources that no longer exist.
 func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, resource string) bool {
 	gr := groupResource{group: group, resource: resource}
-	result, unknown := a.checkDebounced(ctx, cluster, gr)
+	verdict := a.checkDebounced(ctx, cluster, gr)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if verdict == nil || a.lastCheck[cluster][gr] != verdict {
+		return false
+	}
+	result := verdict.denied
 
-	if unknown {
+	if verdict.unknown {
+		a.mergeDeniedLocked(cluster, gr, result.Namespaces)
 		log.Infof("Unable to tell whether access to [%s] in cluster [%s] was revoked. Keeping the cache and retrying later.", resource, cluster)
 		return false
 	}
 
 	if !result.Cluster {
 		partial := len(result.Namespaces) > 0
-		a.mu.Lock()
 		if partial {
 			// Partial revocation: the cluster stays healthy, but the denied namespaces'
 			// informers are frozen. Record them so callers stop serving stale data.
@@ -140,7 +144,6 @@ func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, reso
 			// previously marked: drop its marks so the namespace is served again.
 			a.dropNsRevokedLocked(cluster, gr)
 		}
-		a.mu.Unlock()
 		if partial {
 			log.Infof("Access to [%s] in cluster [%s] was revoked in namespaces %v while other namespaces remain readable. Their data is hidden until access is restored.", resource, cluster, result.Namespaces)
 		} else {
@@ -149,9 +152,7 @@ func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, reso
 		return false
 	}
 
-	a.mu.Lock()
 	a.markDegradedLocked(cluster, gr)
-	a.mu.Unlock()
 	return true
 }
 
@@ -187,6 +188,23 @@ func (a *ClusterAccess) RevokedNamespaces(cluster string) []string {
 	return a.revokedNamespacesLocked(cluster)
 }
 
+// IsNamespaceRevoked checks the cluster and the per-resource namespace sets. Unlike
+// RevokedNamespaces it builds and sorts nothing, so per-request gates can call it cheaply
+// even while a large partial revocation is marked.
+func (a *ClusterAccess) IsNamespaceRevoked(cluster, namespace string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if _, degraded := a.degraded[cluster]; degraded {
+		return true
+	}
+	for _, namespaces := range a.nsRevoked[cluster] {
+		if _, revoked := namespaces[namespace]; revoked {
+			return true
+		}
+	}
+	return false
+}
+
 // revokedNamespacesLocked returns the sorted union of the cluster's partially-revoked
 // namespaces across the per-resource sets. It must be called with a.mu held.
 func (a *ClusterAccess) revokedNamespacesLocked(cluster string) []string {
@@ -218,47 +236,62 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 			pending[cluster] = append(pending[cluster], gr)
 		}
 	}
-	nsPending := map[string]map[groupResource]struct{}{}
+	nsPending := map[inFlightKey]struct{}{}
 	for cluster, resources := range a.nsRevoked {
-		nsPending[cluster] = map[groupResource]struct{}{}
 		for gr := range resources {
-			nsPending[cluster][gr] = struct{}{}
+			nsPending[inFlightKey{cluster, gr}] = struct{}{}
+		}
+	}
+	// A bounded sweep may exhaust its first window before reaching a single
+	// denied namespace. Resume it even if no informer emits another watch error.
+	for cluster, checks := range a.lastCheck {
+		for gr, result := range checks {
+			if _, full := a.revoked[cluster][gr]; !full && result.denied.Incomplete {
+				nsPending[inFlightKey{cluster, gr}] = struct{}{}
+			}
 		}
 	}
 	a.mu.Unlock()
 
 	for cluster, resources := range pending {
-		restored := true
-		// Namespaces that remain denied once the cluster's access is back: seeded as
-		// partial-revocation marks so their data stays hidden.
-		remaining := map[groupResource][]string{}
+		observed := make(map[groupResource]*accessCheckResult, len(resources))
 		for _, gr := range resources {
-			denied, unknown := a.checkDebounced(ctx, cluster, gr)
-			if unknown || denied.Cluster {
-				restored = false
+			result := a.checkDebounced(ctx, cluster, gr)
+			if result == nil || result.unknown || result.denied.Cluster {
 				break
 			}
-			if len(denied.Namespaces) > 0 {
-				remaining[gr] = denied.Namespaces
-			}
+			observed[gr] = result
 		}
-		if !restored {
+		if len(observed) != len(resources) {
 			continue
 		}
-		// The checks ran without the lock. A resource revoked *again* while they were
-		// running must not be cleared by this probe, so re-verify the revoked set is
-		// still the one that was checked before deleting anything.
+
+		// All resource decisions must still be current when recovery is published.
 		a.mu.Lock()
-		if !a.revokedUnchangedLocked(cluster, resources) {
+		if len(a.revoked[cluster]) != len(resources) {
+			a.mu.Unlock()
+			continue
+		}
+		current := true
+		for gr, verdict := range observed {
+			if _, tracked := a.revoked[cluster][gr]; !tracked || a.lastCheck[cluster][gr] != verdict {
+				current = false
+				break
+			}
+		}
+		if !current {
 			a.mu.Unlock()
 			continue
 		}
 		delete(a.degraded, cluster)
 		delete(a.revoked, cluster)
-		delete(a.lastCheck, cluster)
-		delete(a.nsRevoked, cluster)
-		for gr, namespaces := range remaining {
-			a.setNsRevokedLocked(cluster, gr, namespaces)
+		for gr, verdict := range observed {
+			delete(a.lastCheck[cluster], gr)
+			if len(verdict.denied.Namespaces) > 0 {
+				a.setNsRevokedLocked(cluster, gr, verdict.denied.Namespaces)
+			} else {
+				a.deleteNsRevokedLocked(cluster, gr)
+			}
 		}
 		// Right after the reseed, the cluster's marks are exactly the remaining denials.
 		remainingNamespaces := a.revokedNamespacesLocked(cluster)
@@ -273,31 +306,35 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 	// Partial revocations: re-check each resource that found denied namespaces and
 	// replace its denied set with the fresh verdict. A namespace recovers when no
 	// tracked resource denies it anymore.
-	for cluster, resources := range nsPending {
-		for gr := range resources {
-			denied, unknown := a.checkDebounced(ctx, cluster, gr)
-			a.mu.Lock()
-			switch {
-			case unknown:
-				// Cannot tell: keep the current marks, retry on the next probe.
-			case denied.Cluster:
-				// The cluster's access is now gone entirely. Degrade it right away
-				// rather than wait for a watch error to do it: until one fires, the
-				// frozen informers would serve stale data for every namespace. The
-				// marks are dropped without the recovery log - this data is not
-				// served again, and neither is the cluster.
-				a.markDegradedLocked(cluster, gr)
-			case len(denied.Namespaces) == 0:
-				a.dropNsRevokedLocked(cluster, gr)
-			default:
-				// The cluster's marks may be gone since the snapshot: the loop above
-				// drops them when the cluster recovers, and ConfirmRevoked drops them
-				// when its own check comes back all-allowed. setNsRevokedLocked
-				// re-creates the entry if needed.
-				a.setNsRevokedLocked(cluster, gr, denied.Namespaces)
-			}
+	for key := range nsPending {
+		cluster, gr := key.cluster, key.gr
+		result := a.checkDebounced(ctx, cluster, gr)
+		a.mu.Lock()
+		if result == nil || a.lastCheck[cluster][gr] != result {
 			a.mu.Unlock()
+			continue
 		}
+		denied := result.denied
+		switch {
+		case result.unknown:
+			a.mergeDeniedLocked(cluster, gr, denied.Namespaces)
+		case denied.Cluster:
+			// The cluster's access is now gone entirely. Degrade it right away
+			// rather than wait for a watch error to do it: until one fires, the
+			// frozen informers would serve stale data for every namespace. The
+			// marks are dropped without the recovery log - this data is not
+			// served again, and neither is the cluster.
+			a.markDegradedLocked(cluster, gr)
+		case len(denied.Namespaces) == 0:
+			a.dropNsRevokedLocked(cluster, gr)
+		default:
+			// The cluster's marks may be gone since the snapshot: the loop above
+			// reseeds them when the cluster recovers, and ConfirmRevoked drops them
+			// when its own check comes back all-allowed. setNsRevokedLocked
+			// re-creates the entry if needed.
+			a.setNsRevokedLocked(cluster, gr, denied.Namespaces)
+		}
+		a.mu.Unlock()
 	}
 }
 
@@ -319,20 +356,20 @@ func (a *ClusterAccess) Run(ctx context.Context, interval time.Duration) {
 // the debounce window and sharing one in-flight sweep between concurrent callers for the
 // same cluster and resource. Every fresh result is stored, so the probe and the watch-error
 // path agree on the newest verdict instead of each keeping its own.
-func (a *ClusterAccess) checkDebounced(ctx context.Context, cluster string, gr groupResource) (DeniedAccess, bool) {
+func (a *ClusterAccess) checkDebounced(ctx context.Context, cluster string, gr groupResource) *accessCheckResult {
 	key := inFlightKey{cluster: cluster, gr: gr}
 	a.mu.Lock()
 	if last, found := a.lastCheck[cluster][gr]; found && a.now().Sub(last.at) < accessCheckDebounce {
 		a.mu.Unlock()
-		return last.denied, last.unknown
+		return last
 	}
 	if existing, ok := a.inFlight[key]; ok {
 		a.mu.Unlock()
 		select {
 		case <-existing.done:
-			return existing.denied, existing.unknown
+			return existing.result
 		case <-ctx.Done():
-			return DeniedAccess{}, true
+			return nil
 		}
 	}
 	call := &inFlightCheck{done: make(chan struct{})}
@@ -348,15 +385,13 @@ func (a *ClusterAccess) checkDebounced(ctx context.Context, cluster string, gr g
 	a.mu.Lock()
 	delete(a.inFlight, key)
 	if a.lastCheck[cluster] == nil {
-		a.lastCheck[cluster] = map[groupResource]accessCheckResult{}
+		a.lastCheck[cluster] = map[groupResource]*accessCheckResult{}
 	}
-	verdict := checkVerdict{denied: denied, unknown: unknown}
-	a.lastCheck[cluster][gr] = accessCheckResult{at: a.now(), checkVerdict: verdict}
-	a.mu.Unlock()
-
-	call.checkVerdict = verdict
+	call.result = &accessCheckResult{at: a.now(), denied: denied, unknown: unknown}
+	a.lastCheck[cluster][gr] = call.result
 	close(call.done)
-	return denied, unknown
+	a.mu.Unlock()
+	return call.result
 }
 
 // runCheck runs one live access check, bounded by the check timeout.
@@ -366,9 +401,24 @@ func (a *ClusterAccess) runCheck(ctx context.Context, cluster string, gr groupRe
 	denied, err := a.check(ctx, cluster, gr.group, gr.resource)
 	if err != nil {
 		log.Debugf("Unable to check access to [%s] in cluster [%s]: %s", gr.resource, cluster, err)
-		return DeniedAccess{}, true
+		return denied, true
 	}
 	return denied, false
+}
+
+// An incomplete sweep can add confirmed denials. Only a complete sweep can clear one.
+func (a *ClusterAccess) mergeDeniedLocked(cluster string, gr groupResource, namespaces []string) {
+	if len(namespaces) == 0 {
+		return
+	}
+	current := a.nsRevoked[cluster][gr]
+	if current == nil {
+		a.setNsRevokedLocked(cluster, gr, namespaces)
+		return
+	}
+	for _, ns := range namespaces {
+		current[ns] = struct{}{}
+	}
 }
 
 // setNsRevokedLocked records the namespaces that denied the resource, replacing any previous
@@ -384,8 +434,7 @@ func (a *ClusterAccess) setNsRevokedLocked(cluster string, gr groupResource, nam
 
 // deleteNsRevokedLocked removes the resource's namespace marks for the cluster silently,
 // without the recovery log: used when the cluster is degrading, where the data is not served
-// again either. It reports whether the cluster's last mark was removed. It must be called
-// with a.mu held.
+// again either. It must be called with a.mu held.
 func (a *ClusterAccess) deleteNsRevokedLocked(cluster string, gr groupResource) bool {
 	if a.nsRevoked[cluster] == nil {
 		return false
@@ -393,9 +442,8 @@ func (a *ClusterAccess) deleteNsRevokedLocked(cluster string, gr groupResource) 
 	delete(a.nsRevoked[cluster], gr)
 	if len(a.nsRevoked[cluster]) == 0 {
 		delete(a.nsRevoked, cluster)
-		return true
 	}
-	return false
+	return len(a.nsRevoked[cluster]) == 0
 }
 
 // dropNsRevokedLocked removes the resource's namespace marks for the cluster and logs
@@ -406,21 +454,6 @@ func (a *ClusterAccess) dropNsRevokedLocked(cluster string, gr groupResource) {
 	if a.deleteNsRevokedLocked(cluster, gr) {
 		log.Infof("Kiali can read the partially-revoked namespaces of cluster [%s] again. Their data is served again.", cluster)
 	}
-}
-
-// revokedUnchangedLocked reports whether the cluster's revoked set is still exactly the
-// resources the probe checked. It must be called with a.mu held.
-func (a *ClusterAccess) revokedUnchangedLocked(cluster string, resources []groupResource) bool {
-	current := a.revoked[cluster]
-	if len(current) != len(resources) {
-		return false
-	}
-	for _, gr := range resources {
-		if _, ok := current[gr]; !ok {
-			return false
-		}
-	}
-	return true
 }
 
 // namespaceSet turns a namespace slice into a set.

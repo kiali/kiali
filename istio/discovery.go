@@ -17,6 +17,7 @@ import (
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -33,6 +34,18 @@ import (
 
 // 3 seconds is somewhat arbitrary but mesh discovery expires after 20s so it needs to be less than that.
 var getVersionTimeout = time.Second * 3
+
+// meshResolveFailureBackoff is how long a failed rebuild suppresses new attempts.
+// Without it, every cache-missing caller after a failure would lead another full,
+// equally doomed rebuild (the mesh cache only stores successes), holding the leadership
+// and burning the resolve budget back to back. Within the window callers are served the
+// retained mesh, or the recorded error when no mesh has ever been built. It stays
+// hardcoded rather than configurable because no healthy environment needs a different
+// value: the backoff only shapes how Kiali retries its own failed work, and lowering it
+// reintroduces the back-to-back doomed rebuilds it exists to prevent. The rebuild's
+// overall budget, which a slow-but-healthy mesh can legitimately need raised, is
+// configurable (kiali_internal.kubernetes_client.mesh_resolve_timeout).
+const meshResolveFailureBackoff = 10 * time.Second
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
 	meshConfigYaml, ok := istioConfig.Data["mesh"]
@@ -98,11 +111,13 @@ func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.C
 }
 
 // sets the mesh configuration for a controlplane from the istio configmap(s).
-func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
+// The ctx is the mesh-resolve budget: the network lookup's live namespace fetch
+// must not outlive it (see resolveMesh).
+func (in *Discovery) setControlPlaneConfig(ctx context.Context, kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) error {
 	configMapName := istioConfigMapName(controlPlane.Revision)
 
 	controlPlaneConf := &models.ControlPlaneConfiguration{
-		Network: in.resolveNetwork(kubeCache, controlPlane),
+		Network: in.resolveNetwork(ctx, kubeCache, controlPlane),
 		StandardConfig: &models.MeshConfigSource{
 			Cluster:   controlPlane.Cluster.Name,
 			ConfigMap: &models.MeshConfigMap{},
@@ -133,7 +148,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 			}
 		}
 		if sharedConfigCache != nil {
-			if err := setSharedConfig(controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
+			if err := setSharedConfig(ctx, controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
 				log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
 				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration: %s", err))
 			}
@@ -142,7 +157,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 
 	loadedFileConfig := false
 	if shouldLoadMeshConfigFile(controlPlane, configMapName) {
-		if err := setFileConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
+		if err := setFileConfig(ctx, controlPlane, controlPlaneConf, kubeCache); err != nil {
 			log.Warningf("Unable to load mounted mesh configuration file; falling back to the standard ConfigMap: %s", err)
 			appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load mounted mesh configuration file; displaying the standard ConfigMap instead: %s", err))
 		} else {
@@ -209,7 +224,7 @@ func shouldLoadMeshConfigFile(controlPlane *models.ControlPlane, standardConfigM
 		controlPlane.MeshConfigFile.ConfigMapKey != "mesh"
 }
 
-func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
+func setFileConfig(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
 	fileRef := controlPlane.MeshConfigFile
 	fileConfig := &models.MeshConfigSource{
 		Cluster:   controlPlane.Cluster.Name,
@@ -221,7 +236,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 
 	configMap := &corev1.ConfigMap{}
 	if err := kubeCache.Get(
-		context.Background(),
+		ctx,
 		ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
 		configMap,
 	); err != nil {
@@ -238,7 +253,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 	if err := parseMeshConfigFile(meshConfigYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
 		return fmt.Errorf("unable to parse mesh configuration file [%s] into EffectiveConfig: %w", fileRef.Path, err)
 	}
-	if err := setFileMeshNetworks(controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
+	if err := setFileMeshNetworks(ctx, controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
 		return err
 	}
 
@@ -247,7 +262,7 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 	return nil
 }
 
-func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
+func setFileMeshNetworks(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
 	fileRef := controlPlane.MeshNetworksConfigFile
 	if fileRef == nil {
 		return nil
@@ -257,7 +272,7 @@ func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *mo
 	if fileRef.ConfigMapName != meshConfigMap.Name {
 		networksConfigMap = &corev1.ConfigMap{}
 		if err := kubeCache.Get(
-			context.Background(),
+			ctx,
 			ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
 			networksConfigMap,
 		); err != nil {
@@ -278,7 +293,7 @@ func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *mo
 	return nil
 }
 
-func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader, cluster string) error {
+func setSharedConfig(ctx context.Context, controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader, cluster string) error {
 	sharedConfig := &models.MeshConfigSource{
 		Cluster:   cluster,
 		ConfigMap: &models.MeshConfigMap{},
@@ -288,7 +303,7 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 
 	sharedUserConfigMap := &corev1.ConfigMap{}
 	if err := kubeCache.Get(
-		context.Background(),
+		ctx,
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
@@ -512,6 +527,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 }
 
 type MeshDiscovery interface {
+	ClusterInventory() []models.KubeCluster
 	Clusters() []models.KubeCluster
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
 	GetRootNamespace(ctx context.Context, cluster, namespace string) string
@@ -527,11 +543,26 @@ type Discovery struct {
 	conf           *config.Config
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
+	// meshLeadership serializes mesh rebuilds: exactly one leader rebuilds at a time.
+	// It is acquired with TryLock and held only for the duration of a rebuild - callers
+	// are never blocked waiting on it (see Mesh).
+	meshLeadership sync.Mutex
+	// meshStateMu guards the rebuild-completion signal and the failure marks below.
+	meshStateMu sync.Mutex
+	// meshRebuildDone is closed when the in-flight rebuild (if any) finishes; it is nil
+	// when no rebuild is running. Only cold-start callers (no mesh has ever been built)
+	// wait on it - everyone else is served the retained mesh (see Mesh).
+	meshRebuildDone chan struct{}
+	// meshResolveFailedAt and meshResolveErr record the last rebuild failure for the
+	// failure backoff (see meshResolveFailureBackoff).
+	meshResolveFailedAt time.Time
+	meshResolveErr      error
 	// namespaceMap provides quick lookup from Namespace to ControlPlane key="cluster:namespace", set during Mesh discovery
 	namespaceMap map[string]*models.ControlPlane
-	// meshMutex protects concurrent access to the Mesh function to prevent race conditions
-	meshMutex  sync.Mutex
-	getVersion getVersionFunc
+	// namespaceMapMu guards namespaceMap: the rebuild swaps in a fully built replacement
+	// (see resolveMesh) while readers such as GetRootNamespace consult it.
+	namespaceMapMu sync.RWMutex
+	getVersion     getVersionFunc
 }
 
 // NewDiscovery initializes a new Discovery.
@@ -615,10 +646,11 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace.
 // If the namespace is not managed by any control plane, it returns an empty string.
 func (in *Discovery) GetRootNamespace(ctx context.Context, cluster, namespace string) string {
-	in.meshMutex.Lock()
-	defer in.meshMutex.Unlock()
-
+	// The map is swapped atomically by the rebuild (see resolveMesh); a miss falls back
+	// to the cached mesh below, so the read does not need to exclude a rebuild.
+	in.namespaceMapMu.RLock()
 	cp := in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
+	in.namespaceMapMu.RUnlock()
 	if cp != nil {
 		return cp.RootNamespace
 	}
@@ -661,14 +693,16 @@ func (in *Discovery) IsRemoteCluster(ctx context.Context, cluster string) bool {
 	return true
 }
 
-// Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
-// is done as best-effort using the resources that are present in the cluster.
-// TODO: should this go in kubernetes package?
-func (in *Discovery) Clusters() []models.KubeCluster {
+// ClusterInventory returns the known inventory without waiting for Kubernetes discovery.
+func (in *Discovery) ClusterInventory() []models.KubeCluster {
 	if clusters := in.kialiCache.GetClusters(); clusters != nil {
 		return clusters
 	}
 
+	return in.configuredClusters()
+}
+
+func (in *Discovery) configuredClusters() []models.KubeCluster {
 	// Even if somehow there are no clusters found, setting this to an empty slice will prevent us
 	// from trying to resolve again.
 	clustersByName := map[string]models.KubeCluster{}
@@ -690,14 +724,25 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		clustersByName[cluster] = meshCluster
 	}
 
-	// Add clusters from config.
+	// Add clusters from config. A cluster skipped at startup (definitively broken
+	// registration) must not be re-introduced here as accessible: it has no cache and no
+	// clients, and publishing it would send clients at a cluster Kiali cannot serve.
+	// A config-only entry whose configured secret could not be read is the same
+	// situation: the actual clients are authoritative, and advertising the cluster as
+	// accessible would put the console into multicluster mode for a cluster whose
+	// reads can only fail (ErrClusterNotCached).
+	unreadableSecrets := in.kialiCache.UnreadableRemoteSecrets()
 	for _, cluster := range in.conf.Clustering.Clusters {
+		if in.kialiCache.IsClusterSkipped(cluster.Name) {
+			continue
+		}
 		if _, found := clustersByName[cluster.Name]; !found {
 			clustersByName[cluster.Name] = models.KubeCluster{
 				Name: cluster.Name,
 				// Clusters without a SecretName are not accessible
-				// because we don't have a kubeconfig for them.
-				Accessible: cluster.SecretName != "",
+				// because we don't have a kubeconfig for them. Neither is one whose
+				// secret is recorded unreadable: no client was built from it.
+				Accessible: cluster.SecretName != "" && !slices.Contains(unreadableSecrets, cluster.SecretName),
 			}
 		}
 	}
@@ -708,11 +753,49 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		log.Warning("No clusters found. This likely means that Kiali is misconfigured. Ensure that kiali is configured to access at least one cluster.")
 	}
 
+	return clusters
+}
+
+// orderedSAClusterNames returns the SA client cluster names with the home cluster first,
+// for serial per-cluster passes whose budget a dead remote must not spend ahead of the
+// mandatory cluster (see resolveMesh).
+func (in *Discovery) orderedSAClusterNames() []string {
+	names := maps.Keys(in.kialiSAClients)
+	home := in.conf.KubernetesConfig.ClusterName
+	slices.SortFunc(names, func(a, b string) int { return homeFirst(a, b, home) })
+	return names
+}
+
+// homeFirst is the comparator behind the home-first ordering: a serial per-cluster
+// pass whose budget a dead remote must not spend ahead of the mandatory cluster
+// (see resolveMesh and orderedSAClusterNames).
+func homeFirst(a, b, home string) int {
+	switch {
+	case a == home:
+		return -1
+	case b == home:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
+// is done as best-effort using the resources that are present in the cluster.
+// TODO: should this go in kubernetes package?
+func (in *Discovery) Clusters() []models.KubeCluster {
+	if clusters := in.kialiCache.GetClusters(); clusters != nil {
+		return clusters
+	}
+	clusters := in.configuredClusters()
 	// TODO: Separate KialiInstance from Cluster model.
+	// This is the cached-mesh accessor path (no caller deadline exists here); the
+	// mesh-resolve path passes its own budget down instead, see resolveMesh.
+	ctx := context.Background()
 	for i := range clusters {
 		// need the actual object for update, so use the index, not the copy
 		cluster := &clusters[i]
-		instances, err := in.getKialiInstances(*cluster)
+		instances, err := in.getKialiInstances(ctx, *cluster)
 		if err != nil {
 			log.Warningf("Unable to get Kiali instances for cluster [%s]: %v", cluster.Name, err)
 			continue
@@ -739,7 +822,15 @@ type clusterRevisionKey struct {
 // Mesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
 // Do not edit the mesh object returned from here directly. It is shared across threads.
-// This function is protected by a mutex to prevent concurrent execution and race conditions.
+//
+// Mesh serves stale-while-revalidate: a caller that misses the mesh cache is served the
+// retained last mesh (see cache.KialiCache.LastMesh) immediately, while at most one
+// background rebuild runs per expiry. Rebuilds are detached from every caller - a request
+// disconnecting, or the control-plane monitor's polling deadline, must not kill a result
+// that other callers and the next monitor tick depend on - and each rebuild resolves the
+// home cluster first within its own budget, so a dead remote cannot starve the mandatory
+// cluster's resolution. Only before the first successful build (cold start, no retained
+// mesh) does a caller wait for the in-flight rebuild, bounded by its own context.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "Mesh",
@@ -747,17 +838,162 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	)
 	defer end()
 
-	// Protect against concurrent access to prevent race conditions
-	in.meshMutex.Lock()
-	defer in.meshMutex.Unlock()
-
-	// Check cache after acquiring the lock in case another goroutine
-	// already populated it while we were waiting for the lock
 	if mesh, ok := in.kialiCache.GetMesh(); ok {
 		return mesh, nil
 	}
 
+	for {
+		// A retained mesh is served immediately while a rebuild refreshes the cache: no
+		// request ever waits on a rebuild once the first mesh exists. The staleness is
+		// bounded by the mesh cache expiration plus one rebuild, the same data the graph
+		// and detail views already serve from their own caches during an outage.
+		if last := in.kialiCache.LastMesh(); last != nil {
+			in.ensureMeshRebuild()
+			return last, nil
+		}
+
+		// Cold start: no mesh has ever been built. Try to lead the initial rebuild
+		// ourselves; if one is already in flight, wait for it and re-evaluate.
+		if in.meshLeadership.TryLock() {
+			// Re-check: a rebuild may have completed between the cache check and the
+			// lock acquisition.
+			if mesh, ok := in.kialiCache.GetMesh(); ok {
+				in.meshLeadership.Unlock()
+				return mesh, nil
+			}
+			if in.meshResolveInBackoff() {
+				err := in.meshResolveErrSnapshot()
+				in.meshLeadership.Unlock()
+				// No mesh has ever been built and the last attempt failed recently:
+				// fail fast rather than lead another immediately-doomed rebuild.
+				if err == nil {
+					err = fmt.Errorf("mesh resolution failed recently and is being retried")
+				}
+				return nil, err
+			}
+			mesh, err := in.leadMeshResolve()
+			in.meshLeadership.Unlock()
+			return mesh, err
+		}
+
+		done := in.meshRebuildDoneSnapshot()
+		if done == nil {
+			// The in-flight rebuild finished between the TryLock and the snapshot;
+			// loop to re-check the cache and the leadership.
+			continue
+		}
+		select {
+		case <-done:
+			// Loop: the cache and the retained mesh are re-checked with the rebuild's
+			// result in place.
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+}
+
+// ensureMeshRebuild starts a background rebuild if none is running and no failure
+// backoff is in effect. It never blocks: callers are served the retained mesh while
+// the rebuild it triggers runs.
+func (in *Discovery) ensureMeshRebuild() {
+	if !in.meshLeadership.TryLock() {
+		return // a rebuild is already in flight
+	}
+	go func() {
+		defer in.meshLeadership.Unlock()
+		if _, ok := in.kialiCache.GetMesh(); ok {
+			return // re-checked under the leadership: the cache was refreshed
+		}
+		if in.meshResolveInBackoff() {
+			return // a recent failure is being backed off; the next expiry retries
+		}
+		// Errors are logged and recorded by leadMeshResolve for the backoff; callers
+		// keep being served the retained mesh in the meantime.
+		_, _ = in.leadMeshResolve()
+	}()
+}
+
+// leadMeshResolve runs one full mesh rebuild while holding the mesh leadership,
+// publishing the result to the mesh cache on success or recording the failure for
+// the backoff. The rebuild runs detached from any caller with meshResolveTimeout as
+// its overall budget.
+func (in *Discovery) leadMeshResolve() (*models.Mesh, error) {
+	done := make(chan struct{})
+	in.meshStateMu.Lock()
+	in.meshRebuildDone = done
+	in.meshStateMu.Unlock()
+	defer func() {
+		in.meshStateMu.Lock()
+		close(done)
+		in.meshRebuildDone = nil
+		in.meshStateMu.Unlock()
+	}()
+
+	// The budget is kiali_internal.kubernetes_client.mesh_resolve_timeout; 0 disables
+	// it (an unguarded WithTimeout with 0 would expire instantly instead).
+	resolveCtx := context.Background()
+	var cancel context.CancelFunc = func() {}
+	if timeout := in.conf.KialiInternal.KubernetesClient.MeshResolveTimeout; timeout > 0 {
+		resolveCtx, cancel = context.WithTimeout(resolveCtx, timeout)
+	}
+	defer cancel()
+
+	mesh, err := in.resolveMesh(resolveCtx)
+	if err != nil {
+		log.Errorf("Unable to resolve the mesh; keeping the previously retained mesh. Retrying no sooner than %s. Err: %s", meshResolveFailureBackoff, err)
+		in.meshStateMu.Lock()
+		in.meshResolveFailedAt = time.Now()
+		in.meshResolveErr = err
+		in.meshStateMu.Unlock()
+		return nil, err
+	}
+
+	in.kialiCache.SetMesh(mesh)
+	in.meshStateMu.Lock()
+	in.meshResolveFailedAt = time.Time{}
+	in.meshResolveErr = nil
+	in.meshStateMu.Unlock()
+	return mesh, nil
+}
+
+// meshResolveInBackoff reports whether the last rebuild failed within the backoff window.
+func (in *Discovery) meshResolveInBackoff() bool {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return !in.meshResolveFailedAt.IsZero() && time.Since(in.meshResolveFailedAt) < meshResolveFailureBackoff
+}
+
+// meshResolveErrSnapshot returns the error recorded by the last failed rebuild, if any.
+func (in *Discovery) meshResolveErrSnapshot() error {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return in.meshResolveErr
+}
+
+// meshRebuildDoneSnapshot returns the completion signal of the in-flight rebuild, or
+// nil when no rebuild is running.
+func (in *Discovery) meshRebuildDoneSnapshot() chan struct{} {
+	in.meshStateMu.Lock()
+	defer in.meshStateMu.Unlock()
+	return in.meshRebuildDone
+}
+
+// resolveMesh builds the mesh from the clusters Kiali can see. It must only be called
+// through Mesh/ensureMeshRebuild (exactly one caller holds the mesh leadership), and it
+// owns the namespaceMap swap-in.
+func (in *Discovery) resolveMesh(ctx context.Context) (*models.Mesh, error) {
 	clusters := in.Clusters()
+	// The home cluster is resolved first: a remote that is not answering must not
+	// consume the rebuild budget ahead of the mandatory cluster and make the home
+	// resolution fail with a spurious context-deadline error (map iteration order
+	// would otherwise decide whether home is starved by a dead remote).
+	home := in.conf.KubernetesConfig.ClusterName
+	slices.SortStableFunc(clusters, func(a, b models.KubeCluster) int { return homeFirst(a.Name, b.Name, home) })
+
+	// One scoped read per cluster for the whole mesh resolution: several passes below need
+	// the same per-cluster namespace lists - and the same failures, so a remote whose scan
+	// fails is not rescanned (at its full timeout) by the next pass.
+	namespacesInScopeMemo := map[string]scopedNamespaces{}
 
 	mesh := &models.Mesh{}
 	var remoteClusters []*models.KubeCluster
@@ -783,7 +1019,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
 		if in.conf.Clustering.IgnoreHomeCluster && in.conf.KubernetesConfig.ClusterName == cluster.Name {
 			log.Tracef("Cluster [%s] is an external Kiali cluster. Adding the external management cluster.", cluster.Name)
-			externalKialis := in.discoverKiali(cluster)
+			externalKialis := in.discoverKiali(ctx, cluster)
 			if len(externalKialis) != 0 {
 				mesh.ExternalKiali = &models.ExternalKialiInstance{
 					Cluster: &cluster,
@@ -856,7 +1092,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 			// Need to get control plane config after reading env vars since reading config
 			// relies on reading some env vars.
-			if err := in.setControlPlaneConfig(kubeCache, &controlPlane); err != nil {
+			if err := in.setControlPlaneConfig(ctx, kubeCache, &controlPlane); err != nil {
 				// If this errors the configuration will likely be wrong but Kiali will fallback
 				// to the istio defaults for the mesh config values it relies on.
 				log.Warningf("Unable to set control plane configuration: %s", err)
@@ -958,12 +1194,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			continue
 		}
 
-		if !in.conf.AllNamespacesAccessible() {
-			log.Infof("All namespaces are not accessible. Skipping processing remote clusters for cluster [%s].", cluster.Name)
-			continue
-		}
-
-		namespaces, err := in.kialiSAClients[cluster.Name].GetNamespaces("")
+		// In non-cluster-wide-access mode a cluster-scoped namespace list is not readable;
+		// resolve the cluster's namespaces within its own effective scope instead, so remote
+		// clusters are processed (their external-controlplane associations included) rather
+		// than skipped.
+		namespaces, err := in.getClusterNamespacesInScope(ctx, cluster.Name, namespacesInScopeMemo)
 		if err != nil {
 			log.Errorf("unable to process remote clusters for cluster [%s]. Err: %s", cluster.Name, err)
 			continue
@@ -1006,37 +1241,37 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	// Get the tags for the mesh.
-	if err := in.setTags(ctx, mesh.ControlPlanes); err != nil {
-		return nil, err
-	}
+	tags := in.revisionTags(ctx)
 
 	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
-	// Multi-cluster is not supported without cluster wide access.
+	// In non-cluster-wide-access mode the namespaces come from each cluster's own effective
+	// scope (override-aware), not just the home cluster's default list: the revision map and
+	// the managed-namespace associations must cover remote scopes too.
+	// TODO: Namespace list / caching is probably something that other parts of Kiali need.
+	// This probably should moved outside of discovery.
 	if !in.conf.AllNamespacesAccessible() {
-		// TODO: Namespace list / caching is probably something that other parts of Kiali need.
-		// This probably should moved outside of discovery.
-		for _, name := range in.conf.Deployment.AccessibleNamespaces {
-			homeClusterClient, ok := in.kialiSAClients[in.conf.KubernetesConfig.ClusterName]
-			if !ok {
-				log.Errorf("unable to get client for cluster [%s].", in.conf.KubernetesConfig.ClusterName)
+		for _, cluster := range clusters {
+			if !cluster.Accessible {
 				continue
 			}
 
-			ns, err := homeClusterClient.GetNamespace(name)
+			k8sNamespaces, err := in.getClusterNamespacesInScope(ctx, cluster.Name, namespacesInScopeMemo)
 			if err != nil {
-				log.Errorf("unable to get namespace [%s] for cluster [%s]. Err: %s", name, in.conf.KubernetesConfig.ClusterName, err)
+				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
 				continue
 			}
 
-			n := models.CastNamespace(*ns, in.conf.KubernetesConfig.ClusterName)
-			rev := GetRevision(n)
-			if rev == "" {
-				// No revision label means there's no controlplane managing it.
-				// This happens is injection is not enabled for this namespace and it's not ambient.
-				continue
+			for _, ns := range k8sNamespaces {
+				n := models.CastNamespace(ns, cluster.Name)
+				rev := GetRevision(n)
+				if rev == "" {
+					// No revision label means there's no controlplane managing it.
+					// This happens is injection is not enabled for this namespace and it's not ambient.
+					continue
+				}
+				key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
+				namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
 			}
-			key := clusterRevisionKey{Cluster: in.conf.KubernetesConfig.ClusterName, Revision: rev}
-			namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
 		}
 	} else {
 		for _, cluster := range clusters {
@@ -1050,7 +1285,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				continue
 			}
 
-			k8sNamespaces, err := client.GetNamespaces("")
+			k8sNamespaces, err := client.GetNamespaces(ctx, "")
 			if err != nil {
 				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
 				continue
@@ -1084,6 +1319,14 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	for _, cp := range controlPlanes {
 		for _, cluster := range cp.ManagedClusters {
+			key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.Revision}
+			clusterTags := tags[key]
+			// The API exposes one display tag. Prefer the host cluster, then a
+			// stable cluster and tag name for an externally managed control plane.
+			preferCluster := cp.Tag == nil || cluster.Name == cp.Cluster.Name || (cp.Tag.Cluster != cp.Cluster.Name && cluster.Name < cp.Tag.Cluster)
+			if len(clusterTags) > 0 && preferCluster {
+				cp.Tag = clusterTags[0]
+			}
 			if cp.IsMaistra() {
 				// In maistra the Revision is actually the maistra.io/member-of label which is the namespace where the controlplane lives.
 				key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.IstiodNamespace}
@@ -1097,16 +1340,12 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 				continue
 			}
-			// Default to controlplane revision but if there's a tag then overwrite with that.
-			rev := cp.Revision
-			if cp.Tag != nil {
-				if cp.Tag.Cluster == cluster.Name && cp.Tag.Revision == cp.Revision {
-					rev = cp.Tag.Name
+			cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespacesByClusterAndRev[key]...)
+			for _, tag := range clusterTags {
+				if tag.Name != cp.Revision {
+					tagged := clusterRevisionKey{Cluster: cluster.Name, Revision: tag.Name}
+					cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespacesByClusterAndRev[tagged]...)
 				}
-			}
-			key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
-			if namespaces, ok := namespacesByClusterAndRev[key]; ok {
-				cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespaces...)
 			}
 		}
 	}
@@ -1120,25 +1359,16 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	// set the NamespaceMap, any previous map will get gc'd
 	// Use the namespaces already collected in namespacesByClusterAndRev which respects cluster_wide_access
-	in.namespaceMap = map[string]*models.ControlPlane{}
+	// Build it fully before the swap so readers never observe a partially filled map.
+	namespaceMap := map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		// For each control plane, find the namespaces that belong to it based on cluster and revision matching
-		cpRev := cp.Revision
-		if cp.Tag != nil {
-			cpRev = cp.Tag.Name
-		}
-
-		// Look up namespaces by cluster and revision
-		key := clusterRevisionKey{Cluster: cp.Cluster.Name, Revision: cpRev}
-		if namespaces, ok := namespacesByClusterAndRev[key]; ok {
-			for _, ns := range namespaces {
-				mapKey := in.namespaceMapKey(cp.Cluster.Name, ns.Name)
-				in.namespaceMap[mapKey] = cp
-			}
+		for _, ns := range cp.ManagedNamespaces {
+			namespaceMap[in.namespaceMapKey(ns.Cluster, ns.Name)] = cp
 		}
 	}
-
-	in.kialiCache.SetMesh(mesh)
+	in.namespaceMapMu.Lock()
+	in.namespaceMap = namespaceMap
+	in.namespaceMapMu.Unlock()
 
 	return mesh, nil
 }
@@ -1182,9 +1412,70 @@ func convertToDiscoverySelectors(istioSelectors []*istiov1alpha1.LabelSelector) 
 	return ds
 }
 
-func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.ControlPlane) error {
-	tagsByClusterRev := map[string]*models.Tag{}
-	for cluster, client := range in.kialiSAClients {
+// getClusterNamespacesInScope lists the cluster's namespaces the way its access allows: one
+// cluster-scoped list in cluster-wide-access mode, or - in non-cluster-wide-access mode,
+// where the SA cannot list namespaces - one get per namespace in the cluster's effective
+// scope (its discovery selector override when one is defined, otherwise the default
+// accessible namespaces). A namespace that is missing or forbidden contributes nothing; a
+// transport failure (timeout, unreachable) aborts the cluster's scan so one dead remote
+// cannot cost its timeout once per scoped namespace while Mesh holds its mutex. The memo
+// caches the result per cluster within one mesh resolution, so the multiple passes over the
+// same cluster read it once.
+// scopedNamespaces is one per-cluster scoped read within a mesh resolution: the namespaces
+// or the error that stopped the scan, memoized so every pass over the cluster observes the
+// same result.
+type scopedNamespaces struct {
+	err        error
+	namespaces []corev1.Namespace
+}
+
+func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster string, memo map[string]scopedNamespaces) ([]corev1.Namespace, error) {
+	if cached, found := memo[cluster]; found {
+		return cached.namespaces, cached.err
+	}
+
+	client, ok := in.kialiSAClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("no SA client for cluster [%s]", cluster)
+	}
+
+	var namespaces []corev1.Namespace
+	var err error
+	if in.conf.AllNamespacesAccessible() {
+		namespaces, err = client.GetNamespaces(ctx, "")
+	} else {
+		scope := cache.AccessibleNamespacesForCluster(in.conf, cluster)
+		namespaces = make([]corev1.Namespace, 0, len(scope))
+		for _, name := range scope {
+			var ns *corev1.Namespace
+			ns, err = client.GetNamespace(ctx, name)
+			if err != nil {
+				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
+					// The namespace does not exist on this cluster or the SA cannot read
+					// it; either way it contributes nothing to the mesh resolution.
+					err = nil
+					continue
+				}
+				// A transport failure says nothing about the namespace: abort the scan
+				// rather than silently skip the rest of the scope.
+				break
+			}
+			namespaces = append(namespaces, *ns)
+		}
+	}
+	memo[cluster] = scopedNamespaces{namespaces: namespaces, err: err}
+	if err != nil {
+		return nil, err
+	}
+	return namespaces, nil
+}
+
+func (in *Discovery) revisionTags(ctx context.Context) map[clusterRevisionKey][]*models.Tag {
+	tagsByClusterRev := map[clusterRevisionKey][]*models.Tag{}
+	// Home cluster first (see resolveMesh): a dead remote's webhook list must not run
+	// ahead of the home cluster's within the rebuild budget.
+	for _, cluster := range in.orderedSAClusterNames() {
+		client := in.kialiSAClients[cluster]
 		if !in.kialiCache.CanListWebhooks(cluster) {
 			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
 			continue
@@ -1207,29 +1498,19 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 				Name:     webhook.Labels[models.IstioTagLabel],
 				Revision: webhook.Labels[config.IstioRevisionLabel],
 			}
-			key := tag.Cluster + tag.Revision
-			if _, found := tagsByClusterRev[key]; found {
-				log.Debugf("Found more than one webhook for tag [%s] pointing to revision: [%s] on cluster: [%s]. This is likely a misconfiguration.", tag.Name, tag.Revision, tag.Cluster)
-				continue
-			}
-			tagsByClusterRev[key] = &tag
-		}
-	}
-
-	for i := range controlPlanes {
-		controlPlane := &controlPlanes[i]
-		for _, cluster := range controlPlane.ManagedClusters {
-			key := cluster.Name + controlPlane.Revision
-			if tag, ok := tagsByClusterRev[key]; ok {
-				controlPlane.Tag = tag
+			key := clusterRevisionKey{Cluster: cluster, Revision: tag.Revision}
+			if tag.Name != "" && !slices.ContainsFunc(tagsByClusterRev[key], func(t *models.Tag) bool { return t.Name == tag.Name }) {
+				tagsByClusterRev[key] = append(tagsByClusterRev[key], &tag)
 			}
 		}
 	}
-
-	return nil
+	for _, tags := range tagsByClusterRev {
+		slices.SortFunc(tags, func(a, b *models.Tag) int { return strings.Compare(a.Name, b.Name) })
+	}
+	return tagsByClusterRev
 }
 
-func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.KialiInstance, error) {
+func (in *Discovery) getKialiInstances(ctx context.Context, cluster models.KubeCluster) ([]models.KialiInstance, error) {
 	kialiConfigURLsForCluster := []config.KialiURL{}
 	for _, cfgurl := range in.conf.Clustering.KialiURLs {
 		if cfgurl.ClusterName == cluster.Name {
@@ -1238,7 +1519,7 @@ func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.Kia
 	}
 
 	var instances []models.KialiInstance
-	instances = append(instances, in.discoverKiali(cluster)...)
+	instances = append(instances, in.discoverKiali(ctx, cluster)...)
 	for _, cfgURL := range kialiConfigURLsForCluster {
 		instances = appendKialiInstancesFromConfig(instances, cfgURL)
 	}
@@ -1259,7 +1540,7 @@ func convertKialiServiceToInstance(svc *corev1.Service) models.KialiInstance {
 }
 
 // discoverKiali tries to find a Kiali installation on the cluster.
-func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiInstance {
+func (in *Discovery) discoverKiali(ctx context.Context, cluster models.KubeCluster) []models.KialiInstance {
 	clusterName := cluster.Name
 	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
 	if err != nil {
@@ -1270,7 +1551,7 @@ func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiIns
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
 	svcList := &corev1.ServiceList{}
-	if err := cache.ListReadable(context.Background(), kubeCache, in.conf, in.kialiCache, clusterName, svcList,
+	if err := cache.ListReadable(ctx, kubeCache, in.conf, in.kialiCache, clusterName, svcList,
 		ctrlclient.MatchingLabels{"app.kubernetes.io/part-of": "kiali"}); err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
 		return nil
@@ -1313,14 +1594,14 @@ func appendKialiInstancesFromConfig(instances []models.KialiInstance, cfgurl con
 	return instances
 }
 
-func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient.Reader, namespace, revision string) string {
+func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(ctx context.Context, kubeCache ctrlclient.Reader, namespace, revision string) string {
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
 	configMapName := sidecarInjectorConfigMapName(revision)
 
 	istioSidecarConfig := &corev1.ConfigMap{}
-	err := kubeCache.Get(context.Background(), ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
+	err := kubeCache.Get(ctx, ctrlclient.ObjectKey{Name: configMapName, Namespace: namespace}, istioSidecarConfig)
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
@@ -1376,16 +1657,16 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
-func (in *Discovery) resolveNetwork(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
+func (in *Discovery) resolveNetwork(ctx context.Context, kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
 	clusterName := controlPlane.Cluster.Name
-	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
+	if network := in.getNetworkFromSidecarInejctorConfigMap(ctx, kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
 		return network
 	}
 
 	// Network id wasn't found in the config. Try to find it on the istio namespace.
 
 	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(controlPlane.IstiodNamespace)
+	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(ctx, controlPlane.IstiodNamespace)
 	if err != nil {
 		log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", controlPlane.IstiodNamespace, clusterName, err)
 		return ""

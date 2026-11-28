@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -31,7 +32,28 @@ const (
 	kialiCacheIstioStatusKey = "istioStatus"
 	kialiCacheMeshKey        = "mesh"
 	kialiCacheWaypointsKey   = "waypoints"
+
+	// webhookPermissionCheckTimeout bounds the per-cluster SSAR NewKialiCache makes on the
+	// startup path. It stays hardcoded rather than configurable because it is a one-shot
+	// startup call already covered for the steady state by the configurable
+	// cluster_probe_timeout; only its sizing against the startup budget matters.
+	// synchronous startup path to learn whether Kiali can list mutating webhooks. Without it,
+	// a remote that accepts connections but stalls blocks startup indefinitely.
+	webhookPermissionCheckTimeout = 10 * time.Second
+	// webhookCheckBackoff is how long CanListWebhooks waits before re-checking a cluster
+	// whose webhook permission check failed transiently. It stays hardcoded rather than
+	// configurable because no healthy environment needs a different value: it only
+	// shapes Kiali's own retry cadence, and lowering it turns a dead remote into a
+	// back-to-back probe loop.
+	webhookCheckBackoff = 30 * time.Second
 )
+
+// unreachableProbeInterval is how often the background prober re-checks clusters marked
+// unreachable (see MarkClusterUnreachable). It stays hardcoded rather than configurable
+// because it is deliberately pinned to the access-probe cadence (DefaultAccessProbeInterval)
+// so unreachable-recovery and revocation-recovery behave identically; a separate knob
+// would let the two recovery paths diverge.
+const unreachableProbeInterval = DefaultAccessProbeInterval
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -83,7 +105,10 @@ type KialiCache interface {
 	// Returns true if the cache was updated, false if namespace not in cache.
 	UpdateWorkloadHealth(cluster, namespace, workloadName string, health *models.WorkloadHealth)
 
-	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
+	// GatewayAPIClasses returns the cluster's Gateway API classes. The context bounds
+	// the Gateway API capability probe and the informer cache read, so a caller sharing
+	// one discovery budget across clusters is not held by one stalled remote.
+	GatewayAPIClasses(ctx context.Context, cluster string) []config.GatewayAPIClass
 
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
 	SetIstioStatus(kubernetes.IstioComponentStatus)
@@ -94,6 +119,50 @@ type KialiCache interface {
 	// revocation). Their informers cannot refresh, so reads from them serve stale
 	// data; callers must exclude these namespaces rather than serve frozen state.
 	RevokedNamespaces(cluster string) []string
+	// HasRevokedAccess checks full and partial revocations in a single snapshot.
+	HasRevokedAccess(cluster string) bool
+	// IsNamespaceRevoked checks whether the entire cluster or this namespace lost
+	// access, including when a caller holds a warm authorization or mesh snapshot.
+	IsNamespaceRevoked(cluster, namespace string) bool
+
+	// SkippedClusters returns the names of the remote clusters whose registration was
+	// definitively broken at startup (invalid credentials, TLS misconfiguration), for
+	// which Kiali has no cache and no clients. Consumers that authorize access by
+	// enumerating SA-visible clusters must treat these as "cannot evaluate" and fail
+	// closed: their telemetry may still be queryable through unscoped queries.
+	SkippedClusters() []string
+	// IsClusterSkipped reports whether the named cluster is one of the skipped clusters.
+	// See SkippedClusters for the contract.
+	IsClusterSkipped(cluster string) bool
+	// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+	// directory could not be enumerated at startup. A non-empty result means the
+	// remote inventory is incomplete: the clusters those secrets define are unknown
+	// (a secret name is not a cluster name), so consumers that authorize access by
+	// enumerating SA-visible clusters must treat the inventory as unestablished and
+	// fail closed, exactly as for a skipped cluster, until Kiali restarts.
+	UnreadableRemoteSecrets() []string
+
+	// The following three methods implement the namespace-set computation backoff: a
+	// failed computation is not retried for a short window, and the record is dropped on
+	// success. They are on this interface (rather than an optional capability) so the
+	// business layer's calls are compile-checked - a silently failed type assertion here
+	// once disabled the whole backoff in production.
+
+	// MarkClusterUnreachable records that the cluster failed at the transport level
+	// (unreachable, stalled). Every request-path probe of the cluster - session
+	// validation, version fetch, ambient check, namespace-set computation - consults
+	// this signal first and skips its live call while the mark is set, so a dead remote
+	// is probed by the background prober instead of by every request (see
+	// UnreachableClusters and the prober started by NewKialiCache). The home cluster is
+	// never marked: its failures are exceptional and fail loud.
+	MarkClusterUnreachable(cluster string)
+	// ClearClusterUnreachable drops the mark, e.g. after the background prober's call
+	// was answered. Every surface recovers on its next request.
+	ClearClusterUnreachable(cluster string)
+	// IsClusterUnreachable reports whether the cluster is currently marked unreachable.
+	IsClusterUnreachable(cluster string) bool
+	// UnreachableClusters returns the currently marked cluster names, for the prober.
+	UnreachableClusters() []string
 
 	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
 	// serve reads, and returns the cluster's reader when it should not be skipped; callers
@@ -119,6 +188,7 @@ type KialiCache interface {
 	SkipUnavailableCluster(cluster, surface string, mode SkipMode) (reader client.Reader, skip bool, err error)
 
 	GetMesh() (*models.Mesh, bool)
+	LastMesh() *models.Mesh
 	SetMesh(*models.Mesh)
 
 	// GetNamespace returns a namespace from the in memory cache if it exists.
@@ -142,21 +212,30 @@ type KialiCache interface {
 	GetWaypoints() (models.Workloads, bool)
 	SetWaypoints(models.Workloads)
 
-	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
-	GetZtunnelPods(cluster string) []v1.Pod
+	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset.
+	// The context bounds the informer reads; a cluster whose caches cannot
+	// answer in time yields no pods, and the answer is retried on the next call.
+	GetZtunnelPods(ctx context.Context, cluster string) []v1.Pod
 
-	// GetZtunnelDaemonset returns a list of ztunnel daemonset per cluster
-	GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet
+	// GetZtunnelDaemonset returns a list of ztunnel daemonset per cluster.
+	// The context bounds the informer reads; a cluster whose caches cannot
+	// answer in time yields no daemonsets, and the answer is retried on the
+	// next call.
+	GetZtunnelDaemonset(ctx context.Context, cluster string) []appsv1.DaemonSet
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
-	IsAmbientEnabled(cluster string) bool
+	// The context bounds the daemonset reads: a cluster whose caches cannot
+	// answer in time reports false without caching that verdict, so the check
+	// is retried on the next call rather than paying the read timeout per
+	// accessible namespace indefinitely.
+	IsAmbientEnabled(ctx context.Context, cluster string) bool
 
 	// IsAmbientEnabledInAnyCluster returns true when at least one of the
 	// supplied clusters has the istio Ambient profile enabled. Short-circuits
 	// on the first match. Reuses the per-cluster cache populated by
 	// IsAmbientEnabled, so repeated calls are cheap.
-	IsAmbientEnabledInAnyCluster(clusters []string) bool
+	IsAmbientEnabledInAnyCluster(ctx context.Context, clusters []string) bool
 
 	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
 	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
@@ -195,6 +274,21 @@ type KialiCache interface {
 	SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace)
 }
 
+// NamespaceComputeKey identifies one accessible-namespace-set computation: the
+// (cluster, cacheKey) pair joined by a NUL separator. cacheKey is the requesting user
+// client's GetCacheKey() - the identity that scopes the user's cached results (the
+// bearer token, or the impersonated username when Kiali impersonates; see
+// kubernetes.K8SClient.GetCacheKey). The NUL separator cannot occur in a cluster name
+// or a cache key, so pairs cannot collide. The same key coalesces concurrent
+// computations (the business layer's singleflight).
+type NamespaceComputeKey string
+
+// NewNamespaceComputeKey builds the key for one (cluster, cacheKey) computation.
+// See NamespaceComputeKey for the format and the meaning of cacheKey.
+func NewNamespaceComputeKey(cluster, cacheKey string) NamespaceComputeKey {
+	return NamespaceComputeKey(cluster + "\x00" + cacheKey)
+}
+
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
 
@@ -205,11 +299,31 @@ type kialiCacheImpl struct {
 	canListStore store.Store[canListKey, bool]
 	canListLock  sync.RWMutex
 	// This isn't expected to change so it's not protected by a mutex.
-	buildInfo               models.BuildInfo
+	buildInfo models.BuildInfo
+	// canReadWebhookByCluster memoizes whether Kiali can list mutating webhooks per cluster.
+	// A false from a transient failure is re-checked lazily (see CanListWebhooks), so it is
+	// guarded by canReadWebhookMutex; the startup writes hold it too.
 	canReadWebhookByCluster map[string]bool
-	clients                 map[string]kubernetes.ClientInterface
-	clusterAccess           *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
-	conf                    config.Config
+	canReadWebhookMutex     sync.Mutex
+	// webhookCheckFailures records when a cluster's webhook check last failed transiently,
+	// for the lazy retry backoff. Guarded by canReadWebhookMutex.
+	webhookCheckFailures map[string]time.Time
+
+	// unreachableProberDisabled suppresses the background prober goroutine; see
+	// WithUnreachableProberDisabled.
+	unreachableProberDisabled bool
+
+	// unreachableMu guards unreachable. The mark carries no expiry: the background
+	// prober clears it once the cluster answers, which is also what bounds how long a
+	// recovered cluster's data takes to return (one probe interval).
+	unreachableMu sync.RWMutex
+	// unreachable is the set of clusters marked unreachable at the transport level;
+	// see MarkClusterUnreachable.
+	unreachable map[string]struct{}
+
+	clients       map[string]kubernetes.ClientInterface
+	clusterAccess *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
+	conf          config.Config
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -237,6 +351,7 @@ type kialiCacheImpl struct {
 
 	// There's only ever one mesh but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheMeshKey.
+	lastMesh  atomic.Pointer[models.Mesh]
 	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per cacheKey + cluster as a map[string]namespace where string is the namespace name
@@ -261,6 +376,20 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheWaypointsKey
 	waypointStore store.Store[string, models.Workloads]
 
+	// skippedClusters are remote clusters whose registration was definitively broken at
+	// startup (see WithSkippedClusters): Kiali has no cache and no clients for them, and they
+	// are absent from its inventory until a restart with a fixed registration. Consumers that
+	// authorize access by enumerating SA-visible clusters must treat a skipped cluster as
+	// "cannot evaluate" and fail closed, because its telemetry may still be queryable.
+	skippedClusters map[string]struct{}
+
+	// unreadableRemoteSecrets names the remote cluster secrets whose directory could not
+	// be enumerated at startup (see WithUnreadableRemoteSecrets). While it is non-empty
+	// the remote inventory is incomplete: the clusters those secrets define are unknown,
+	// so consumers that authorize by enumerating SA-visible clusters must fail closed
+	// until a restart, exactly as for a skipped cluster.
+	unreadableRemoteSecrets []string
+
 	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
@@ -276,14 +405,46 @@ func WithClusterAccess(clusterAccess *ClusterAccess) Option {
 	}
 }
 
+// WithSkippedClusters records the remote clusters whose registration was definitively broken at
+// startup, so consumers of the cache can treat them consistently: they are not in kubeCache, and
+// authorization surfaces must fail closed for them (see SkippedClusters). The list is a snapshot
+// of the client factory's registry taken once at cache construction - a deliberate shape: the
+// per-request checks that read it stay a lock-free map read rather than a cross-package call
+// into the factory's mutex. It is therefore consistent only because cluster skipping is
+// startup-only (see ClientFactory.SkipCluster's contract): construction order in runServer
+// guarantees every skip has been recorded before the snapshot is taken, and no caller may skip
+// a cluster afterwards.
+func WithSkippedClusters(clusters []string) Option {
+	return func(c *kialiCacheImpl) {
+		if c.skippedClusters == nil {
+			c.skippedClusters = make(map[string]struct{}, len(clusters))
+		}
+		for _, cluster := range clusters {
+			c.skippedClusters[cluster] = struct{}{}
+		}
+	}
+}
+
+// WithUnreadableRemoteSecrets records the remote cluster secrets whose directory could not
+// be enumerated at startup, so consumers of the cache can treat the inventory consistently:
+// authorization surfaces that enumerate SA-visible clusters must fail closed while any
+// secret is unreadable (see UnreadableRemoteSecrets).
+func WithUnreadableRemoteSecrets(secrets []string) Option {
+	return func(c *kialiCacheImpl) {
+		c.unreadableRemoteSecrets = append(c.unreadableRemoteSecrets, secrets...)
+	}
+}
+
 func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config, opts ...Option) (KialiCache, error) {
 	zl := log.WithGroup(log.KialiCacheLogName)
 	ctx = log.ToContext(ctx, zl)
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
+		unreachable:             map[string]struct{}{},
 		canListStore:            store.NewExpirationStore(ctx, store.New[canListKey, bool](), &namespaceKeyTTL, nil),
 		canReadWebhookByCluster: make(map[string]bool),
+		webhookCheckFailures:    make(map[string]time.Time),
 		clients:                 kialiSAClients,
 		conf:                    conf,
 		zl:                      zl,
@@ -295,6 +456,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
 		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
+		skippedClusters:         make(map[string]struct{}),
 		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
@@ -305,25 +467,33 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		opt(&kialiCacheImpl)
 	}
 
+	// Check if each cluster can list webhooks. The checks run on the synchronous startup
+	// path, so each gets its own bound (nothing else limits this round trip at this point)
+	// and they run concurrently: a remote that accepts connections but stalls adds its
+	// timeout to startup once, not once per cluster ahead of it.
+	var webhookWg sync.WaitGroup
 	for cluster, client := range kialiSAClients {
-		// Check if the cluster can list webhooks
-		reviews, err := client.GetSelfSubjectAccessReview(ctx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
-		if err != nil {
-			zl.Warn().Msgf("Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
-			kialiCacheImpl.canReadWebhookByCluster[cluster] = false
-		}
-
-		for _, review := range reviews {
-			if review.Status.Allowed {
-				kialiCacheImpl.canReadWebhookByCluster[cluster] = true
-				break
+		webhookWg.Add(1)
+		go func(cluster string, client kubernetes.ClientInterface) {
+			defer webhookWg.Done()
+			canRead, definitive := checkWebhookPermission(ctx, client)
+			kialiCacheImpl.canReadWebhookMutex.Lock()
+			if definitive {
+				// A successful SSAR is a definitive answer either way: allowed, or a real
+				// RBAC denial that needs no retry.
+				kialiCacheImpl.canReadWebhookByCluster[cluster] = canRead
+			} else {
+				// A transient failure is recorded so the lazy re-check in CanListWebhooks
+				// retries after the backoff.
+				kialiCacheImpl.webhookCheckFailures[cluster] = time.Now()
 			}
-		}
-
-		if canReadMutatingWebhooks := kialiCacheImpl.canReadWebhookByCluster[cluster]; !canReadMutatingWebhooks {
-			zl.Info().Msgf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
-		}
+			kialiCacheImpl.canReadWebhookMutex.Unlock()
+			if !canRead {
+				zl.Info().Msgf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
+			}
+		}(cluster, client)
 	}
+	webhookWg.Wait()
 
 	// TODO: Treat all clusters the same way.
 	// Ensure home client got set.
@@ -331,11 +501,87 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		return nil, fmt.Errorf("[Kiali Cache] home cluster [%s] not configured in kiali cache", conf.KubernetesConfig.ClusterName)
 	}
 
+	// The unreachable-cluster prober owns recovery detection: request paths never probe
+	// a marked cluster (see MarkClusterUnreachable), so something must. Testing caches
+	// disable it (see WithUnreachableProberDisabled): they drive the signal
+	// deterministically, and a prober succeeding against a fake client would clear
+	// marks mid-test.
+	if !kialiCacheImpl.unreachableProberDisabled {
+		go kialiCacheImpl.probeUnreachableClusters(ctx)
+	}
+
 	return &kialiCacheImpl, nil
 }
 
+// WithUnreachableProberDisabled stops the cache from starting its background
+// unreachable-cluster prober. The signal's mark and clear can then be driven
+// deterministically; probeUnreachableOnce remains available for direct testing of the
+// prober's classification.
+func WithUnreachableProberDisabled() Option {
+	return func(c *kialiCacheImpl) { c.unreachableProberDisabled = true }
+}
+
+// checkWebhookPermission asks the cluster whether Kiali may list mutating webhooks, bounded
+// by its own timeout. It returns the reviews, whether reading is allowed, and whether the
+// answer is definitive: a transport failure (timeout, unreachable) is neither allowed nor a
+// denial - it is retried later - while a successful SSAR is definitive either way.
+func checkWebhookPermission(ctx context.Context, client kubernetes.ClientInterface) (allowed, definitive bool) {
+	checkCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
+	defer cancel()
+	reviews, err := client.GetSelfSubjectAccessReview(checkCtx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
+	if err != nil {
+		return false, false
+	}
+	for _, review := range reviews {
+		if review.Status.Allowed {
+			return true, true
+		}
+	}
+	return false, true
+}
+
 func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
-	return c.canReadWebhookByCluster[cluster]
+	c.canReadWebhookMutex.Lock()
+	if c.canReadWebhookByCluster[cluster] {
+		c.canReadWebhookMutex.Unlock()
+		return true
+	}
+	// A definitive verdict (allowed, or a real RBAC denial recorded at startup) needs no
+	// re-check; only a transient failure is retried, after a backoff, so a remote that was
+	// unreachable at startup gets its istio tags once it recovers - and a plain denial does
+	// not poll every 30 seconds.
+	failedAt, failed := c.webhookCheckFailures[cluster]
+	client := c.clients[cluster]
+	c.canReadWebhookMutex.Unlock()
+	if !failed || time.Since(failedAt) < webhookCheckBackoff {
+		return false
+	}
+	if client == nil {
+		return false
+	}
+	// A cluster marked unreachable is not probed - the background prober owns its
+	// recovery detection (the invariant at cache construction: request paths never
+	// probe a marked cluster). The re-check resumes once the mark is cleared.
+	if c.IsClusterUnreachable(cluster) {
+		return false
+	}
+
+	// The live re-check runs without the lock: one slow remote must not block the healthy
+	// clusters' webhook lookups. Concurrent callers may duplicate the check; it is rare,
+	// bounded, and idempotent.
+	allowed, definitive := checkWebhookPermission(context.Background(), client)
+
+	c.canReadWebhookMutex.Lock()
+	defer c.canReadWebhookMutex.Unlock()
+	if definitive {
+		c.canReadWebhookByCluster[cluster] = allowed
+		delete(c.webhookCheckFailures, cluster)
+	} else {
+		// checkWebhookPermission only returns here on a transient failure, where
+		// allowed is always false.
+		c.webhookCheckFailures[cluster] = time.Now()
+	}
+	return allowed
 }
 
 // ErrClusterNotCached is returned by GetKubeCache when there is no cache configured for the
@@ -349,6 +595,33 @@ var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
 // all (ErrClusterNotCached). A degraded cluster recovers on its own once access is restored,
 // so the fitting HTTP status for it is 503 (temporarily unavailable) rather than 500.
 var ErrClusterDegraded = errors.New("cluster cache is degraded")
+
+// ErrClusterUnreachable is wrapped into errors for a cluster that recently failed at the
+// transport level (see MarkClusterUnreachable): request paths skip their probes of such a
+// cluster, and a background prober clears the mark once the cluster answers again. It is
+// distinct from an access denial - the fitting HTTP status is 503 (temporarily
+// unavailable), not 403.
+var ErrClusterUnreachable = errors.New("cluster is unreachable")
+
+// NewClusterUnreachableError returns the error for a request that names a cluster
+// currently marked unreachable: temporarily unavailable (503), not an access denial.
+func NewClusterUnreachableError(cluster string) error {
+	return fmt.Errorf("cluster [%s]: %w", cluster, ErrClusterUnreachable)
+}
+
+// ErrNamespaceRevoked is returned by detail paths for a namespace whose access was partially
+// revoked while the rest of the cluster remains readable: its informers are frozen, so reads
+// from it would serve stale pre-revocation data. Like a degraded cluster it recovers on its
+// own (~30s probe), so the fitting HTTP status is 503 rather than 404 or 403 - the namespace
+// exists and the user may well see it again shortly.
+var ErrNamespaceRevoked = errors.New("namespace access is revoked")
+
+// NewNamespaceRevokedError returns the error for a request that names a namespace whose
+// access was revoked: temporarily unavailable (503), not an access denial. Use it instead
+// of hand-rolling the wrapping, so every site wraps (errors.Is works) and reads the same.
+func NewNamespaceRevokedError(cluster, namespace string) error {
+	return fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, ErrNamespaceRevoked)
+}
 
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
@@ -369,6 +642,132 @@ func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
 		return nil
 	}
 	return c.clusterAccess.RevokedNamespaces(cluster)
+}
+
+func (c *kialiCacheImpl) HasRevokedAccess(cluster string) bool {
+	access := c.clusterAccess
+	if access == nil {
+		return false
+	}
+	access.mu.Lock()
+	defer access.mu.Unlock()
+	_, full := access.degraded[cluster]
+	return full || len(access.nsRevoked[cluster]) > 0
+}
+
+func (c *kialiCacheImpl) IsNamespaceRevoked(cluster, namespace string) bool {
+	if c.clusterAccess == nil {
+		return false
+	}
+	return c.clusterAccess.IsNamespaceRevoked(cluster, namespace)
+}
+
+// SkippedClusters returns the names of the clusters skipped at startup, sorted. See the
+// interface method for the contract.
+func (c *kialiCacheImpl) SkippedClusters() []string {
+	names := make([]string, 0, len(c.skippedClusters))
+	for cluster := range c.skippedClusters {
+		names = append(names, cluster)
+	}
+	slices.Sort(names)
+	return names
+}
+
+// IsClusterSkipped reports whether the named cluster was skipped at startup.
+func (c *kialiCacheImpl) IsClusterSkipped(cluster string) bool {
+	_, skipped := c.skippedClusters[cluster]
+	return skipped
+}
+
+// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose directory
+// could not be enumerated at startup. See the interface method for the contract.
+func (c *kialiCacheImpl) UnreadableRemoteSecrets() []string {
+	return slices.Clone(c.unreadableRemoteSecrets)
+}
+
+// namespaceComputeFailure is one recorded accessible-set computation failure.
+// MarkClusterUnreachable records that the cluster failed at the transport level. The
+// home cluster is never marked (see the interface contract).
+func (c *kialiCacheImpl) MarkClusterUnreachable(cluster string) {
+	if cluster == c.conf.KubernetesConfig.ClusterName {
+		return
+	}
+	c.unreachableMu.Lock()
+	defer c.unreachableMu.Unlock()
+	if _, marked := c.unreachable[cluster]; !marked {
+		c.unreachable[cluster] = struct{}{}
+		c.zl.Info().Msgf("Cluster [%s] is unreachable; its request-path probes are suspended until it answers again", cluster)
+	}
+}
+
+// ClearClusterUnreachable drops the mark; the cluster's data returns on the next request.
+func (c *kialiCacheImpl) ClearClusterUnreachable(cluster string) {
+	c.unreachableMu.Lock()
+	defer c.unreachableMu.Unlock()
+	if _, marked := c.unreachable[cluster]; marked {
+		delete(c.unreachable, cluster)
+		c.zl.Info().Msgf("Cluster [%s] is reachable again", cluster)
+	}
+}
+
+// IsClusterUnreachable reports whether the cluster is currently marked unreachable.
+func (c *kialiCacheImpl) IsClusterUnreachable(cluster string) bool {
+	c.unreachableMu.RLock()
+	defer c.unreachableMu.RUnlock()
+	_, marked := c.unreachable[cluster]
+	return marked
+}
+
+// UnreachableClusters returns the currently marked cluster names.
+func (c *kialiCacheImpl) UnreachableClusters() []string {
+	c.unreachableMu.RLock()
+	defer c.unreachableMu.RUnlock()
+	names := make([]string, 0, len(c.unreachable))
+	for cluster := range c.unreachable {
+		names = append(names, cluster)
+	}
+	return names
+}
+
+// probeUnreachableClusters re-probes marked clusters until they answer or the context is
+// done. It is the only thing that clears the marks: request paths never probe a marked
+// cluster, so recovery is detected here, within one interval of connectivity returning.
+// Any answer - even an API-level error such as Forbidden - proves reachability and clears
+// the mark; only transport-level failures keep it.
+func (c *kialiCacheImpl) probeUnreachableClusters(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(unreachableProbeInterval):
+			c.probeUnreachableOnce(ctx)
+		}
+	}
+}
+
+// probeUnreachableOnce re-probes every marked cluster once; see probeUnreachableClusters.
+// The clusters are probed concurrently, each bounded by its own timeout: a sequential
+// sweep would let a few stalled remotes push the sweep past the probe interval, delaying
+// every other marked cluster's recovery by whole cycles - breaking the one-interval
+// recovery contract the request paths rely on (they never probe a marked cluster
+// themselves). The same fan-out the startup path uses; see setupRemoteClusters.
+func (c *kialiCacheImpl) probeUnreachableOnce(ctx context.Context) {
+	var wg sync.WaitGroup
+	for _, cluster := range c.UnreachableClusters() {
+		client := c.clients[cluster]
+		if client == nil {
+			continue
+		}
+		wg.Add(1)
+		go func(cluster string, client kubernetes.ClientInterface) {
+			defer wg.Done()
+			err := kubernetes.ProbeClusterCredentials(ctx, client, c.conf.KialiInternal.KubernetesClient.ClusterProbeTimeout)
+			if err == nil || !kubernetes.IsConnectionError(err) {
+				c.ClearClusterUnreachable(cluster)
+			}
+		}(cluster, client)
+	}
+	wg.Wait()
 }
 
 // SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster
@@ -436,7 +835,11 @@ func (c *kialiCacheImpl) GetMesh() (*models.Mesh, bool) {
 	return c.meshStore.Get(kialiCacheMeshKey)
 }
 
+// LastMesh supplies last-known configuration while discovery refreshes the expiring mesh.
+func (c *kialiCacheImpl) LastMesh() *models.Mesh { return c.lastMesh.Load() }
+
 func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
+	c.lastMesh.Store(mesh)
 	c.meshStore.Set(kialiCacheMeshKey, mesh)
 }
 
@@ -460,13 +863,13 @@ func (c *kialiCacheImpl) ValidationConfig() store.Store[string, string] {
 // namespaces (see ListReadable). It is the one ztunnel fetch IsAmbientEnabled,
 // GetZtunnelPods and GetZtunnelDaemonset share. The reader is returned for callers that
 // go on to list through the same cache (GetZtunnelPods).
-func (in *kialiCacheImpl) listZtunnelDaemonsets(cluster string) (client.Reader, []appsv1.DaemonSet, error) {
+func (in *kialiCacheImpl) listZtunnelDaemonsets(ctx context.Context, cluster string) (client.Reader, []appsv1.DaemonSet, error) {
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
 		return nil, nil, err
 	}
 	list := &appsv1.DaemonSetList{}
-	if err := ListReadable(context.TODO(), kubeCache, &in.conf, in, cluster, list,
+	if err := ListReadable(ctx, kubeCache, &in.conf, in, cluster, list,
 		client.MatchingLabels{config.KubernetesAppLabel: config.Ztunnel}); err != nil {
 		return nil, nil, err
 	}
@@ -478,15 +881,43 @@ func (in *kialiCacheImpl) listZtunnelDaemonsets(cluster string) (client.Reader, 
 
 // IsAmbientEnabled checks if the istio Ambient profile was enabled
 // by checking if the ztunnel daemonset exists on the cluster.
-func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
+func (in *kialiCacheImpl) IsAmbientEnabled(ctx context.Context, cluster string) bool {
+	return in.isAmbientEnabled(ctx, cluster)
+}
+
+func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
 	if found {
 		return check
 	}
 
-	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+	// A cluster marked unreachable is not probed: the background prober re-checks it,
+	// and the ambient detection resumes once the mark is cleared (see
+	// MarkClusterUnreachable).
+	if in.IsClusterUnreachable(cluster) {
+		return false
+	}
+
+	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
+		// Only a transport-level failure marks the cluster unreachable — the same
+		// classification the background prober uses when it clears the mark — and
+		// never under an already-expired caller context: this check runs under a
+		// shared discovery budget (for example /api/config's capability timeout),
+		// where one stalled remote can consume the budget and every later cluster's
+		// read then fails fast; those failures are attributable to the budget, not
+		// to the clusters that happened to be next. A degraded or uncached cluster
+		// is likewise not an unreachable one: a degraded cache (the SA lost access)
+		// recovers through its own probe, and marking it unreachable here would
+		// flap against the background prober, which correctly sees the cluster
+		// answer at the transport level.
+		if ctx.Err() == nil &&
+			!errors.Is(err, ErrClusterDegraded) &&
+			!errors.Is(err, ErrClusterNotCached) &&
+			kubernetes.IsConnectionError(err) {
+			in.MarkClusterUnreachable(cluster)
+		}
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return false
 	}
@@ -497,16 +928,33 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 }
 
 // IsAmbientEnabledInAnyCluster returns true when at least one cluster in the
-// supplied slice has the istio Ambient profile enabled. The check delegates
-// to IsAmbientEnabled, so per-cluster results are reused from the existing
-// ambientChecksPerCluster cache.
-func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(clusters []string) bool {
-	return slices.ContainsFunc(clusters, in.IsAmbientEnabled)
+// supplied slice has the istio Ambient profile enabled. The clusters are checked
+// concurrently, each bounded by the context, so a caller sharing one discovery
+// budget across clusters is not held behind one stalled remote. Per-cluster
+// results are reused from the existing ambientChecksPerCluster cache.
+func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(ctx context.Context, clusters []string) bool {
+	var wg sync.WaitGroup
+	enabled := make(chan bool, len(clusters))
+	for _, cluster := range clusters {
+		wg.Add(1)
+		go func(cluster string) {
+			defer wg.Done()
+			enabled <- in.isAmbientEnabled(ctx, cluster)
+		}(cluster)
+	}
+	wg.Wait()
+	close(enabled)
+	for e := range enabled {
+		if e {
+			return true
+		}
+	}
+	return false
 }
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
-func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+func (in *kialiCacheImpl) GetZtunnelPods(ctx context.Context, cluster string) []v1.Pod {
+	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -516,7 +964,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	podList := &v1.PodList{}
-	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
+	if err := kubeCache.List(ctx, podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
 		in.zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
 		return nil
 	}
@@ -524,8 +972,8 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	return podList.Items
 }
 
-func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
-	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+func (in *kialiCacheImpl) GetZtunnelDaemonset(ctx context.Context, cluster string) []appsv1.DaemonSet {
+	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -590,6 +1038,9 @@ func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 
 // GetHealth returns cached health data for a namespace
 func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool) {
+	if c.IsNamespaceRevoked(cluster, namespace) {
+		return nil, false
+	}
 	key := models.HealthCacheKey(cluster, namespace)
 	data, found := c.healthStore.Get(key)
 
@@ -756,7 +1207,7 @@ func (c *kialiCacheImpl) UpdateWorkloadHealth(cluster, namespace, workloadName s
 // K8s Gateway API classes can come from  different places depending on the configuration:
 // 1. From explicitly listed classes in the configuration if set
 // 2. Auto-discovered classes that use Istio as a controller and matching a label selector in the configuration (if set)
-func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
+func (c *kialiCacheImpl) GatewayAPIClasses(ctx context.Context, cluster string) []config.GatewayAPIClass {
 	result := []config.GatewayAPIClass{}
 	userClient := c.clients[cluster]
 	if userClient == nil {
@@ -764,7 +1215,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		return result
 	}
 	// do not continue if Gateway API is not configured on cluster
-	if !userClient.IsGatewayAPI() {
+	if !userClient.IsGatewayAPIContext(ctx) {
 		return result
 	}
 	kubeCache, err := c.GetKubeCache(cluster)
@@ -799,7 +1250,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 			}
 			classList := &k8s_networking_v1.GatewayClassList{}
 
-			err := kubeCache.List(context.TODO(), classList, listOpts...)
+			err := kubeCache.List(ctx, classList, listOpts...)
 			if err != nil {
 				c.zl.Error().Msgf("Cannot auto discover GatewayAPIClasses: list failed: %s", err)
 			} else {
@@ -831,7 +1282,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		for name := range c.clients {
 			allClusters = append(allClusters, name)
 		}
-		if c.IsAmbientEnabledInAnyCluster(allClusters) {
+		if c.IsAmbientEnabledInAnyCluster(ctx, allClusters) {
 			result = append(result, config.GatewayAPIClass{Name: "istio-waypoint", ClassName: "istio-waypoint"})
 		}
 	}

@@ -51,7 +51,7 @@ func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface
 		return "unexpected mesh status response type", http.StatusInternalServerError
 	}
 
-	summary := transformToSummary(meshConfig, ki.KialiCache)
+	summary := transformToSummary(ctx, meshConfig, ki.KialiCache)
 	if !hasAccessibleControlPlane(summary) {
 		return "No accessible control plane data found for this token. Cannot retrieve mesh status.", http.StatusForbidden
 	}
@@ -64,11 +64,11 @@ func hasAccessibleControlPlane(summary MeshSummaryFormatted) bool {
 	return len(summary.Components.ControlPlane.Nodes) > 0
 }
 
-func transformToSummary(cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryFormatted {
+func transformToSummary(ctx context.Context, cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryFormatted {
 	nodesByID := buildNodeIndex(cfg)
 
 	return MeshSummaryFormatted{
-		Components:        extractComponents(cfg, kialiCache),
+		Components:        extractComponents(ctx, cfg, kialiCache),
 		ConnectivityGraph: extractConnectivity(cfg, nodesByID),
 		CriticalAlerts:    extractCriticalAlerts(cfg),
 		Environment:       extractEnvironment(cfg),
@@ -132,7 +132,7 @@ func extractTrustDomain(nd *meshCommon.NodeData) string {
 	return ""
 }
 
-func extractComponents(cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryComponents {
+func extractComponents(ctx context.Context, cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryComponents {
 	var cp MeshSummaryControlPlane
 	obs := MeshSummaryObservabilityStack{}
 	monitoredNS := make([]MeshSummaryMonitoredNamespace, 0)
@@ -202,7 +202,7 @@ func extractComponents(cfg meshCommon.Config, kialiCache cache.KialiCache) MeshS
 	// Extract ztunnel information for Ambient-enabled clusters
 	var ztunnel *MeshSummaryZtunnel
 	if len(ambientClusters) > 0 && kialiCache != nil {
-		ztunnel = extractZtunnelStatus(kialiCache, ambientClusters)
+		ztunnel = extractZtunnelStatus(ctx, kialiCache, ambientClusters)
 	}
 
 	return MeshSummaryComponents{
@@ -510,20 +510,20 @@ func mergeStatus(a, b string) string {
 }
 
 // extractZtunnelStatus collects ztunnel DaemonSet and pod information across Ambient-enabled clusters
-func extractZtunnelStatus(kialiCache cache.KialiCache, ambientClusters map[string]bool) *MeshSummaryZtunnel {
+func extractZtunnelStatus(ctx context.Context, kialiCache cache.KialiCache, ambientClusters map[string]bool) *MeshSummaryZtunnel {
 	var allPods []MeshSummaryZtunnelPod
 	var totalDesired, totalReady int32
 
 	for cluster := range ambientClusters {
 		// Get DaemonSet status
-		daemonsets := kialiCache.GetZtunnelDaemonset(cluster)
+		daemonsets := kialiCache.GetZtunnelDaemonset(ctx, cluster)
 		for _, ds := range daemonsets {
 			totalDesired += ds.Status.DesiredNumberScheduled
 			totalReady += ds.Status.NumberReady
 		}
 
 		// Get pod details
-		pods := kialiCache.GetZtunnelPods(cluster)
+		pods := kialiCache.GetZtunnelPods(ctx, cluster)
 		for _, pod := range pods {
 			ready := false
 			for _, cond := range pod.Status.Conditions {

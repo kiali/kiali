@@ -15,6 +15,7 @@ import (
 
 func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface, conf config.Config) KialiCache {
 	t.Helper()
+
 	// Disabling Istio API for tests. Otherwise the cache will try and poll the Istio endpoint
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
@@ -23,7 +24,7 @@ func newTestingCache(t testing.TB, clients map[string]kubernetes.ClientInterface
 		readers[cluster] = client
 	}
 
-	cache, err := NewKialiCache(t.Context(), clients, readers, conf)
+	cache, err := NewKialiCache(t.Context(), clients, readers, conf, WithUnreachableProberDisabled())
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}

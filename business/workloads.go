@@ -602,7 +602,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		workload.SetServices(services)
 	}
 
-	if in.cache.IsAmbientEnabled(criteria.Cluster) {
+	if in.cache.IsAmbientEnabled(ctx, criteria.Cluster) {
 		in.decorateWorkloadWaypointTrafficSplit(ctx, workload)
 	}
 
@@ -1070,7 +1070,9 @@ func (in *WorkloadService) fetchWorkloadsInNamespaces(ctx context.Context, clust
 	// we've already established the caller has access to the namespaces; use SA client to obtain namespace resource info
 	client, ok := in.kialiSAClients[cluster]
 	if !ok {
-		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		// A missing SA client means the cluster is not in Kiali's inventory (skipped or
+		// misconfigured), not that the user lacks access: 404 semantics.
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	kubeCache, err := in.cache.GetKubeCache(cluster)
@@ -2409,11 +2411,11 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, w, false, waypoints)
 				// TODO: Maybe user doesn't have permissions
-				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+				ztunnelPods := in.cache.GetZtunnelPods(ctx, criteria.Cluster)
 				for _, zPod := range ztunnelPods {
 					// There should be a ztunnel pod per node
 					// The information should be the same, but choosing the pod could help to verify the information is synchronized
-					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Name)
+					zPodConfig := in.cache.GetZtunnelDump(ctx, criteria.Cluster, zPod.Name)
 					if zPodConfig != nil {
 						w.AddPodsProtocol(*zPodConfig)
 					}
@@ -2456,7 +2458,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 // mesh-wide and is fetched with the Kiali ServiceAccount client, so it must never
 // be returned unfiltered. The unfiltered dump stays in the cache; filtering copies.
 func (in *WorkloadService) GetZtunnelConfig(ctx context.Context, cluster, pod string) (*kubernetes.ZtunnelConfigDump, error) {
-	dump := in.cache.GetZtunnelDump(cluster, pod)
+	dump := in.cache.GetZtunnelDump(ctx, cluster, pod)
 	if dump == nil {
 		return nil, nil
 	}
@@ -3070,7 +3072,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (if possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) streamParsedLogs(ctx context.Context, cluster, namespace string, names []string, opts *LogOptions, w http.ResponseWriter) error {
 	var userClient kubernetes.ClientInterface
 	var ok bool
 	if opts.LogType.UsesKialiSA() {
@@ -3096,7 +3098,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 	firstEntry := true
 	firstWritter := true
 	for i, name := range names {
-		logsReader, err := userClient.StreamPodLogs(namespace, name, &k8sOpts)
+		logsReader, err := userClient.StreamPodLogs(ctx, namespace, name, &k8sOpts)
 		if err != nil {
 			return err
 		}
@@ -3245,7 +3247,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
-		pods := in.cache.GetZtunnelPods(cluster)
+		pods := in.cache.GetZtunnelPods(ctx, cluster)
 		// This is needed for the K8S client
 		opts.Container = models.IstioProxy
 		fs, err := ztunnelFilterPatterns(namespace, name, service)
@@ -3258,7 +3260,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		}
 		if len(pods) > 0 {
 			// They should be all in the same ns
-			return in.streamParsedLogs(cluster, pods[0].Namespace, names, opts, w)
+			return in.streamParsedLogs(ctx, cluster, pods[0].Namespace, names, opts, w)
 		}
 	}
 	if opts.LogType == models.LogTypeWaypoint {
@@ -3285,13 +3287,13 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 					}
 					// This is needed for the K8S client
 					opts.Container = models.IstioProxy
-					return in.streamParsedLogs(cluster, waypoint.Namespace, names, opts, w)
+					return in.streamParsedLogs(ctx, cluster, waypoint.Namespace, names, opts, w)
 				}
 			}
 		}
 	}
 	names = append(names, name)
-	return in.streamParsedLogs(cluster, namespace, names, opts, w)
+	return in.streamParsedLogs(ctx, cluster, namespace, names, opts, w)
 }
 
 // ztunnelFilterPatterns builds the anchored regular expressions used to filter ztunnel

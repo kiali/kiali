@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -36,6 +37,28 @@ type ClientFactory interface {
 	// we really don't want to expose this, but we need to give this to kiali main.
 	// There is a TODO to remove this. See comments at NewLayerWithSAClients
 	GetSAClientsAsUserClientInterfaces() map[string]UserClientInterface
+	// IsClusterSkipped reports whether the cluster's registration was definitively broken at
+	// startup and Kiali is deliberately not serving it (see SkipCluster). The home cluster is
+	// never skipped.
+	IsClusterSkipped(cluster string) bool
+	// SkipCluster removes the cluster from Kiali's inventory: its SA client is dropped and
+	// subsequent user-client requests for it are refused. Callers must only skip clusters whose
+	// registration is definitively broken (for example, credentials rejected with 401 or a TLS
+	// misconfiguration) - never one that is merely unreachable, which recovers on its own.
+	// This is startup-only: the Kiali cache snapshots the skipped set at its construction
+	// (see WithSkippedClusters) to keep per-request authorization checks a lock-free map
+	// read, so a call made after the cache is built would drop the cluster's clients here
+	// while the cache's authorization surfaces still serve it - the two would silently
+	// diverge. The runtime degradation path is the ClusterAccess machinery, not this.
+	SkipCluster(cluster string, reason error)
+	// SkippedClusters returns the names of the skipped clusters, sorted.
+	SkippedClusters() []string
+	// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+	// directory could not be enumerated at startup. A non-empty result means the
+	// remote inventory is incomplete (see RemoteClusterInventory.UnreadableSecrets):
+	// the clusters those secrets define are unknown, so authorization surfaces that
+	// cannot name them must fail closed until a restart.
+	UnreadableRemoteSecrets() []string
 }
 
 // clientFactory used to generate per users clients
@@ -63,6 +86,13 @@ type clientFactory struct {
 	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
 	remoteClusterInfos map[string]RemoteClusterInfo
 
+	// unreadableRemoteSecrets names the remote cluster secrets whose directory could not
+	// be enumerated at startup (see RemoteClusterInventory.UnreadableSecrets). The remote
+	// inventory is incomplete while it is non-empty: the clusters those secrets define are
+	// unknown, so authorization surfaces that cannot name them must fail closed until a
+	// restart.
+	unreadableRemoteSecrets []string
+
 	// saClientEntries is a map of cluster name to a Kiali SA client for that cluster.
 	// The Kiali SA client uses the Kiali service account to access the cluster API.
 	// Note that the underlying type for this map is UserClientInterface but this is only because
@@ -73,6 +103,14 @@ type clientFactory struct {
 	// to write data when you expose them as UserClientInterface. Again, this is only for special cases
 	// like RBAC is disabled or anonymous mode is used).
 	saClientEntries map[string]UserClientInterface
+
+	// skippedClusters records remote clusters that Kiali deliberately does not serve because
+	// their registration is definitively broken (credentials rejected, TLS misconfiguration,
+	// unconstructible client config). A skipped cluster is removed from the SA clients and gets
+	// no user clients either: it is absent from Kiali's inventory until Kiali is restarted with
+	// a fixed registration. Transient problems (a remote that is merely unreachable) are NOT
+	// recorded here - those clusters keep their clients and recover on their own.
+	skippedClusters map[string]struct{}
 
 	// saTokenFile is the path to the SA token file for in-cluster authentication.
 	// Saved before stripping auth from baseRestConfig, used for home cluster impersonation.
@@ -87,17 +125,51 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 		return nil, err
 	}
 
-	// obtain details on all known remote clusters
-	remoteClusterInfos, err := GetRemoteClusterInfos()
-	if err != nil {
-		return nil, err
+	// obtain details on all known remote clusters. The inventory never fails to load:
+	// an unreadable secrets root or secret directory is recorded as inventory-incomplete
+	// (UnreadableSecrets) rather than an error, so a broken remote mount does not take
+	// the healthy home cluster down with it.
+	inventory := GetRemoteClusterInfos()
+	cf.remoteClusterInfos = inventory.Clusters
+	cf.unreadableRemoteSecrets = inventory.UnreadableSecrets
+	for _, secret := range inventory.UnreadableSecrets {
+		log.Errorf("[%s] could not be read, so the remote cluster inventory is incomplete. Kiali serves its readable registrations, but cross-cluster queries that cannot enumerate the full inventory are denied until Kiali is restarted with a readable secret.", secret)
 	}
-	cf.remoteClusterInfos = remoteClusterInfos
 
-	for cluster, clusterInfo := range remoteClusterInfos {
+	// A cluster whose secret data was found but could not be processed (a malformed
+	// kubeconfig) is a definitively broken registration: record it in the skip registry so
+	// authorization surfaces fail closed for it, the same as a rejected credential. Without
+	// this the cluster would be silently forgotten and unscoped queries could pass on the
+	// strength of the remaining clusters alone.
+	for _, cluster := range inventory.UnprocessableClusters {
+		if cluster == cf.homeCluster {
+			// A broken registration shadowing the home cluster's name must not mark the
+			// healthy home cluster skipped; the home registration wins.
+			log.Warningf("Ignoring unprocessable remote cluster secret for cluster [%s]: it shadows the home cluster's name", cluster)
+			continue
+		}
+		log.Errorf("The remote cluster secret data for cluster [%s] could not be processed; skipping the cluster. Fix its kiali-multi-cluster-secret and restart Kiali to recover.", cluster)
+		cf.skippedClusters[cluster] = struct{}{}
+	}
+
+	for cluster, clusterInfo := range inventory.Clusters {
+		// A remote registration that shadows the home cluster's name would mark the home
+		// cluster skipped when its (broken) client fails to construct, and the skip entry
+		// would then refuse service to the healthy home client installed below. The home
+		// registration wins; the shadowing remote is ignored.
+		if cluster == cf.homeCluster {
+			log.Warningf("Ignoring remote cluster secret for cluster [%s]: it shadows the home cluster's name", cluster)
+			continue
+		}
 		client, err := cf.newSAClient(clusterInfo.ClusterInfo)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create remote Kiali Service Account client. Err: %s", err)
+			// A remote whose client cannot even be constructed (for example, a kubeconfig that
+			// parses but whose CA data cannot initialize the TLS transport) is definitively
+			// misconfigured: skipping it keeps the rest of Kiali serving instead of aborting
+			// startup. The home cluster stays fatal below.
+			log.Errorf("Unable to create remote Kiali Service Account client for cluster [%s]; skipping the cluster. Fix its kiali-multi-cluster-secret and restart Kiali to recover. Err: %s", cluster, err)
+			cf.skippedClusters[cluster] = struct{}{}
+			continue
 		}
 		log.Debugf("Adding saClientEntry [%s]", cluster)
 		cf.saClientEntries[cluster] = client
@@ -158,6 +230,7 @@ func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restCo
 		homeCluster:     kialiConf.KubernetesConfig.ClusterName,
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
+		skippedClusters: make(map[string]struct{}),
 		saTokenFile:     saTokenFile,
 	}
 
@@ -334,6 +407,10 @@ func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (User
 		return cf.GetSAClientAsUserClientInterface(cluster), nil
 	}
 
+	if cf.IsClusterSkipped(cluster) {
+		return nil, fmt.Errorf("cluster [%s] is skipped by Kiali because its registration is broken; fix the cluster's credentials and restart Kiali", cluster)
+	}
+
 	return cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 }
 
@@ -345,6 +422,12 @@ func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[str
 
 	clients := make(map[string]UserClientInterface)
 	for cluster, authInfo := range authInfos {
+		if cf.IsClusterSkipped(cluster) {
+			// A session that still names a skipped cluster simply gets no client for it; the
+			// session is preserved and the cluster is absent from that request's view.
+			log.Debugf("Not returning user client for skipped cluster [%s]", cluster)
+			continue
+		}
 		ci, err := cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 		if err != nil {
 			log.Errorf("Error returning user client for cluster: %s. Err: %s", cluster, err)
@@ -475,6 +558,54 @@ func (cf *clientFactory) GetSAClient(cluster string) ClientInterface {
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries[cluster]
+}
+
+// IsClusterSkipped reports whether the cluster's registration was definitively broken at
+// startup and Kiali is deliberately not serving it (see SkipCluster).
+func (cf *clientFactory) IsClusterSkipped(cluster string) bool {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+	_, skipped := cf.skippedClusters[cluster]
+	return skipped
+}
+
+// SkipCluster removes the cluster from Kiali's inventory. See the ClientFactory interface and
+// the skippedClusters field for the contract: only definitively broken registrations are
+// skipped, never a cluster that is merely unreachable.
+func (cf *clientFactory) SkipCluster(cluster string, reason error) {
+	if cluster == cf.homeCluster {
+		// The home cluster is never skippable; a caller passing it is a programming error.
+		log.Errorf("Refusing to skip home cluster [%s]: %v", cluster, reason)
+		return
+	}
+	cf.mutex.Lock()
+	defer cf.mutex.Unlock()
+	if _, already := cf.skippedClusters[cluster]; already {
+		return
+	}
+	cf.skippedClusters[cluster] = struct{}{}
+	delete(cf.saClientEntries, cluster)
+}
+
+// SkippedClusters returns the names of the skipped clusters, sorted.
+func (cf *clientFactory) SkippedClusters() []string {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+	names := make([]string, 0, len(cf.skippedClusters))
+	for cluster := range cf.skippedClusters {
+		names = append(names, cluster)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+// directory could not be enumerated at startup. See the ClientFactory interface for
+// the contract.
+func (cf *clientFactory) UnreadableRemoteSecrets() []string {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+	return slices.Clone(cf.unreadableRemoteSecrets)
 }
 
 // getSAClientAsUserClientInterface returns a read-write client associated with the Kiali service account for the given cluster.

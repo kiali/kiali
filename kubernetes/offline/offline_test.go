@@ -508,7 +508,7 @@ metadata:
 	}
 
 	opts := &core_v1.PodLogOptions{Container: containerName}
-	reader, err := client.StreamPodLogs(namespace, podName, opts)
+	reader, err := client.StreamPodLogs(context.Background(), namespace, podName, opts)
 	if err != nil {
 		t.Fatalf("Failed to stream pod logs: %v", err)
 	}
@@ -543,7 +543,7 @@ metadata:
 	}
 
 	opts := &core_v1.PodLogOptions{Container: "nonexistent-container"}
-	reader, err := client.StreamPodLogs("test-namespace", "test-pod", opts)
+	reader, err := client.StreamPodLogs(context.Background(), "test-namespace", "test-pod", opts)
 	if err != nil {
 		t.Fatalf("Failed to stream pod logs: %v", err)
 	}
@@ -577,7 +577,7 @@ metadata:
 		t.Fatalf("Failed to create offline client: %v", err)
 	}
 
-	reader, err := client.StreamPodLogs("test-namespace", "test-pod", nil)
+	reader, err := client.StreamPodLogs(context.Background(), "test-namespace", "test-pod", nil)
 	if err != nil {
 		t.Fatalf("Failed to stream pod logs: %v", err)
 	}
@@ -612,7 +612,7 @@ metadata:
 	}
 
 	opts := &core_v1.PodLogOptions{Container: ""}
-	reader, err := client.StreamPodLogs("test-namespace", "test-pod", opts)
+	reader, err := client.StreamPodLogs(context.Background(), "test-namespace", "test-pod", opts)
 	if err != nil {
 		t.Fatalf("Failed to stream pod logs: %v", err)
 	}
@@ -647,7 +647,7 @@ metadata:
 	}
 
 	opts := &core_v1.PodLogOptions{Container: "test-container"}
-	reader, err := client.StreamPodLogs("nonexistent-namespace", "test-pod", opts)
+	reader, err := client.StreamPodLogs(context.Background(), "nonexistent-namespace", "test-pod", opts)
 	if err != nil {
 		t.Fatalf("Failed to stream pod logs: %v", err)
 	}

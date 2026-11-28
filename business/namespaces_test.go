@@ -387,16 +387,18 @@ func TestGetClusterNamespacesForClusterPropagatesRemoteErrors(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
 
-	// The aggregate skips the failing remote cluster (picker semantics)...
+	// The per-cluster lookup propagates the remote's error, for the cluster it
+	// was asked about, home or remote. The failure also marks the cluster
+	// unreachable (the shared signal), so...
+	_, err := nsservice.GetClusterNamespacesForCluster(context.TODO(), "west")
+	require.Error(err)
+	require.True(errors.IsInternalError(err))
+
+	// ...the aggregate then skips the failing remote cluster (picker semantics)
+	// rather than probe it again.
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 	require.ElementsMatch([]string{"bookinfo"}, nsNames(namespaces))
-
-	// ...while the per-cluster lookup propagates its error, for the cluster it
-	// was asked about, home or remote.
-	_, err = nsservice.GetClusterNamespacesForCluster(context.TODO(), "west")
-	require.Error(err)
-	require.True(errors.IsInternalError(err))
 }
 
 // Get namespace

@@ -148,9 +148,12 @@ func checkNamespaceAccessAllSAClusters(
 
 // accessibleNamespaceNames returns the user's accessible namespace names for
 // the cluster, narrowed to namespacesParam (a comma-separated list) when it
-// is set. It writes a 500 and returns false if the accessible set cannot be
-// computed (fail closed).
-func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer *business.Layer, cluster, namespacesParam string) ([]string, bool) {
+// is set. Partially-revoked namespaces (frozen informers; see
+// cache.RevokedNamespaces) are excluded from the aggregate form and fail the
+// named form with a 503. It writes the error response and returns false when
+// the accessible set cannot be computed (fail closed) or a named namespace is
+// revoked.
+func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer *business.Layer, kialiCache cache.KialiCache, cluster, namespacesParam string) ([]string, bool) {
 	accessible, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		// Fail closed: if the accessible set cannot be determined, reject
@@ -164,12 +167,25 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 		for _, ns := range accessible {
 			names = append(names, ns.Name)
 		}
-		return names, true
+		// The cached accessible set is deliberately unfiltered, but a partially-revoked
+		// namespace's informers are frozen: exclude it from the aggregate (the cluster's
+		// remaining namespaces still serve) rather than fail the whole request on it -
+		// the same contract as the health aggregate.
+		return slices.DeleteFunc(names, func(ns string) bool {
+			return kialiCache.IsNamespaceRevoked(cluster, ns)
+		}), true
 	}
 
 	requested := strings.Split(namespacesParam, ",")
 	for _, ns := range accessible {
 		if slices.Contains(requested, ns.Name) {
+			// A request that explicitly names a partially-revoked namespace fails closed
+			// with the detail paths' 503: its informers cannot refresh, so serving the
+			// frozen snapshot would show resources that may no longer exist.
+			if kialiCache.IsNamespaceRevoked(cluster, ns.Name) {
+				RespondWithError(w, http.StatusServiceUnavailable, cache.NewNamespaceRevokedError(cluster, ns.Name).Error())
+				return nil, false
+			}
 			names = append(names, ns.Name)
 		}
 	}

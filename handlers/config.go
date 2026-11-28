@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -113,14 +114,13 @@ type PublicConfig struct {
 // resolvePublicIdentityDomain returns the identity domain to expose to the
 // frontend. If the user configured it explicitly it is returned as-is.
 // Otherwise it is derived from the home cluster control plane's trust domain.
-func resolvePublicIdentityDomain(ctx context.Context, conf *config.Config, discovery istio.MeshDiscovery) string {
-	var mesh *models.Mesh
-	if m, err := discovery.Mesh(ctx); err == nil {
-		mesh = m
-	} else {
-		log.FromContext(ctx).Debug().Err(err).Msgf("Failed to fetch mesh for identity domain resolution on cluster [%s]", conf.KubernetesConfig.ClusterName)
-	}
-	return business.ResolveClusterIdentityDomain(mesh, conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
+// It resolves from the cached mesh only: the console blocks on this endpoint
+// before it can render, and a full mesh resolution here would make it wait out
+// a rebuild - which, during a remote outage, scans the dead cluster for longer
+// than the proxy timeout in front of this endpoint. Until a mesh is cached
+// (the first moments after startup) the configured identity domain applies.
+func resolvePublicIdentityDomain(conf *config.Config, kialiCache cache.KialiCache) string {
+	return business.ResolveClusterIdentityDomain(kialiCache.LastMesh(), conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -133,7 +133,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig(conf, prom, logger)
+		promConfig := getPrometheusConfig(r.Context(), conf, prom, logger)
 
 		log.Debugf("AI Info: %+v", conf.AI.Metrics)
 		aiConfig := getAIConfig(conf, r)
@@ -157,7 +157,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			HealthStatusMetricsEnabled: conf.Server.Observability.Metrics.HealthStatus.Enabled,
 			IgnoreHomeCluster:          conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:         conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-			IstioIdentityDomain:        resolvePublicIdentityDomain(r.Context(), conf, discovery),
+			IstioIdentityDomain:        resolvePublicIdentityDomain(conf, cache),
 			IstioLabels:                conf.IstioLabels,
 			KialiFeatureFlags:          conf.KialiFeatureFlags,
 			LogLevel:                   log.GetLogLevel(),
@@ -182,24 +182,56 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			accessibleClusters = append(accessibleClusters, clusterName)
 		}
 
-		for _, cluster := range accessibleClusters {
-			if client := userClients[cluster]; client != nil {
-				if client.IsGatewayAPI() {
-					publicConfig.GatewayAPIEnabled = true
-				}
-				if client.IsIstioGateway() {
-					publicConfig.IstioGatewayInstalled = true
-				}
-				if client.IsIstioAPI() {
-					publicConfig.IstioAPIInstalled = true
-				}
-			}
+		// Capability discovery shares one deadline for the whole request: the console
+		// blocks on this endpoint before it can render anything, so one stalled remote
+		// must not consume the request (or the proxy timeout in front of it). Clusters
+		// are probed concurrently and a cluster that cannot answer within the deadline
+		// simply reports false for this page load - the probes back off and retry, so a
+		// later load discovers the feature once the remote recovers.
+		// 0 disables the budget (an unguarded WithTimeout with 0 would expire instantly).
+		discoveryCtx := r.Context()
+		var cancelDiscovery context.CancelFunc = func() {}
+		if timeout := conf.KialiInternal.KubernetesClient.CapabilityDiscoveryTimeout; timeout > 0 {
+			discoveryCtx, cancelDiscovery = context.WithTimeout(discoveryCtx, timeout)
 		}
-		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(accessibleClusters)
-		// Dedupe gateway API classes by ClassName across clusters.
+		defer cancelDiscovery()
+
+		slices.Sort(accessibleClusters)
+		type clusterCapabilities struct {
+			ambient, gateway, istio, istioGateway bool
+			classes                               []config.GatewayAPIClass
+		}
+		results := make([]clusterCapabilities, len(accessibleClusters))
+		var wg sync.WaitGroup
+		for i, cluster := range accessibleClusters {
+			client := userClients[cluster]
+			if client == nil {
+				continue
+			}
+			// A cluster marked unreachable is not probed (the shared signal; see
+			// kialiCache.MarkClusterUnreachable): the background prober re-checks it,
+			// and this page load reports false for it - the same partial result a
+			// cluster that misses the discovery deadline produces.
+			if cache.IsClusterUnreachable(cluster) {
+				continue
+			}
+			result := &results[i]
+			wg.Go(func() {
+				result.gateway = client.IsGatewayAPIContext(discoveryCtx)
+				result.istioGateway = client.IsIstioGatewayContext(discoveryCtx)
+				result.istio = client.IsIstioAPIContext(discoveryCtx)
+			})
+			wg.Go(func() { result.ambient = cache.IsAmbientEnabled(discoveryCtx, cluster) })
+			wg.Go(func() { result.classes = cache.GatewayAPIClasses(discoveryCtx, cluster) })
+		}
+		wg.Wait()
 		seenClasses := make(map[string]bool)
-		for _, cluster := range accessibleClusters {
-			for _, gwClass := range cache.GatewayAPIClasses(cluster) {
+		for _, result := range results {
+			publicConfig.AmbientEnabled = publicConfig.AmbientEnabled || result.ambient
+			publicConfig.GatewayAPIEnabled = publicConfig.GatewayAPIEnabled || result.gateway
+			publicConfig.IstioGatewayInstalled = publicConfig.IstioGatewayInstalled || result.istioGateway
+			publicConfig.IstioAPIInstalled = publicConfig.IstioAPIInstalled || result.istio
+			for _, gwClass := range result.classes {
 				if !seenClasses[gwClass.ClassName] {
 					seenClasses[gwClass.ClassName] = true
 					publicConfig.GatewayAPIClasses = append(publicConfig.GatewayAPIClasses, gwClass)
@@ -209,17 +241,19 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.
-		clusters := discovery.Clusters()
-
-		for _, cluster := range clusters {
+		for _, cluster := range discovery.ClusterInventory() {
 			publicConfig.Clusters[cluster.Name] = cluster
-
-			if client := userClients[cluster.Name]; client != nil {
-				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetCacheKey()); found {
-					for _, ns := range namespaces {
-						if discovery.IsControlPlane(r.Context(), cluster.Name, ns.Name) {
-							publicConfig.ControlPlanes[cluster.Name] = ns.Name
-						}
+		}
+		if mesh := cache.LastMesh(); mesh != nil {
+			for _, cp := range mesh.ControlPlanes {
+				if cp.Cluster == nil {
+					continue
+				}
+				cluster := cp.Cluster.Name
+				if client := userClients[cluster]; client != nil {
+					_, accessible, _ := cache.ResolveClusterNamespace(cluster, client.GetCacheKey(), cp.IstiodNamespace)
+					if accessible && !cache.IsNamespaceRevoked(cluster, cp.IstiodNamespace) {
+						publicConfig.ControlPlanes[cluster] = cp.IstiodNamespace
 					}
 				}
 			}
@@ -358,7 +392,9 @@ type PrometheusPartialConfig struct {
 	}
 }
 
-func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
+// The ctx is the caller's request deadline: the two live Prometheus calls it may
+// make must not outlive the requesting client.
+func getPrometheusConfig(ctx context.Context, conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
 	var disabledReason string
 	if drp, ok := client.(prometheus.DisabledReasonProvider); ok {
 		disabledReason = drp.DisabledReason()
@@ -384,7 +420,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 		}
 	} else {
-		configResult, err := client.GetConfiguration(context.Background())
+		configResult, err := client.GetConfiguration(ctx)
 		if checkErr(err, "Failed to fetch Prometheus configuration", logger) {
 			var config PrometheusPartialConfig
 			if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration", logger) {
@@ -396,7 +432,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 			}
 		}
 
-		promRuntimeinfoResults, err := client.GetRuntimeinfo(context.Background())
+		promRuntimeinfoResults, err := client.GetRuntimeinfo(ctx)
 		if checkErr(err, "Failed to fetch Prometheus runtime info", logger) {
 			// the storage retention as reported by Prometheus endpoint /api/v1/status/runtimeinfo
 			// It will either be time-based (e.g. "1d") or size-based (e.g "10GB") or both (e.g "1d or 10GB").

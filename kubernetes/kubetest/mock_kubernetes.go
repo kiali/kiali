@@ -62,12 +62,12 @@ func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	return args.Get(0).([]batch_v1.Job), args.Error(1)
 }
 
-func (o *K8SClientMock) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+func (o *K8SClientMock) GetNamespace(_ context.Context, namespace string) (*core_v1.Namespace, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+func (o *K8SClientMock) GetNamespaces(_ context.Context, labelSelector string) ([]core_v1.Namespace, error) {
 	args := o.Called(labelSelector)
 	return args.Get(0).([]core_v1.Namespace), args.Error(1)
 }
@@ -117,6 +117,10 @@ func (o *K8SClientMock) GetSelfSubjectAccessReview(ctx context.Context, namespac
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
+func (o *K8SClientMock) GetAccessSweepReview(ctx context.Context, namespace, api, resource string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return o.GetSelfSubjectAccessReview(ctx, namespace, api, resource, verbs)
+}
+
 func (o *K8SClientMock) GetService(namespace string, name string) (*core_v1.Service, error) {
 	args := o.Called(namespace, name)
 	return args.Get(0).(*core_v1.Service), args.Error(1)
@@ -142,7 +146,7 @@ func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet
 	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
 }
 
-func (o *K8SClientMock) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (o *K8SClientMock) StreamPodLogs(_ context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	args := o.Called(namespace, name, opts)
 	return args.Get(0).(io.ReadCloser), args.Error(1)
 }

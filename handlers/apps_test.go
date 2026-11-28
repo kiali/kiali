@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -126,11 +127,11 @@ type clientNoPrivileges struct {
 	kubernetes.UserClientInterface
 }
 
-func (c *clientNoPrivileges) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+func (c *clientNoPrivileges) GetNamespace(_ context.Context, namespace string) (*core_v1.Namespace, error) {
 	if namespace == "my_namespace" {
 		return nil, errors.New("No privileges")
 	}
-	return c.UserClientInterface.GetNamespace(namespace)
+	return c.UserClientInterface.GetNamespace(context.Background(), namespace)
 }
 
 func TestAppMetricsInaccessibleNamespace(t *testing.T) {

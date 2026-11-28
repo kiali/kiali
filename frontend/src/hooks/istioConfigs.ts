@@ -1,9 +1,11 @@
 import * as React from 'react';
 import * as API from '../services/Api';
 import { ValidationTypes } from '../types/IstioObjects';
-import { IstioConfigItem, toIstioItems } from '../types/IstioConfigList';
+import type { IstioConfigItem } from '../types/IstioConfigList';
+import { toIstioItems } from '../types/IstioConfigList';
 import { useRefreshInterval } from './refresh';
 import { addError } from '../utils/AlertUtils';
+import { MessageType } from '../types/NotificationCenter';
 import { useKialiTranslation } from '../utils/I18nUtils';
 import { isMultiCluster, serverConfig } from '../config';
 
@@ -51,13 +53,21 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
     setIsLoading(true);
     setIsError(false);
 
-    const fetchPromises: Promise<IstioConfigItem[]>[] = [];
+    const fetchPromises: Promise<IstioConfigItem[] | null>[] = [];
 
     if (isMultiCluster) {
       // Fetch from all clusters
-      for (let cluster in serverConfig.clusters) {
+      for (const cluster in serverConfig.clusters) {
         fetchPromises.push(
-          API.getAllIstioConfigs([], true, '', '', cluster).then(response => toIstioItems(response.data, cluster))
+          API.getAllIstioConfigs([], true, '', '', cluster)
+            .then(response => toIstioItems(response.data, cluster))
+            .catch(error => {
+              // One cluster's failure (e.g. a partially-revoked namespace) must degrade
+              // the card to that cluster's configs, not blank it: surface it as a toast
+              // and let the other clusters' results render.
+              addError(t('Error fetching Istio configs.'), error, true, MessageType.WARNING);
+              return null;
+            })
         );
       }
     } else {
@@ -68,8 +78,22 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
 
     Promise.all(fetchPromises)
       .then(results => {
-        // Flatten all items from all clusters
-        const allItems = results.flat();
+        // Flatten all items from all clusters, skipping any cluster that failed
+        const allItems = results.flatMap(result => result ?? []);
+
+        // Only when every cluster failed is there nothing to show: report an error
+        // state rather than pass a legitimately empty mesh off as zero configs.
+        if (results.some(result => result === null) && allItems.length === 0) {
+          setIsError(true);
+          setStats({
+            errors: 0,
+            issues: [],
+            total: 0,
+            valid: 0,
+            warnings: 0
+          });
+          return;
+        }
 
         const total = allItems.length;
         let valid = 0;

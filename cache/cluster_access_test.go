@@ -20,7 +20,10 @@ type fakeAccess struct {
 	calls  int
 	denied map[string]DeniedAccess // keyed by cluster/group/resource
 	err    error
-	mu     sync.Mutex
+	// errResources fails checks for the given cluster/group/resource keys only, so a test
+	// can make one resource's recheck "unknown" while another's succeeds.
+	errResources map[string]error
+	mu           sync.Mutex
 }
 
 func (f *fakeAccess) set(cluster, group, resource string, allowed bool) {
@@ -47,6 +50,9 @@ func (f *fakeAccess) check(_ context.Context, cluster, group, resource string) (
 	f.calls++
 	if f.err != nil {
 		return DeniedAccess{}, f.err
+	}
+	if err, found := f.errResources[cluster+"/"+group+"/"+resource]; found {
+		return DeniedAccess{}, err
 	}
 	return f.denied[cluster+"/"+group+"/"+resource], nil
 }
@@ -513,4 +519,113 @@ func TestProbeKeepsPartialRevocationWhenClusterRecovers(t *testing.T) {
 	_, degraded := access.DegradedSince("west")
 	require.False(t, degraded, "pods are readable again")
 	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"), "deployments still deny bookinfo")
+}
+
+// TestProbeUnknownRecheckKeepsNeverDegradedMarks pins the recovery fix: the recovery
+// branch must not wipe the partial-revocation marks of resources that never degraded - a
+// wholesale delete destroyed marks the second pass means to re-check, so an "unknown"
+// recheck (the check cannot tell) preserved nothing.
+func TestProbeUnknownRecheckKeepsNeverDegradedMarks(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+
+	// Two resources: one degrades the cluster (pods), one holds a partial mark (deployments).
+	fake.set("west", "", "pods", false)
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+
+	// The cluster recovers on pods; the deployments recheck cannot tell (a transient error
+	// on that one resource, the two-valued "unknown").
+	*now = now.Add(2 * accessCheckDebounce)
+	fake.set("west", "", "pods", true)
+	fake.errResources = map[string]error{"west/apps/deployments": errors.New("transient")}
+	access.Probe(context.Background())
+	fake.errResources = nil
+
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "the cluster recovered")
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"),
+		"the never-degraded resource's marks survive the recovery and the unknown recheck")
+
+	// Once the recheck can tell and finds the namespace readable, the mark drops.
+	*now = now.Add(2 * accessCheckDebounce)
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	require.Empty(t, access.RevokedNamespaces("west"))
+}
+
+func TestRecoveryCannotClearLaterDenialOfSameResource(t *testing.T) {
+	for name, later := range map[string]DeniedAccess{"full": {Cluster: true}, "partial": {Namespaces: []string{"new"}}} {
+		t.Run(name, func(t *testing.T) {
+			probing := false
+			firstResource := make(chan string, 1)
+			secondStarted, release := make(chan struct{}), make(chan struct{})
+			count := 0
+			access := NewClusterAccess(func(ctx context.Context, cluster, group, resource string) (DeniedAccess, error) {
+				if probing {
+					count++
+					switch count {
+					case 1:
+						firstResource <- resource
+						return DeniedAccess{Namespaces: []string{"old"}}, nil
+					case 2:
+						close(secondStarted)
+						<-release
+						return DeniedAccess{}, nil
+					default:
+						return later, nil
+					}
+				}
+				return DeniedAccess{Cluster: true}, nil
+			})
+			now := time.Now()
+			access.now = func() time.Time { return now }
+			for _, res := range []string{"pods", "services"} {
+				require.True(t, access.ConfirmRevoked(t.Context(), "west", "", res))
+			}
+			now = now.Add(accessCheckDebounce)
+			probing = true
+			done := make(chan struct{})
+			go func() { defer close(done); access.Probe(t.Context()) }()
+			<-secondStarted
+			now = now.Add(accessCheckDebounce)
+			denied := access.ConfirmRevoked(t.Context(), "west", "", <-firstResource)
+			close(release)
+			<-done
+			require.Equal(t, later.Cluster, denied)
+			_, degraded := access.DegradedSince("west")
+			if !later.Cluster {
+				require.Contains(t, access.RevokedNamespaces("west"), "new", "an older recovery must not overwrite the later namespace verdict")
+			} else {
+				require.True(t, degraded)
+			}
+		})
+	}
+}
+
+func TestIncompleteCheckPreservesObservedDenials(t *testing.T) {
+	access := NewClusterAccess(func(context.Context, string, string, string) (DeniedAccess, error) {
+		return DeniedAccess{Namespaces: []string{"new"}}, context.DeadlineExceeded
+	})
+	access.setNsRevokedLocked("west", groupResource{resource: "pods"}, []string{"previous"})
+	require.False(t, access.ConfirmRevoked(t.Context(), "west", "", "pods"))
+	require.Equal(t, []string{"new", "previous"}, access.RevokedNamespaces("west"))
+}
+
+func TestProbeResumesIncompleteSweepBeforeFirstDenial(t *testing.T) {
+	calls := 0
+	access := NewClusterAccess(func(context.Context, string, string, string) (DeniedAccess, error) {
+		calls++
+		if calls == 1 {
+			return DeniedAccess{Incomplete: true}, context.DeadlineExceeded
+		}
+		return DeniedAccess{Namespaces: []string{"hidden"}}, nil
+	})
+	now := time.Now()
+	access.now = func() time.Time { return now }
+	require.False(t, access.ConfirmRevoked(t.Context(), "west", "", "pods"))
+	now = now.Add(accessCheckDebounce)
+	access.Probe(t.Context())
+	require.Equal(t, []string{"hidden"}, access.RevokedNamespaces("west"))
 }

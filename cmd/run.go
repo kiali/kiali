@@ -168,7 +168,7 @@ func openDefaultBrowser(ctx context.Context, conf *config.Config) error {
 
 // portForwardToPod sets up port forwarding to a pod identified by namespace and labelSelector.
 // It returns the allocated local port that was used for port forwarding.
-func portForwardToPod(ctx context.Context, localClient kubernetes.ClientInterface, namespace string, labelSelector Selector, targetPort string) (int, error) {
+func portForwardToPod(ctx context.Context, conf *config.Config, localClient kubernetes.ClientInterface, namespace string, labelSelector Selector, targetPort string) (int, error) {
 	// TODO: Check if the address is already in use.
 	localPort := httputil.Pool.GetFreePort()
 
@@ -191,6 +191,7 @@ func portForwardToPod(ctx context.Context, localClient kubernetes.ClientInterfac
 		"localhost",
 		fmt.Sprintf("%d:%s", localPort, targetPort),
 		io.Discard,
+		conf.KialiInternal.KubernetesClient.PortForwardEstablishTimeout,
 	)
 	if err != nil {
 		return 0, err
@@ -209,7 +210,7 @@ func portForwardToPod(ctx context.Context, localClient kubernetes.ClientInterfac
 
 func portForwardToTracing(ctx context.Context, localClient kubernetes.ClientInterface, conf *config.Config, tracingPort string, tracingSelector Selector) error {
 	// go run kiali.go run --port-forward-prom --port-forward-tracing --enable-tracing --tracing-selector app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend --tracing-port 3200 --port-forward-grafana --config kiali-local.yaml --cluster-name-overrides=kind-ci=cluster-default
-	localPort, err := portForwardToPod(ctx, localClient, "", tracingSelector, tracingPort)
+	localPort, err := portForwardToPod(ctx, conf, localClient, "", tracingSelector, tracingPort)
 	if err != nil {
 		return err
 	}
@@ -222,7 +223,7 @@ func portForwardToTracing(ctx context.Context, localClient kubernetes.ClientInte
 }
 
 func portForwardToGrafana(ctx context.Context, localClient kubernetes.ClientInterface, conf *config.Config, dashboardsPort string, dashboardSelector Selector) error {
-	localPort, err := portForwardToPod(ctx, localClient, "", dashboardSelector, dashboardsPort)
+	localPort, err := portForwardToPod(ctx, conf, localClient, "", dashboardSelector, dashboardsPort)
 	if err != nil {
 		return err
 	}
@@ -233,7 +234,7 @@ func portForwardToGrafana(ctx context.Context, localClient kubernetes.ClientInte
 }
 
 func portForwardToProm(ctx context.Context, localClient kubernetes.ClientInterface, conf *config.Config, metricsPort string, metricsSelector Selector) error {
-	localPort, err := portForwardToPod(ctx, localClient, "", metricsSelector, metricsPort)
+	localPort, err := portForwardToPod(ctx, conf, localClient, "", metricsSelector, metricsPort)
 	if err != nil {
 		return err
 	}

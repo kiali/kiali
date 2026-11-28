@@ -623,7 +623,7 @@ func (iss *IstioStatusService) getAddonComponentStatus(ctx context.Context, clus
 	go iss.getAddonStatus(cluster, "prometheus", extServices.Prometheus.Enabled, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
 	go iss.getAddonStatus(cluster, "perses", extServices.Perses.Enabled, extServices.Perses.IsCore, &extServices.Perses.Auth, extServices.Perses.InternalURL, extServices.Perses.HealthCheckUrl, staChan, &wg)
-	go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
+	go iss.getTracingStatus(ctx, cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)
 
 	// Custom dashboards may use the main Prometheus config
 	customProm := extServices.CustomDashboards.Prometheus
@@ -677,7 +677,7 @@ func (iss *IstioStatusService) getAddonStatus(cluster string, name string, enabl
 	}
 }
 
-func (iss *IstioStatusService) getTracingStatus(cluster string, name string, enabled bool, isCore bool, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
+func (iss *IstioStatusService) getTracingStatus(ctx context.Context, cluster string, name string, enabled bool, isCore bool, staChan chan<- kubernetes.IstioComponentStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	if !enabled {
@@ -686,7 +686,7 @@ func (iss *IstioStatusService) getTracingStatus(cluster string, name string, ena
 
 	status := kubernetes.ComponentHealthy
 
-	accessible, err := iss.tracing.GetStatus(context.TODO())
+	accessible, err := iss.tracing.GetStatus(ctx)
 	if !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		status = kubernetes.ComponentUnreachable

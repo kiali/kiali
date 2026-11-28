@@ -157,6 +157,10 @@ func (c *OfflineClient) GetSelfSubjectAccessReview(ctx context.Context, namespac
 	return reviews, nil
 }
 
+func (c *OfflineClient) GetAccessSweepReview(ctx context.Context, namespace, api, resource string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return c.GetSelfSubjectAccessReview(ctx, namespace, api, resource, verbs)
+}
+
 // noopReadCloser is a simple implementation of io.ReadCloser that returns
 // empty reads and does nothing on close. This is useful for offline mode
 // where we don't want to actually stream logs.
@@ -172,7 +176,7 @@ func (nrc *noopReadCloser) Close() error {
 
 // StreamPodLogs overrides the embedded FakeK8sClient method to read logs from local files
 // for offline mode testing. This reads from the offline data directory structure.
-func (c *OfflineClient) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (c *OfflineClient) StreamPodLogs(_ context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	// If container is specified, try to find logs for that specific container
 	if opts != nil && opts.Container != "" {
 		containerName := opts.Container

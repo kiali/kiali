@@ -2,9 +2,16 @@ package handlers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -12,6 +19,8 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tracing"
 )
 
 // TestHasAllClusterNamespaceAccessFullAccess tests that a user with the same namespace access
@@ -48,8 +57,64 @@ func TestHasAllClusterNamespaceAccessFullAccess(t *testing.T) {
 
 	layer := &business.Layer{Namespace: nsService}
 
-	result := hasAllClusterNamespaceAccess(context.TODO(), layer, "")
+	result := hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "")
 	require.True(result)
+
+	skipped, err := cache.NewKialiCache(t.Context(), saClients, map[string]ctrlclient.Reader{"east": saEast, "west": saWest}, *conf, cache.WithSkippedClusters([]string{"unavailable"}))
+	require.NoError(err)
+	cf := kubetest.NewFakeClientFactory(conf, userClients)
+	cf.SAClients = saClients
+	loader := func() tracing.ClientInterface { return nil }
+	checkQueries := func(t *testing.T, c cache.KialiCache, expected map[string]string) {
+		t.Helper()
+		prom := &prometheustest.PromClientMock{}
+		queries := &prometheustest.PromAPIMock{}
+		prom.On("API").Return(queries)
+		queries.On("Query", mock.Anything, mock.Anything, mock.Anything).Return(model.Vector{})
+		for _, handler := range []http.HandlerFunc{
+			OverviewServiceLatencies(conf, c, cf, nil, prom, loader, nil, discovery),
+			OverviewServiceThroughput(conf, c, cf, nil, prom, loader, nil, discovery),
+		} {
+			queries.Calls = nil
+			w := httptest.NewRecorder()
+			WithFakeAuthInfo(conf, handler)(w, httptest.NewRequest(http.MethodGet, "/", nil))
+			assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			got := map[string]int{}
+			for _, call := range queries.Calls {
+				query := call.Arguments.String(1)
+				for cluster, nsMatcher := range expected {
+					if strings.Contains(query, `destination_cluster="`+cluster+`"`) && strings.Contains(query, nsMatcher) {
+						got[cluster]++
+					}
+				}
+			}
+			assert.Len(t, queries.Calls, len(expected))
+			for cluster := range expected {
+				assert.Equal(t, 1, got[cluster], "expected one scoped query for %s", cluster)
+			}
+		}
+	}
+	t.Run("skipped", func(t *testing.T) { checkQueries(t, skipped, map[string]string{"east": "", "west": ""}) })
+
+	incomplete, err := cache.NewKialiCache(t.Context(), saClients, map[string]ctrlclient.Reader{"east": saEast, "west": saWest}, *conf, cache.WithUnreadableRemoteSecrets([]string{"unreadable-secret"}))
+	require.NoError(err)
+	require.False(hasAllClusterNamespaceAccess(context.TODO(), layer, incomplete, ""), "an unreadable remote secret must disable the unscoped query")
+	t.Run("unreadable remote secret", func(t *testing.T) { checkQueries(t, incomplete, map[string]string{"east": "", "west": ""}) })
+
+	access := cache.NewClusterAccess(func(_ context.Context, _, _, resource string) (cache.DeniedAccess, error) {
+		if resource == "pods" {
+			return cache.DeniedAccess{Cluster: true}, nil
+		}
+		return cache.DeniedAccess{Namespaces: []string{"beta"}}, nil
+	})
+	tracked, err := cache.NewKialiCache(t.Context(), saClients, map[string]ctrlclient.Reader{"east": saEast, "west": saWest}, *conf, cache.WithClusterAccess(access))
+	require.NoError(err)
+	require.False(access.ConfirmRevoked(t.Context(), "west", "apps", "deployments"))
+	t.Run("partially revoked", func(t *testing.T) {
+		checkQueries(t, tracked, map[string]string{"east": "", "west": `destination_service_namespace=~"^(?:bookinfo)$"`})
+	})
+	require.True(access.ConfirmRevoked(t.Context(), "west", "", "pods"))
+	t.Run("fully revoked", func(t *testing.T) { checkQueries(t, tracked, map[string]string{"east": ""}) })
 }
 
 // TestHasAllClusterNamespaceAccessLimitedNamespaces tests that a user with fewer namespaces
@@ -82,7 +147,7 @@ func TestHasAllClusterNamespaceAccessLimitedNamespaces(t *testing.T) {
 
 	layer := &business.Layer{Namespace: nsService}
 
-	result := hasAllClusterNamespaceAccess(context.TODO(), layer, "")
+	result := hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "")
 	require.False(result)
 }
 
@@ -110,7 +175,7 @@ func TestHasAllClusterNamespaceAccessLimitedClusters(t *testing.T) {
 	layer := &business.Layer{Namespace: nsService}
 
 	// With cluster="" it checks all SA clusters; user is missing "west"
-	result := hasAllClusterNamespaceAccess(context.TODO(), layer, "")
+	result := hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "")
 	require.False(result)
 }
 
@@ -148,14 +213,14 @@ func TestHasAllClusterNamespaceAccessSpecificCluster(t *testing.T) {
 	layer := &business.Layer{Namespace: nsService}
 
 	// "east" should pass - user has full access
-	result := hasAllClusterNamespaceAccess(context.TODO(), layer, "east")
+	result := hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "east")
 	require.True(result)
 
 	// "west" should fail - user is missing "beta"
-	result = hasAllClusterNamespaceAccess(context.TODO(), layer, "west")
+	result = hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "west")
 	require.False(result)
 
 	// "" should fail - because "west" fails
-	result = hasAllClusterNamespaceAccess(context.TODO(), layer, "")
+	result = hasAllClusterNamespaceAccess(context.TODO(), layer, kialiCache, "")
 	require.False(result)
 }

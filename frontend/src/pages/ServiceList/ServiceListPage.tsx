@@ -7,6 +7,7 @@ import type { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import type { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { InstanceType } from '../../types/Common';
 import type { Namespace } from '../../types/Namespace';
+import { MessageType } from '../../types/NotificationCenter';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
 import type { SortField } from '../../types/SortFilters';
@@ -194,7 +195,17 @@ class ServiceListPageComponent extends FilterComponent.Component<
           onlyDefinitions: toggles.get('configuration') !== undefined ? !toggles.get('configuration') : false // !configuration => onlyDefinitions
         },
         cluster
-      );
+      ).catch(err => {
+        // One cluster's failure (e.g. a partially-revoked namespace) must degrade
+        // the list to that cluster's rows, not blank the page: surface it as a
+        // toast and let the other clusters' results render. Cancellations still
+        // propagate so the registry keeps its semantics.
+        if (err?.isCanceled) {
+          throw err;
+        }
+        addError(`Could not fetch services list for cluster [${cluster}]`, err, true, MessageType.WARNING);
+        return null;
+      });
     });
 
     this.promises
@@ -203,6 +214,9 @@ class ServiceListPageComponent extends FilterComponent.Component<
         let serviceListItems: ServiceListItem[] = [];
 
         responses.forEach(response => {
+          if (!response) {
+            return;
+          }
           endPerfTimer(perfKey);
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data));
         });

@@ -1,6 +1,8 @@
 package kubetest
 
 import (
+	"context"
+	"sort"
 	"sync"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -37,6 +39,10 @@ type K8SClientFactoryMock struct {
 	// namespaces the user cannot: the SA clients should be unfiltered while
 	// the user Clients carry the restricted/list-authorized reactors.
 	SAClients map[string]kubernetes.ClientInterface
+
+	// skippedClusters models clusters whose registration was definitively broken at
+	// startup (see the ClientFactory interface).
+	skippedClusters map[string]struct{}
 }
 
 // Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
@@ -128,6 +134,49 @@ func (o *K8SClientFactoryMock) WithSAClient(cluster string, objects ...runtime.O
 	return o
 }
 
+// IsClusterSkipped reports whether the cluster's registration was marked definitively broken
+// at startup (see the ClientFactory interface).
+
+func (o *K8SClientFactoryMock) IsClusterSkipped(cluster string) bool {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	if o.skippedClusters == nil {
+		return false
+	}
+	_, skipped := o.skippedClusters[cluster]
+	return skipped
+}
+
+func (o *K8SClientFactoryMock) SkipCluster(cluster string, reason error) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	if o.skippedClusters == nil {
+		o.skippedClusters = make(map[string]struct{})
+	}
+	o.skippedClusters[cluster] = struct{}{}
+	if o.SAClients != nil {
+		delete(o.SAClients, cluster)
+	}
+}
+
+func (o *K8SClientFactoryMock) SkippedClusters() []string {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	names := make([]string, 0, len(o.skippedClusters))
+	for cluster := range o.skippedClusters {
+		names = append(names, cluster)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// UnreadableRemoteSecrets models remote cluster secrets whose directory could not be
+// enumerated at startup (see the ClientFactory interface). The mock never models them;
+// tests that need them use the real factory.
+func (o *K8SClientFactoryMock) UnreadableRemoteSecrets() []string {
+	return nil
+}
+
 // GetSAClientsAsUserClientInterfaces returns all the SA clients as read-write clients (UserClientInterface).
 // Note: this deliberately returns the user Clients, NOT the (test-only) SAClients field —
 // the SAClients field holds plain ClientInterface values that cannot be converted back to
@@ -208,6 +257,11 @@ func (o *K8SClientMock) IsGatewayAPI() bool {
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) IsGatewayAPIContext(ctx context.Context) bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func (o *K8SClientMock) HasTCPRouteInV1() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
@@ -233,7 +287,17 @@ func (o *K8SClientMock) IsIstioGateway() bool {
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) IsIstioGatewayContext(ctx context.Context) bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func (o *K8SClientMock) IsIstioAPI() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsIstioAPIContext(ctx context.Context) bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

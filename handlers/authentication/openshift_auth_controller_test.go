@@ -1,6 +1,7 @@
 package authentication_test
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -47,11 +50,20 @@ func fakeNamespace(name string) *corev1.Namespace {
 // testing cache and discovery, for tests that exercise session validation.
 func setupOpenshiftAuthController(t *testing.T, conf *config.Config, clientFactory *kubetest.K8SClientFactoryMock) *authentication.OpenshiftAuthController {
 	t.Helper()
+	controller, _ := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+	return controller
+}
+
+// setupOpenshiftAuthControllerWithCache is setupOpenshiftAuthController for tests that
+// also need the cache handle, e.g. to model the shared unreachable-cluster signal's
+// mark and clear.
+func setupOpenshiftAuthControllerWithCache(t *testing.T, conf *config.Config, clientFactory *kubetest.K8SClientFactoryMock) (*authentication.OpenshiftAuthController, cache.KialiCache) {
+	t.Helper()
 	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clientFactory.Clients), kialiCache, conf)
 	controller, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
 	require.NoError(t, err)
-	return controller
+	return controller, kialiCache
 }
 
 func fakeOAuthMetadataServer(t *testing.T) *httptest.Server {
@@ -362,6 +374,251 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	})
 
 	require.True(sessionCookieWest.MaxAge < 0, "west session should be dropped")
+}
+
+// TestTerminationSurvivesConcurrentValidationError pins the ordering of the deferred
+// session terminations: a remote token that was positively rejected (unauthorized)
+// must lose its cookie even when another session's validation failed the request.
+// The verdicts are independent; dropping the termination on the error return let the
+// dead session ride until a later request happened to succeed.
+func TestTerminationSurvivesConcurrentValidationError(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	// The home cluster's validation fails with an indeterminate error (not an
+	// authorization verdict): the request must fail, but that must not drop the
+	// west session's queued termination.
+	eastClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, fmt.Errorf("apiserver unavailable")
+	})
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	westClient := kubetest.NewFakeK8sClient(
+		fakeNamespace("bookinfo"),
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~", // tilde means user for this token
+			},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, k8serrors.NewUnauthorized("unauthorized")
+	})
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	// This is a global var that is accessed in inside of the auth controller.
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err, "the home cluster's failed validation must fail the request")
+
+	cookies := w.Result().Cookies()
+	sessionCookieWest = slicetest.FindOrFail(t, cookies, func(c *http.Cookie) bool {
+		return c.Name == authentication.SessionCookieName+"-west"
+	})
+
+	require.True(sessionCookieWest.MaxAge < 0, "the rejected west session must still be dropped")
+}
+
+// TestUnreachableRemoteSessionValidationIsCached verifies that an indeterminate remote
+// validation (an unreachable or stalled cluster) marks the cluster through the shared
+// unreachable signal rather than re-probing on every request: the first request pays
+// the probe and its failure, subsequent requests skip it while the cluster is marked,
+// and probing resumes once the mark is cleared (the background prober's job).
+func TestUnreachableRemoteSessionValidationIsCached(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// west's user-info endpoint goes dead after the sessions exist. The error is a
+	// deadline, not an authentication failure: the token is fine, the cluster cannot
+	// answer - the indeterminate case the shared signal exists for.
+	var westUserProbes atomic.Int32
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		westUserProbes.Add(1)
+		return true, nil, context.DeadlineExceeded
+	})
+
+	validate := func() {
+		r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+		w := httptest.NewRecorder()
+		r.AddCookie(sessionCookieEast)
+		r.AddCookie(sessionCookieWest)
+		_, err := authController.ValidateSession(r, w)
+		require.NoError(err, "an unreachable remote must not fail the request")
+		// The west session is skipped, not terminated: its cookie survives.
+		for _, c := range w.Result().Cookies() {
+			if c.Name == authentication.SessionCookieName+"-west" {
+				require.False(c.MaxAge < 0, "the unreachable remote's session must not be dropped")
+			}
+		}
+	}
+
+	validate()
+	require.Equal(int32(1), westUserProbes.Load(), "first validation probes the unreachable remote once")
+	require.True(kialiCache.IsClusterUnreachable("west"), "the failed probe must mark the cluster")
+
+	validate()
+	require.Equal(int32(1), westUserProbes.Load(), "a marked cluster must not be re-probed")
+
+	// The mark is cleared (the background prober's job on recovery): probing resumes.
+	kialiCache.ClearClusterUnreachable("west")
+	validate()
+	require.Equal(int32(2), westUserProbes.Load(), "probing must resume once the mark is cleared")
+}
+
+// TestValidateSessionMulticlusterRemoteUserDenialKeepsSignalClear verifies that a
+// user-specific API-level denial on the remote (an HTTP 403 from the user-info
+// endpoint - the cluster answered, the answer is about this user) does not set the
+// shared unreachable signal: the signal is reserved for transport-level failures,
+// the same predicate the background prober uses to clear it. A per-user denial
+// setting it would flap a healthy spoke for every other user on this user's
+// refreshes - the prober clears the mark, the denied user's next request sets it
+// again. The session is still skipped gracefully for the denied user.
+func TestValidateSessionMulticlusterRemoteUserDenialKeepsSignalClear(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// west denies this user's token at the API level: the cluster is healthy and
+	// answered - the denial is about the user, not the cluster.
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, k8serrors.NewForbidden(schema.GroupResource{Group: "user.openshift.io", Resource: "users"}, "~", fmt.Errorf("denied for this user"))
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	_, err := authController.ValidateSession(r, w)
+	require.NoError(err, "a user-specific denial must not fail the request")
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-west" {
+			require.False(c.MaxAge < 0, "the denied session must be skipped, not dropped: the denial is about the user, and the session is retried on the next request")
+		}
+	}
+	require.False(kialiCache.IsClusterUnreachable("west"), "an API-level denial must not set the shared unreachable signal")
+}
+
+// TestValidateSessionMulticlusterRemoteCancellationKeepsSignalClear verifies that a
+// caller abandoning its request during remote session validation does not set the
+// shared unreachable signal: http.Client wraps a canceled request in a *url.Error,
+// which implements net.Error unconditionally, so cancellation classified as a
+// transport failure and marked the healthy remote (a browser navigate-away took the
+// spoke down for every other user until the prober cleared it). The session is still
+// skipped gracefully and retried on the next request.
+func TestValidateSessionMulticlusterRemoteCancellationKeepsSignalClear(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The caller walks away mid-request: the remote user-info lookup is canceled.
+	// The cancellation says nothing about the cluster's health.
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, context.Canceled
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	_, err := authController.ValidateSession(r, w)
+	require.NoError(err, "a canceled validation must not fail the request")
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-west" {
+			require.False(c.MaxAge < 0, "the canceled session must be skipped, not dropped: the cancellation is not a verdict on the token")
+		}
+	}
+	require.False(kialiCache.IsClusterUnreachable("west"), "a caller cancellation must not set the shared unreachable signal")
 }
 
 func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
@@ -1156,7 +1413,11 @@ func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *
 	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
-	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+	// Built inline (rather than through setupOpenshiftAuthController) so the test
+	// holds the cache: the failed namespace lookup marks the cluster unreachable
+	// through the shared signal, and the test must model the background prober
+	// clearing the mark on recovery.
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
 
 	util.Clock = util.RealClock{}
 
@@ -1193,7 +1454,10 @@ func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *
 	}
 
 	// Once the west cluster recovers, the same cookies yield both sessions
-	// again: the session was preserved through the outage, not consumed.
+	// again: the session was preserved through the outage, not consumed. The
+	// failed namespace lookup marked the cluster unreachable (the shared signal),
+	// and the background prober owns clearing the mark - model its success here.
+	kialiCache.ClearClusterUnreachable("west")
 	recoveredWest := newOpenshiftAuthTestClient(t, metadataServer, true)
 	recoveredWest.Token = "west-recovered"
 	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
@@ -1573,5 +1837,130 @@ func TestOpenshiftAuthCallbackNamespaceLookupFailure(t *testing.T) {
 	for _, c := range result.Cookies() {
 		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
 			"no session should be created while the namespace API is failing")
+	}
+}
+
+// TestAuthenticateGetIsSessionCheck pins the GET /api/authenticate semantics for the
+// openshift strategy: a valid session (including one holding a remote-cluster token) is
+// validated and returned; no session yields an authentication failure (401), not the old
+// 500 "implicit flow removed" stub; a POST yields an honest authentication failure.
+func TestAuthenticateGetIsSessionCheck(t *testing.T) {
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	// No session: GET is an authentication failure (401 through the handler), not a 500.
+	r := httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w := httptest.NewRecorder()
+	_, err := authController.Authenticate(r, w)
+	require.Error(t, err)
+	var authErr *authentication.AuthenticationFailureError
+	require.ErrorAs(t, err, &authErr)
+
+	// A valid session is returned by GET - the home cluster's session, even when the
+	// request also carries a remote-cluster session cookie.
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The home-only result first: its SessionID is the reference for what GET must return.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	homeSession, err := authController.Authenticate(r, w)
+	require.NoError(t, err)
+	require.NotEmpty(t, homeSession.SessionID, "the home session carries an ID")
+
+	// With both cookies, GET must still return the home cluster's session - matching the
+	// home-only result by SessionID, so returning the remote session cannot pass.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	session, err := authController.Authenticate(r, w)
+	require.NoError(t, err)
+	require.NotNil(t, session)
+	require.NotNil(t, session.AuthInfo, "session data is returned")
+	require.NotEmpty(t, session.Username, "the home user's name is returned")
+	require.False(t, session.ExpiresOn.IsZero(), "the session's expiry is populated")
+	require.NotEmpty(t, session.SessionID, "the returned session carries an ID")
+	require.Equal(t, homeSession.SessionID, session.SessionID, "GET returns the home cluster's session, not the remote's")
+
+	// A remote-only session (no home cookie) is an authentication failure: the home
+	// cluster's session is the mandatory one.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieWest)
+	_, err = authController.Authenticate(r, w)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &authErr)
+
+	// POST is an honest authentication failure: openshift login never happens via a form
+	// post, and the old 500 stub is gone.
+	r = httptest.NewRequest(http.MethodPost, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	_, err = authController.Authenticate(r, w)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &authErr)
+}
+
+type sessionIdentityClient struct {
+	*kubetest.FakeK8sClient
+	err error
+}
+
+func (c sessionIdentityClient) GetUser(ctx context.Context, name string) (*osuser_v1.User, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.FakeK8sClient.GetUser(ctx, name)
+}
+
+func TestOpenShiftSessionCheckStatus(t *testing.T) {
+	originalClock := util.Clock
+	util.Clock = util.RealClock{}
+	t.Cleanup(func() { util.Clock = originalClock })
+	for _, tc := range []struct {
+		name        string
+		query       bool
+		identityErr error
+		status      int
+	}{
+		{"expired header", false, k8serrors.NewUnauthorized("expired"), 401},
+		{"expired query", true, k8serrors.NewUnauthorized("expired"), 401},
+		{"not in allowlist", false, nil, 403},
+		{"identity service unavailable", false, k8serrors.NewServiceUnavailable("unavailable"), 500},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "east"
+			conf.LoginToken.SigningKey = "kiali67890123456"
+			conf.Auth.Strategy = config.AuthStrategyOpenshift
+			conf.Auth.OpenShift.Impersonation.Enabled = true
+			conf.Auth.OpenShift.Impersonation.AllowedUsers = []string{"different-user"}
+			cluster := conf.KubernetesConfig.ClusterName
+			base := newOpenshiftAuthTestClient(t, fakeOAuthMetadataServer(t), true)
+			cf := kubetest.NewFakeClientFactoryWithClient(conf, sessionIdentityClient{base, tc.identityErr})
+			cf.SAClients = map[string]kubernetes.ClientInterface{cluster: base}
+			controller := setupOpenshiftAuthController(t, conf, cf)
+			r := httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+			if tc.query {
+				r.URL.RawQuery = "oauth_token=fixture"
+			} else {
+				r.Header.Set("Authorization", "Bearer fixture")
+			}
+			w := httptest.NewRecorder()
+			handlers.Authenticate(conf, controller)(w, r)
+			require.Equal(t, tc.status, w.Code, w.Body.String())
+		})
 	}
 }

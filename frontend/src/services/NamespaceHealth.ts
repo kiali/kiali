@@ -1,8 +1,9 @@
 import * as API from 'services/Api';
 
-import { DurationInSeconds } from 'types/Common';
-import { NamespaceHealth } from 'types/Health';
-import { addDanger } from 'utils/AlertUtils';
+import type { DurationInSeconds } from 'types/Common';
+import type { NamespaceHealth } from 'types/Health';
+import type { ApiError } from 'types/Api';
+import { addWarning } from 'utils/AlertUtils';
 
 // Keep aligned with Namespaces page chunking to avoid long URIs / backend overload.
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -15,7 +16,12 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
   return chunks;
 };
 
-const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+const errorMessage = (error: unknown): string => {
+  // Prefer the API's error body (e.g. "namespace access is revoked") over the HTTP
+  // client's generic "Request failed with status code 503".
+  const apiMessage = API.getErrorString(error as ApiError);
+  return apiMessage || (error instanceof Error ? error.message : String(error));
+};
 
 const healthFetchErrorMessage = (
   chunk: string[],
@@ -57,7 +63,7 @@ export const fetchClusterNamespacesHealth = async (
       return await API.getClustersHealth(chunk.join(','), duration, cluster);
     } catch (error) {
       const message = healthFetchErrorMessage(chunk, index, namespaceChunks.length, cluster, error);
-      addDanger(message);
+      addWarning(message);
       return new Map<string, NamespaceHealth>();
     }
   });

@@ -39,6 +39,11 @@ import (
 // fit the budget on large non-cluster-wide installs.
 const accessCheckConcurrency = 8
 
+// accessCheckMaxConcurrency scales the sweep with the namespace count: at large counts the
+// 5s budget only covers the sweep if enough namespaces are in flight (each namespace costs
+// SSAR round trips through the client's rate limiter).
+const accessCheckMaxConcurrency = 64
+
 // makeWatchErrorHandler tears down a cluster's informers on a Forbidden watch error. When
 // clusterAccess is set, it only does so after a live check confirms the access was revoked.
 func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface, clusterAccess *cache.ClusterAccess) func(context.Context, *toolscache.Reflector, error) {
@@ -177,12 +182,12 @@ func cacheNamespaces(conf *config.Config, clusterName string) map[string]ctrlcac
 // individually (a partial revocation): their informers cannot refresh, so callers hide
 // their data rather than serve the frozen pre-revocation snapshot.
 //
-// Every accessible namespace is checked on every run - there is no short-circuit on the
-// first allowed or denied result - because a partial revocation is only visible by
-// enumerating the full denied set. The sweep is O(accessible namespaces), bounded by
-// the 5s check timeout, and only runs when a Forbidden watch error fires (debounced to
-// once per 10s per resource) or the recovery probe re-checks.
+// Unfinished sweeps retain completed namespace decisions across bounded checks. The
+// ClusterAccess caller coalesces simultaneous checks for the same cluster and resource.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
+	type sweepKey struct{ cluster, group, resource string }
+	type progress struct{ denied, pending []string }
+	var sweeps sync.Map
 	return func(ctx context.Context, cluster, group, resource string) (cache.DeniedAccess, error) {
 		if resource == "" {
 			return cache.DeniedAccess{}, fmt.Errorf("the forbidden error does not name a resource")
@@ -200,44 +205,67 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			namespaces = cache.AccessibleNamespacesForCluster(conf, cluster)
 		}
 
-		// Known race, accepted: when one namespace's check errors and another's is
-		// denied, the errgroup returns whichever finished first, so a definitive denial
-		// can be reported as unknown. The outcome is bounded by the debounce window
-		// (10s) and conservative (the cache is kept and the check retried).
-		var mu sync.Mutex
-		denied := make([]string, 0, len(namespaces))
-		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(accessCheckConcurrency)
-		for _, namespace := range namespaces {
+		// Each cluster has a fixed accessible scope for the lifetime of this factory.
+		key := sweepKey{cluster, group, resource}
+		state := progress{pending: namespaces}
+		if previous, ok := sweeps.Load(key); ok {
+			state = previous.(progress)
+		}
+		type namespaceResult struct {
+			denied bool
+			err    error
+		}
+		results := make([]namespaceResult, len(state.pending))
+		scheduled := 0
+		var g errgroup.Group
+		g.SetLimit(max(min(len(namespaces)/4, accessCheckMaxConcurrency), accessCheckConcurrency))
+		for i, namespace := range state.pending {
+			if ctx.Err() != nil {
+				break
+			}
+			scheduled++
 			g.Go(func() error {
-				reviews, err := client.GetSelfSubjectAccessReview(gctx, namespace, group, resource, []string{"list", "watch"})
-				if err != nil {
-					return err
-				}
+				reviews, err := client.GetAccessSweepReview(ctx, namespace, group, resource, []string{"list", "watch"})
 				for _, review := range reviews {
+					// Either denied verb prevents a working informer, even when
+					// the API could not answer the review for the other verb.
 					if !review.Status.Allowed {
-						mu.Lock()
-						denied = append(denied, namespace)
-						mu.Unlock()
+						results[i].denied = true
 						return nil
 					}
 				}
-				return nil
+				results[i].err = err
+				return err
 			})
 		}
-		if err := g.Wait(); err != nil {
-			return cache.DeniedAccess{}, err
+		err := g.Wait()
+		// Give namespaces we haven't reached priority over those that returned errors.
+		retry := slices.Clone(state.pending[scheduled:])
+		for i, result := range results[:scheduled] {
+			if result.err != nil {
+				retry = append(retry, state.pending[i])
+			} else if result.denied {
+				state.denied = append(state.denied, state.pending[i])
+			}
 		}
-		slices.Sort(denied)
-		switch len(denied) {
-		case 0:
-			return cache.DeniedAccess{}, nil
-		case len(namespaces):
-			// Every accessible namespace denied the read: the cluster's access is gone.
+		slices.Sort(state.denied)
+		if len(retry) > 0 {
+			if len(retry) == len(state.pending) && len(state.pending) < len(namespaces) {
+				// A persistently failing namespace must not prevent rechecking
+				// grants in the rest of the scope.
+				sweeps.Delete(key)
+			} else {
+				sweeps.Store(key, progress{pending: retry, denied: state.denied})
+			}
+			if err == nil {
+				err = ctx.Err()
+			}
+			return cache.DeniedAccess{Incomplete: !conf.Deployment.ClusterWideAccess, Namespaces: slices.Clone(state.denied)}, err
+		}
+		sweeps.Delete(key)
+		if len(namespaces) > 0 && len(state.denied) == len(namespaces) {
 			return cache.DeniedAccess{Cluster: true}, nil
-		default:
-			// A partial revocation: the cluster stays readable, the denied namespaces do not.
-			return cache.DeniedAccess{Namespaces: denied}, nil
 		}
+		return cache.DeniedAccess{Namespaces: state.denied}, nil
 	}
 }

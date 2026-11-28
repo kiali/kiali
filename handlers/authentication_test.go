@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -555,6 +556,6 @@ func TestLogoutHandlerReturns204WhenNoRedirect(t *testing.T) {
 
 type rejectClient struct{ kubernetes.UserClientInterface }
 
-func (r *rejectClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+func (r *rejectClient) GetNamespaces(_ context.Context, labelSelector string) ([]core_v1.Namespace, error) {
 	return nil, fmt.Errorf("Rejecting")
 }

@@ -856,7 +856,7 @@ type logStreamer struct {
 	kubernetes.UserClientInterface
 }
 
-func (l *logStreamer) StreamPodLogs(namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
+func (l *logStreamer) StreamPodLogs(_ context.Context, namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader(l.logs)), nil
 }
 
@@ -2270,7 +2270,7 @@ func TestGetZtunnelConfigFiltersAndCacheIsUnmutated(t *testing.T) {
 	assert.Empty(filtered.Certificates)
 
 	// The cache still holds the full, unfiltered dump.
-	cached := svc.cache.GetZtunnelDump(cluster, "ztunnel-test")
+	cached := svc.cache.GetZtunnelDump(context.Background(), cluster, "ztunnel-test")
 	require.NotNil(cached)
 	assert.Len(cached.Workloads, 2)
 	assert.Len(cached.Services, 2)

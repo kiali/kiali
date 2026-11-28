@@ -27,9 +27,18 @@ func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) 
 		// The client named a cluster the server does not know: a configuration error on
 		// the server side, but "not found" is the correct answer for the request.
 		RespondWithError(w, http.StatusNotFound, errorMsg)
+	} else if goerrors.Is(err, cache.ErrClusterUnreachable) {
+		// A cluster marked unreachable recovers on its own (the background prober
+		// re-checks it): temporarily unavailable, not an access denial and not the
+		// user's fault.
+		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
 	} else if goerrors.Is(err, cache.ErrClusterDegraded) {
 		// A degraded cluster recovers on its own (~30s probe): temporarily unavailable,
 		// not broken.
+		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
+	} else if goerrors.Is(err, cache.ErrNamespaceRevoked) {
+		// A partially-revoked namespace recovers on its own (~30s probe): temporarily
+		// unavailable, not missing and not the user's fault.
 		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
 	} else if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, errorMsg)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -86,7 +87,7 @@ type fakePodLogStreamer struct {
 	err  error
 }
 
-func (l *fakePodLogStreamer) StreamPodLogs(namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
+func (l *fakePodLogStreamer) StreamPodLogs(_ context.Context, namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
 	if l.err != nil {
 		return nil, l.err
 	}

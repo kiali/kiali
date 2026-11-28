@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -125,6 +126,7 @@ func NewClientForClients(
 	reader ctrlclient.Reader,
 ) *K8SClient {
 	return &K8SClient{
+		ctx:            context.Background(),
 		istioClientset: istioClient,
 		k8s:            kubeClient,
 		gatewayapi:     gatewayapiClient,

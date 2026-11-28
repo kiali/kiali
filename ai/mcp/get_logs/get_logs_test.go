@@ -205,7 +205,7 @@ type fakeK8sWithEmptyLogs struct {
 	*kubetest.FakeK8sClient
 }
 
-func (c *fakeK8sWithEmptyLogs) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (c *fakeK8sWithEmptyLogs) StreamPodLogs(_ context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader("")), nil
 }
 
@@ -218,7 +218,7 @@ type fakeK8sWithSampleLogs struct {
 	*kubetest.FakeK8sClient
 }
 
-func (c *fakeK8sWithSampleLogs) StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
+func (c *fakeK8sWithSampleLogs) StreamPodLogs(_ context.Context, namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader(sampleLogLines)), nil
 }
 

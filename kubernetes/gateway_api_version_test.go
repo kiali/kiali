@@ -37,18 +37,20 @@ func newTestK8SClientWithGatewayAPIResources(apiResources []metav1.APIResource) 
 func TestCheckGatewayAPIs(t *testing.T) {
 	t.Run("returns false when group version is not registered", func(t *testing.T) {
 		client := newTestK8SClientWithGatewayAPIResourceLists()
-		assert.False(t, checkGatewayAPIs(client, K8sNetworkingGroupVersionV1.String(), map[string]string{
+		present, _ := checkGatewayAPIs(context.Background(), client, K8sNetworkingGroupVersionV1.String(), map[string]string{
 			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
-		}, true))
+		}, true)
+		assert.False(t, present)
 	})
 
 	t.Run("returns false when kind matches but plural name does not", func(t *testing.T) {
 		client := newTestK8SClientWithGatewayAPIResources([]metav1.APIResource{
 			{Kind: K8sTCPRouteType, Name: "tcproute"},
 		})
-		assert.False(t, checkGatewayAPIs(client, K8sNetworkingGroupVersionV1.String(), map[string]string{
+		present, _ := checkGatewayAPIs(context.Background(), client, K8sNetworkingGroupVersionV1.String(), map[string]string{
 			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
-		}, true))
+		}, true)
+		assert.False(t, present)
 	})
 
 	t.Run("returns false when only some required types are present", func(t *testing.T) {
@@ -59,7 +61,8 @@ func TestCheckGatewayAPIs(t *testing.T) {
 			K8sGatewayType:   PluralNames[K8sGatewayType],
 			K8sHTTPRouteType: PluralNames[K8sHTTPRouteType],
 		}
-		assert.False(t, checkGatewayAPIs(client, K8sNetworkingGroupVersionV1.String(), v1Types, false))
+		present, _ := checkGatewayAPIs(context.Background(), client, K8sNetworkingGroupVersionV1.String(), v1Types, false)
+		assert.False(t, present)
 	})
 
 	t.Run("returns true when all required types are present", func(t *testing.T) {
@@ -71,7 +74,8 @@ func TestCheckGatewayAPIs(t *testing.T) {
 			K8sGatewayType:   PluralNames[K8sGatewayType],
 			K8sHTTPRouteType: PluralNames[K8sHTTPRouteType],
 		}
-		assert.True(t, checkGatewayAPIs(client, K8sNetworkingGroupVersionV1.String(), v1Types, false))
+		present, _ := checkGatewayAPIs(context.Background(), client, K8sNetworkingGroupVersionV1.String(), v1Types, false)
+		assert.True(t, present)
 	})
 }
 

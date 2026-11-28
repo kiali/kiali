@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -18,14 +19,17 @@ func ztunnelDumpKey(cluster, pod string) string {
 
 type ZtunnelDumpCache interface {
 	SetZtunnelDump(key string, config *kubernetes.ZtunnelConfigDump)
-	GetZtunnelDump(cluster, pod string) *kubernetes.ZtunnelConfigDump
+	// GetZtunnelDump returns the ztunnel pod's config dump, fetching it through
+	// the pod's port-forward when not yet cached. The context bounds the
+	// ambient detection and ztunnel pod reads that precede the fetch.
+	GetZtunnelDump(ctx context.Context, cluster, pod string) *kubernetes.ZtunnelConfigDump
 }
 
 func (c *kialiCacheImpl) SetZtunnelDump(key string, config *kubernetes.ZtunnelConfigDump) {
 	c.ztunnelConfigStore.Set(key, config)
 }
 
-func (c *kialiCacheImpl) GetZtunnelDump(cluster, pod string) *kubernetes.ZtunnelConfigDump {
+func (c *kialiCacheImpl) GetZtunnelDump(ctx context.Context, cluster, pod string) *kubernetes.ZtunnelConfigDump {
 	key := ztunnelDumpKey(cluster, pod)
 
 	config, found := c.ztunnelConfigStore.Get(key)
@@ -33,11 +37,11 @@ func (c *kialiCacheImpl) GetZtunnelDump(cluster, pod string) *kubernetes.Ztunnel
 		return config
 	}
 
-	if !c.IsAmbientEnabled(cluster) {
+	if !c.IsAmbientEnabled(ctx, cluster) {
 		return nil
 	}
 
-	ztunnelPods := c.GetZtunnelPods(cluster)
+	ztunnelPods := c.GetZtunnelPods(ctx, cluster)
 	if len(ztunnelPods) <= 0 {
 		return nil
 	}

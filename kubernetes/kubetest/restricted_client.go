@@ -6,6 +6,8 @@ package kubetest
 */
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,11 +66,11 @@ func NewNamespaceRestrictedClient(k8s *FakeK8sClient, cacheKey string, listed []
 	return &NamespaceRestrictedClient{denied: deniedSet, fake: k8s, UserClientInterface: k8s}
 }
 
-func (c *NamespaceRestrictedClient) GetNamespace(name string) (*corev1.Namespace, error) {
+func (c *NamespaceRestrictedClient) GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
 	if _, ok := c.denied[name]; ok {
 		return nil, ForbiddenNamespace(name)
 	}
-	return c.UserClientInterface.GetNamespace(name)
+	return c.UserClientInterface.GetNamespace(ctx, name)
 }
 
 // ForbiddenNamespace returns the k8s Forbidden error the restricted fakes

@@ -17,7 +17,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
@@ -54,13 +53,21 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	clusterAccess := cache.NewClusterAccess(newAccessCheck(conf, clientFactory))
 	go clusterAccess.Run(ctx, cache.DefaultAccessProbeInterval)
 
-	mgr, kubeCaches, err := newManager(conf, logger, clientFactory, clusterAccess)
+	mgr, kubeCaches, err := newManager(ctx, conf, logger, clientFactory, clusterAccess)
 	if err != nil {
 		log.Fatalf("Unable to setup manager: %s", err)
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf, cache.WithClusterAccess(clusterAccess))
+	// WithSkippedClusters takes a snapshot of the factory's registry: newManager above
+	// has already run setupRemoteClusters, so every definitively broken registration
+	// has been recorded. Skipping is startup-only by contract (see
+	// ClientFactory.SkipCluster) - a later skip would desynchronize the cache's
+	// authorization surfaces from client creation.
+	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf,
+		cache.WithClusterAccess(clusterAccess),
+		cache.WithSkippedClusters(clientFactory.SkippedClusters()),
+		cache.WithUnreadableRemoteSecrets(clientFactory.UnreadableRemoteSecrets()))
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
@@ -203,48 +210,17 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Debug("Stopped Validations Controller")
 	}()
 
-	// Not totally sure we need to call this for all clusters but better to be safe.
-	for cluster, cache := range kubeCaches {
-		log.Infof("Waiting for cluster: %s cache to sync", cluster)
-
-		if !cache.WaitForCacheSync(ctx) {
-			log.Fatal("Timed out waiting for cache to sync")
-		}
-	}
-	log.Info("All caches synced")
-
-	if conf.ExternalServices.Istio.IstioAPIEnabled {
-		cpm.PollIstiodForProxyStatus(ctx)
-	} else {
-		log.Debug("Istio API is disabled; istiod will not be polled for proxy status")
-		// When Istio API is disabled, PollIstiodForProxyStatus is never called, so
-		// discovery.Mesh() (which populates the cluster list via Clusters()) never runs
-		// at startup. The health monitor's first refresh uses cache.GetClusters(); if
-		// it is nil, the refresh skips entirely ("No clusters found"), so the health
-		// cache stays empty until the next interval and the overview shows cache misses.
-		// Prime the cluster cache by resolving the mesh once so the health monitor
-		// has a non-empty cluster list on its initial run.
-		if hcm != nil {
-			if _, err := discovery.Mesh(ctx); err != nil {
-				log.Warningf("Failed to prime cluster cache for health monitor (Istio API disabled): %s", err)
-			}
-		}
-	}
-
-	// Start health monitor for pre-computing health data (if enabled)
-	if hcm != nil {
-		log.Infof("health cache is enabled (refresh interval: %s); starting health pre-computation.", conf.HealthConfig.Compute.RefreshInterval)
-		hcm.Start(ctx)
-	} else {
-		log.Info("health cache is disabled; skipping health pre-computation.")
-	}
+	// The home cache is mandatory (fatal if it never syncs); the remote caches' bounded
+	// wait runs in the background so an unreachable remote cannot keep the server from
+	// starting to serve. See waitForCachesToSync.
+	waitForCachesToSync(ctx, conf, kubeCaches, conf.KubernetesConfig.ClusterName, discovery)
 
 	// Start listening to requests
 	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, grafanaSvc, prom, tracingLoader, discovery, staticAssetFS)
 	if err != nil {
 		log.Fatal(err)
 	}
-	server.Start()
+	startServerAndMonitors(ctx, server.Start, conf.ExternalServices.Istio.IstioAPIEnabled, cpm, discovery, hcm)
 
 	stopped := make(chan struct{})
 	go func() {
@@ -294,17 +270,7 @@ func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {
 	return readers
 }
 
-// cacheTransforms returns the per-type cache transforms shared across all clusters.
-// These strip cached objects down to only the fields Kiali uses, significantly reducing
-// memory consumption in large meshes.
-func cacheTransforms() map[client.Object]ctrlcache.ByObject {
-	return map[client.Object]ctrlcache.ByObject{
-		&corev1.Pod{}:     {Transform: cache.TransformPod},
-		&corev1.Service{}: {Transform: cache.TransformService},
-	}
-}
-
-func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory, clusterAccess *cache.ClusterAccess) (manager.Manager, map[string]ctrlcache.Cache, error) {
+func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory, clusterAccess *cache.ClusterAccess) (manager.Manager, map[string]ctrlcache.Cache, error) {
 	ctrl.SetLogger(zerologr.New(logger))
 
 	// Combine the istio scheme and the kube scheme.
@@ -348,41 +314,14 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 		return nil, nil, fmt.Errorf("error setting up ValidationsController when creating manager: %s", err)
 	}
 
-	kubeCaches := map[string]ctrlcache.Cache{}
-	// We want one manager/reconciler for all clusters.
-	for _, saClient := range clientFactory.GetSAClients() {
-		if saClient.ClusterInfo().Name == homeClusterInfo.Name {
-			kubeCaches[saClient.ClusterInfo().Name] = mgr.GetCache()
-		} else {
-			clusterName := saClient.ClusterInfo().Name
-			var remoteCluster cluster.Cluster
-			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
-				o.Scheme = scheme
-				// Scope the remote cache the same way as the home cache (see
-				// cacheNamespaces).
-				o.Cache.DefaultNamespaces = cacheNamespaces(conf, clusterName)
-				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
-				o.Cache.ByObject = cacheTransforms()
-				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
-					func() ctrlcache.Cache {
-						if remoteCluster == nil {
-							return nil
-						}
-						return remoteCluster.GetCache()
-					},
-					saClient,
-					clusterAccess,
-				)
-			})
-			if err != nil {
-				log.Fatal(err)
-			}
-			if err := mgr.Add(remoteCluster); err != nil {
-				log.Fatal(err)
-			}
-			kubeCaches[saClient.ClusterInfo().Name] = remoteCluster.GetCache()
-		}
+	// The home cluster is served by the manager's own cache; only the home manager failure is
+	// fatal. Every remote cluster is set up by setupRemoteClusters, which skips definitively
+	// broken registrations (see the #10542 skip semantics) and keeps the rest - including
+	// ones that are merely unreachable, which self-heal through informer retry.
+	kubeCaches := map[string]ctrlcache.Cache{
+		homeClusterInfo.Name: mgr.GetCache(),
 	}
+	maps.Copy(kubeCaches, setupRemoteClusters(ctx, conf, clientFactory, clusterAccess, scheme))
 
 	return mgr, kubeCaches, nil
 }

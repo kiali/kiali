@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/version"
+
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
@@ -19,8 +23,8 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
-	components := getKubernetesVersions(clientFactory)
+func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
+	components := getKubernetesVersions(clientFactory, kialiCache)
 
 	if conf.ExternalServices.Prometheus.Enabled {
 		pv, err := prometheusVersion(ctx, prom)
@@ -235,18 +239,47 @@ func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*m
 	}, nil
 }
 
-func getKubernetesVersions(clientFactory kubernetes.ClientFactory) []models.ExternalServiceInfo {
+// kubeVersionCache memoizes GetServerVersion per cluster. A cluster's server version
+// is effectively static for Kiali's lifetime, and getKubernetesVersions runs on the
+// mesh graph's request path (the graph labels cluster nodes with versions), so a
+// successful fetch is remembered for the process lifetime. A failed fetch is not
+// memoized: a transport-level failure marks the cluster unreachable (see
+// kialiCache.MarkClusterUnreachable) and it is skipped until the background prober
+// detects its recovery; an API-level answer proves the cluster reachable and is
+// simply retried on the next fetch.
+var kubeVersionCache sync.Map // cluster name -> *version.Info
+
+func getKubernetesVersions(clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache) []models.ExternalServiceInfo {
 	// Use the Kiali Service Account client to get the Kubernetes version
 	// since the status endpoint does not have a user token.
 	// Loop through all SA clients to get Kubernetes versions of all clusters
 	var k8sVersions []models.ExternalServiceInfo
 	for clusterName, saClient := range clientFactory.GetSAClients() {
-		serverVersion, err := saClient.GetServerVersion()
-		if err != nil {
-			log.Debugf("Unable to get Kubernetes version for cluster [%s]: %v", clusterName, err)
+		if cached, ok := kubeVersionCache.Load(clusterName); ok {
+			k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
+				Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
+				Version: cached.(*version.Info).GitVersion,
+			})
 			continue
 		}
 
+		// A cluster marked unreachable is not probed; the background prober re-checks it.
+		if kialiCache.IsClusterUnreachable(clusterName) {
+			continue
+		}
+
+		serverVersion, err := saClient.GetServerVersion()
+		if err != nil {
+			log.Debugf("Unable to get Kubernetes version for cluster [%s]: %v", clusterName, err)
+			// Transport failures only - the prober's classification: an API-level
+			// answer, even an error status, proves the cluster is reachable.
+			if kubernetes.IsConnectionError(err) {
+				kialiCache.MarkClusterUnreachable(clusterName)
+			}
+			continue
+		}
+
+		kubeVersionCache.Store(clusterName, serverVersion)
 		k8sVersions = append(k8sVersions, models.ExternalServiceInfo{
 			Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
 			Version: serverVersion.GitVersion,
