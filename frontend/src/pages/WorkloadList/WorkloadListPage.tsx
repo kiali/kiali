@@ -16,7 +16,7 @@ import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import type { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, refreshIntervalSelector, visibleClustersSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
@@ -24,7 +24,7 @@ import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { WorkloadHealth } from '../../types/Health';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
-import { isMultiCluster, serverConfig } from 'config';
+import { isMultiCluster } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
@@ -46,6 +46,7 @@ type ReduxProps = {
   columnOrder: string[];
   hiddenColumnIds: string[];
   refreshInterval: IntervalInMilliseconds;
+  visibleClusters: string[];
 };
 
 type ReduxDispatchProps = {
@@ -98,6 +99,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
     if (
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      this.props.visibleClusters.join(',') !== prevProps.visibleClusters.join(',') ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
@@ -138,14 +140,9 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
-    const uniqueClusters = new Set<string>();
-
-    Object.keys(serverConfig.clusters).forEach(cluster => {
-      uniqueClusters.add(cluster);
-    });
 
     if (this.props.activeNamespaces.length !== 0) {
-      this.fetchWorkloads(Array.from(uniqueClusters), activeFilters, activeToggles);
+      this.fetchWorkloads(this.props.visibleClusters, activeFilters, activeToggles);
     } else {
       this.setState({ listItems: [], loaded: true });
     }
@@ -298,7 +295,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   columnOrder: state.workloadsList.columnOrder,
   hiddenColumnIds: state.workloadsList.hiddenColumnIds,
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  visibleClusters: visibleClustersSelector(state)
 });
 
 export const WorkloadListPage = connectRefresh(connect(mapStateToProps)(WorkloadListPageComponent));

@@ -5,7 +5,8 @@ import {
   languageSelector,
   meshWideMTLSStatusSelector,
   minTLSVersionSelector,
-  refreshIntervalSelector
+  refreshIntervalSelector,
+  selectedClustersSelector
 } from '../../store/Selectors';
 import type { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import type { NamespaceInfo } from '../../types/NamespaceInfo';
@@ -39,6 +40,8 @@ import type { ControlPlane } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
 import type { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
+import type { ClusterSelection } from '../../utils/ClusterUtils';
+import { filterBySelectedClusters } from '../../utils/ClusterUtils';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
 import { namespacesListColumnsPreset } from '../../hooks/managedListColumnsPresets';
@@ -78,6 +81,7 @@ type ReduxStateProps = {
   minTLS: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
+  selectedClusters: ClusterSelection;
 };
 
 type ReduxDispatchProps = {
@@ -482,7 +486,10 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   render(): React.ReactNode {
-    const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
+    const filteredNamespaces = filterBySelectedClusters(
+      runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected()),
+      this.props.selectedClusters
+    );
 
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
     if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
@@ -586,7 +593,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  selectedClusters: selectedClustersSelector(state)
 });
 
 export const NamespacesPage = connectRefresh(connect(mapStateToProps)(NamespacesPageComponent));

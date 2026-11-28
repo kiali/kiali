@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { NamespaceDropdown } from '../Dropdown/NamespaceDropdown';
+import { ClusterSelector } from '../Nav/Masthead/ClusterSelector';
+import { isMultiCluster } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
@@ -57,6 +59,12 @@ const containerStyle = kialiStyle({
 const flexStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap'
+});
+
+const selectorRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  gap: '0.5rem'
 });
 
 const titleStyle = kialiStyle({
@@ -117,7 +125,10 @@ export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
   return (
     <div className={containerStyle}>
       <div className={flexStyle}>
-        <div>{props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}</div>
+        <div className={selectorRowStyle}>
+          {isMultiCluster && props.hideNamespaceSelector !== true && <ClusterSelector />}
+          {props.hideNamespaceSelector === true ? null : <NamespaceDropdown disabled={disabled} />}
+        </div>
 
         {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
       </div>

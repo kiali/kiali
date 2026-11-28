@@ -9,7 +9,7 @@ import type { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Com
 import type { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import type { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, refreshIntervalSelector, visibleClustersSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { namespaceEquals } from '../../utils/Common';
 import type { SortField } from '../../types/SortFilters';
@@ -21,7 +21,7 @@ import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
@@ -48,6 +48,7 @@ type ReduxProps = {
   columnOrder: string[];
   hiddenColumnIds: string[];
   refreshInterval: IntervalInMilliseconds;
+  visibleClusters: string[];
 };
 
 type ReduxDispatchProps = {
@@ -96,6 +97,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
     if (
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      this.props.visibleClusters.join(',') !== prevProps.visibleClusters.join(',') ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
@@ -132,14 +134,9 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
-    const uniqueClusters = new Set<string>();
-
-    Object.keys(serverConfig.clusters).forEach(cluster => {
-      uniqueClusters.add(cluster);
-    });
 
     if (this.props.activeNamespaces.length !== 0) {
-      this.fetchApps(Array.from(uniqueClusters), activeFilters, activeToggles);
+      this.fetchApps(this.props.visibleClusters, activeFilters, activeToggles);
     } else {
       this.setState({ listItems: [], loaded: true });
     }
@@ -255,7 +252,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
   columnOrder: state.appsList.columnOrder,
   hiddenColumnIds: state.appsList.hiddenColumnIds,
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  visibleClusters: visibleClustersSelector(state)
 });
 
 export const AppListPage = connectRefresh(connect(mapStateToProps)(AppListPageComponent));

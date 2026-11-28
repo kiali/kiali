@@ -4,10 +4,26 @@ import type { ClusterState } from '../store/Store';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { ClusterActions } from '../actions/ClusterAction';
 import { serverConfig } from '../config';
+import type { ClusterSelection } from '../utils/ClusterUtils';
+import { allClusterNames, normalizeSelectedClusters } from '../utils/ClusterUtils';
 
 export const INITIAL_CLUSTER_STATE: ClusterState = {
   activeClusters: [],
-  filter: ''
+  filter: '',
+  selectedClusters: undefined
+};
+
+/**
+ * The global cluster selection treats an undefined list as "every cluster". To
+ * toggle a single cluster we materialize that implicit selection first; removing
+ * the last cluster leaves an explicit empty list, which hides everything.
+ */
+const toggleCluster = (selectedClusters: ClusterSelection, cluster: string): ClusterSelection => {
+  const current = selectedClusters ?? allClusterNames();
+
+  return normalizeSelectedClusters(
+    current.includes(cluster) ? current.filter(name => name !== cluster) : [...current, cluster]
+  );
 };
 
 export const ClusterStateReducer = (
@@ -33,6 +49,12 @@ export const ClusterStateReducer = (
 
     case getType(ClusterActions.setFilter):
       return updateState(state, { filter: action.payload });
+
+    case getType(ClusterActions.setSelectedClusters):
+      return updateState(state, { selectedClusters: normalizeSelectedClusters(action.payload) });
+
+    case getType(ClusterActions.toggleSelectedCluster):
+      return updateState(state, { selectedClusters: toggleCluster(state.selectedClusters, action.payload) });
 
     default:
       return state;
