@@ -1,0 +1,138 @@
+import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
+
+const pad2 = (n: number): string => String(n).padStart(2, '0');
+const pad3 = (n: number): string => String(n).padStart(3, '0');
+const isValidDate = (date: Date): boolean => !Number.isNaN(date.getTime());
+
+const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+
+const getDateLocale = (): string => i18n.resolvedLanguage ?? i18n.language ?? 'en';
+
+const getRelativeTimeFormatter = (): Intl.RelativeTimeFormat => {
+  const locale = getDateLocale();
+  let formatter = relativeTimeFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    relativeTimeFormatters.set(locale, formatter);
+  }
+  return formatter;
+};
+
+/** UTC `YYYY-MM-DD HH:mm:ss.SSS` (pod logs / span timestamps). */
+export const formatUtcDateTime = (timeMs: number): string => {
+  if (Number.isNaN(timeMs)) {
+    return '';
+  }
+  const d = new Date(timeMs);
+  if (!isValidDate(d)) {
+    return '';
+  }
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}.${pad3(d.getUTCMilliseconds())}`;
+};
+
+const formatLocaleDateTime = (date: Date): string => (isValidDate(date) ? date.toLocaleString(getDateLocale()) : '');
+
+/** Notification list: relative under 60 minutes, otherwise locale datetime. */
+export const formatNotificationTimestamp = (date: Date, now: Date = new Date()): string => {
+  const diffMinutes = Math.floor(-diffMs(date, now) / (60 * 1000));
+
+  if (diffMinutes < 60) {
+    return formatFromNow(date, now);
+  }
+  return formatLocaleDateTime(date);
+};
+
+export const addDaysFromNowIso = (days: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+};
+
+/** Milliseconds from `from` until `expiresOn` (positive when `expiresOn` is in the future). */
+export const diffMs = (expiresOn: string | Date, from: Date = new Date()): number => {
+  return new Date(expiresOn).getTime() - from.getTime();
+};
+
+export const isSameOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
+
+const formatRelativeTime = (diffSec: number): string => {
+  const formatter = getRelativeTimeFormatter();
+  const absSec = Math.abs(diffSec);
+
+  if (absSec < 60) {
+    return formatter.format(diffSec, 'second');
+  }
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) {
+    return formatter.format(diffMin, 'minute');
+  }
+  const diffHour = Math.round(diffSec / 3600);
+  if (Math.abs(diffHour) < 24) {
+    return formatter.format(diffHour, 'hour');
+  }
+  const diffDay = Math.round(diffSec / 86400);
+  if (Math.abs(diffDay) < 30) {
+    return formatter.format(diffDay, 'day');
+  }
+  const diffMonth = Math.round(diffSec / (86400 * 30));
+  if (Math.abs(diffMonth) < 12) {
+    return formatter.format(diffMonth, 'month');
+  }
+  const diffYear = Math.round(diffSec / (86400 * 365));
+  return formatter.format(diffYear, 'year');
+};
+
+/** Relative to now, e.g. “5 minutes ago” (`moment(date).fromNow()`). */
+export const formatFromNow = (date: Date, now: Date = new Date()): string => {
+  if (!isValidDate(date) || !isValidDate(now)) {
+    return '';
+  }
+  const diffSec = Math.round((date.getTime() - now.getTime()) / 1000);
+  return formatRelativeTime(diffSec);
+};
+
+/** From `anchor` toward `reference`, e.g. “in 5 minutes” (`moment(reference).from(anchor)`). */
+export const formatFrom = (anchor: Date, reference: Date = new Date()): string => {
+  if (!isValidDate(anchor) || !isValidDate(reference)) {
+    return '';
+  }
+  const diffSec = Math.round((reference.getTime() - anchor.getTime()) / 1000);
+  return formatRelativeTime(diffSec);
+};
+
+/** Locale-aware 12-hour clock for trace list headers. */
+export const format12HourClockTime = (date: Date): string => {
+  if (!isValidDate(date)) {
+    return '';
+  }
+  return date.toLocaleTimeString(getDateLocale(), {
+    hour: 'numeric',
+    hour12: true,
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
+
+export const formatRelativeDate = (value: number | Date, fullMonthName = false): string => {
+  const m = value instanceof Date ? value : new Date(value);
+  if (!isValidDate(m)) {
+    return '';
+  }
+  const dt = new Date();
+  const locale = getDateLocale();
+  const month: Intl.DateTimeFormatOptions['month'] = fullMonthName ? 'long' : 'short';
+
+  if (dt.getFullYear() !== m.getFullYear()) {
+    return m.toLocaleDateString(locale, { day: 'numeric', month, year: 'numeric' });
+  }
+  if (m.getMonth() === dt.getMonth() && m.getDate() === dt.getDate()) {
+    return t('Today');
+  }
+  const yesterday = new Date(dt);
+  yesterday.setDate(dt.getDate() - 1);
+  if (m.getMonth() === yesterday.getMonth() && m.getDate() === yesterday.getDate()) {
+    return t('Yesterday');
+  }
+  return m.toLocaleDateString(locale, { day: 'numeric', month });
+};

@@ -39,7 +39,7 @@ import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
-import moment from 'moment';
+import { formatFrom, formatNotificationTimestamp } from 'utils/DateTimeUtils';
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
@@ -57,7 +57,7 @@ type ReduxDispatchProps = {
 type NotificationCenterProps = ReduxStateProps & ReduxDispatchProps;
 
 const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: NotificationCenterProps) => {
-  const { t } = useKialiTranslation();
+  const { i18n, t } = useKialiTranslation();
   const drawerRef = useRef<HTMLElement | null>(null);
 
   const getUnseenGroups = (groups: NotificationGroup[]): Set<string> => {
@@ -164,17 +164,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     );
   };
 
-  const formatTimestamp = (date: Date): string => {
-    const now = moment();
-    const created = moment(date);
-    const diffMinutes = now.diff(created, 'minutes');
-
-    if (diffMinutes < 60) {
-      return created.fromNow();
-    }
-    return date.toLocaleString();
-  };
-
   const formatDetail = (message: NotificationMessage): React.ReactNode => {
     if (!message.detail) {
       return '';
@@ -213,7 +202,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   return (
-    <NotificationDrawer ref={drawerRef}>
+    <NotificationDrawer key={i18n.resolvedLanguage ?? i18n.language} ref={drawerRef}>
       <NotificationDrawerHeader
         closeButtonAriaLabel={t('Close')}
         count={getNumberUnread()}
@@ -294,10 +283,10 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                               justifyContent: 'space-between'
                             }}
                           >
-                            <span>{formatTimestamp(message.created)}</span>
+                            <span>{formatNotificationTimestamp(message.created)}</span>
                             {message.count > 1 && (
                               <span>
-                                {message.count} {moment().from(message.firstTriggered)}
+                                {message.count} {formatFrom(message.firstTriggered ?? message.created)}
                               </span>
                             )}
                           </div>

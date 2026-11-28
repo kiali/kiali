@@ -1,4 +1,3 @@
-import moment from 'moment';
 import type { KialiAppState, LoginSession, LoginState } from '../store/Store';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
@@ -7,11 +6,11 @@ import { AuthResult } from '../types/Auth';
 import type { KialiDispatch } from '../types/Redux';
 import { isAuthStrategyOAuth } from '../config/AuthenticationConfig';
 import { addError } from '../utils/AlertUtils';
+import { diffMs } from 'utils/DateTimeUtils';
 
 const Dispatcher = new Login.LoginDispatcher();
 
-const shouldRelogin = (state?: LoginState): boolean =>
-  !state || !state.session || moment(state.session!.expiresOn).diff(moment()) > 0;
+const shouldRelogin = (state?: LoginState): boolean => !state || !state.session || diffMs(state.session!.expiresOn) > 0;
 
 const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession): Promise<void> => {
   dispatch(LoginActions.loginSuccess(session));

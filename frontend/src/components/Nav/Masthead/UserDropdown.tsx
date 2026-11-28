@@ -5,7 +5,7 @@ import { MILLISECONDS } from '../../../types/Common';
 import type { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
-import moment from 'moment';
+import { diffMs, isSameOrBefore } from 'utils/DateTimeUtils';
 import type { KialiDispatch } from 'types/Redux';
 import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
@@ -83,13 +83,14 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   }
 
   timeLeft = (): number => {
-    const expiresOn = moment(this.props.session!.expiresOn);
+    const expiresOn = new Date(this.props.session!.expiresOn);
+    const now = new Date();
 
-    if (expiresOn <= moment()) {
+    if (isSameOrBefore(expiresOn, now)) {
       this.props.logout();
     }
 
-    return expiresOn.diff(moment());
+    return diffMs(expiresOn, now);
   };
 
   checkSession = (): void => {

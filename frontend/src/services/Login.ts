@@ -1,10 +1,11 @@
 import * as API from './Api';
-import moment from 'moment';
+import { addDaysFromNowIso } from 'utils/DateTimeUtils';
 
-import { LoginSession, KialiAppState } from '../store/Store';
-import { AuthStrategy, AuthResult, AuthConfig } from '../types/Auth';
-import { TimeInMilliseconds } from '../types/Common';
-import { KialiDispatch } from '../types/Redux';
+import type { KialiAppState, LoginSession } from '../store/Store';
+import { AuthResult, AuthStrategy } from '../types/Auth';
+import type { AuthConfig } from '../types/Auth';
+import type { TimeInMilliseconds } from '../types/Common';
+import type { KialiDispatch } from '../types/Redux';
 import { authenticationConfig } from '../config/AuthenticationConfig';
 
 export interface LoginResult {
@@ -36,7 +37,7 @@ class AnonymousLogin implements LoginStrategy<unknown> {
       status: AuthResult.FAILURE,
       session: {
         username: API.ANONYMOUS_USER,
-        expiresOn: moment().add(1, 'd').toISOString()
+        expiresOn: addDaysFromNowIso(1)
       }
     };
   }
