@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	authv1 "k8s.io/api/authorization/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -23,18 +23,19 @@ import (
 )
 
 // failingDaemonsetLister delegates everything to the wrapped fake client except
-// daemonset lists, which fail and are counted. The daemonset reads go through the
-// controller-runtime reader (not the clientset reactors), so the reader's List is
-// what must fail to model an unreachable cluster.
+// daemonset lists, which fail with the configured error and are counted. The
+// daemonset reads go through the controller-runtime reader (not the clientset
+// reactors), so the reader's List is what must fail to model a failing cluster.
 type failingDaemonsetLister struct {
 	*kubetest.FakeK8sClient
 	lists *atomic.Int32
+	err   error
 }
 
 func (f *failingDaemonsetLister) List(ctx context.Context, list ctrlclient.ObjectList, opts ...ctrlclient.ListOption) error {
 	if _, ok := list.(*appsv1.DaemonSetList); ok {
 		f.lists.Add(1)
-		return errors.New("connection refused")
+		return f.err
 	}
 	return f.FakeK8sClient.List(ctx, list, opts...)
 }
@@ -136,6 +137,7 @@ func TestIsAmbientEnabledSuspendsOnUnreachableCluster(t *testing.T) {
 	client := &failingDaemonsetLister{
 		FakeK8sClient: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
 		lists:         &lists,
+		err:           &transportError{},
 	}
 	kialiCache := NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
 		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
@@ -186,6 +188,62 @@ func TestIsAmbientEnabledDoesNotMarkDegradedClusterUnreachable(t *testing.T) {
 	// as unreachable: only a transport failure may.
 	require.False(kialiCache.IsAmbientEnabled(context.Background(), cluster))
 	require.False(kialiCache.IsClusterUnreachable(cluster), "a degraded cache must not be classified as an unreachable cluster")
+}
+
+// TestIsAmbientEnabledDoesNotMarkOnNonTransportError pins the ambient check's
+// classification: only a transport-level failure may mark a cluster unreachable - the
+// same predicate the background prober uses to clear the mark. A timeout reported by
+// the API machinery (for example, from a caller's discovery budget or an informer
+// still syncing) is an answer about the call, not evidence the cluster is down, and
+// marking on it flapped healthy clusters against the prober.
+func TestIsAmbientEnabledDoesNotMarkOnNonTransportError(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	var lists atomic.Int32
+	client := &failingDaemonsetLister{
+		FakeK8sClient: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		lists:         &lists,
+		err:           k8serrors.NewTimeoutError("timeout", 1),
+	}
+	kialiCache := NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": client,
+	}, *conf)
+
+	require.False(kialiCache.IsAmbientEnabled(context.Background(), "west"))
+	require.Equal(int32(1), lists.Load())
+	require.False(kialiCache.IsClusterUnreachable("west"), "a non-transport error must not mark the cluster unreachable")
+}
+
+// TestIsAmbientEnabledDoesNotMarkUnderExpiredContext pins the ambient check's behavior
+// under a shared discovery budget that has already expired: the failure is attributable
+// to the budget, not to whichever cluster happened to be probed next, so no cluster is
+// marked. Without the guard, one stalled remote could consume the whole budget and every
+// later cluster's read then failed fast, cascading unreachable marks onto healthy
+// clusters until the prober cleared them.
+func TestIsAmbientEnabledDoesNotMarkUnderExpiredContext(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	var lists atomic.Int32
+	client := &failingDaemonsetLister{
+		FakeK8sClient: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		lists:         &lists,
+		err:           &transportError{},
+	}
+	kialiCache := NewTestingCacheWithClients(t, map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+		"west": client,
+	}, *conf)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	require.False(kialiCache.IsAmbientEnabled(ctx, "west"))
+	require.Equal(int32(1), lists.Load())
+	require.False(kialiCache.IsClusterUnreachable("west"), "a failure observed under an expired caller context must not mark the cluster")
 }
 
 // TestCanListWebhooksSkipsUnreachableCluster pins the webhook re-check's respect for the

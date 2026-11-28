@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -13,7 +14,15 @@ import (
 // fails this way may be unreachable, while any API-level answer (even an authorization
 // error) proves the cluster is reachable. *net.DNSError and *net.OpError both implement
 // net.Error and are covered by the first check.
+// Context cancellation is excluded even though it can surface as a net.Error: an
+// http.Client wraps a canceled request in a *url.Error, which implements net.Error
+// unconditionally, but a caller abandoning its request (a browser navigate-away) says
+// nothing about the cluster. A deadline, by contrast, is evidence the remote did not
+// answer within its budget and stays classified as a transport failure.
 func IsConnectionError(err error) bool {
+	if errors.Is(err, context.Canceled) {
+		return false
+	}
 	var netErr net.Error
 	if errors.As(err, &netErr) {
 		return true

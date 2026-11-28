@@ -187,9 +187,13 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 		if computeCtx.Err() != nil {
 			// The deadline expired while the set was still being fetched: per-namespace
 			// round trips may have been cut short, and caching the result would serve a
-			// truncated set for the whole token TTL. Fail instead.
+			// truncated set for the whole token TTL. Fail instead. Only a deadline marks
+			// the cluster unreachable — a cancellation is the caller abandoning the
+			// request (a browser navigate-away), which says nothing about the cluster.
 			err := fmt.Errorf("namespaces for cluster [%s] took too long to compute: %w", cluster, computeCtx.Err())
-			in.kialiCache.MarkClusterUnreachable(cluster)
+			if errors.Is(computeCtx.Err(), context.DeadlineExceeded) {
+				in.kialiCache.MarkClusterUnreachable(cluster)
+			}
 			return nil, err
 		}
 

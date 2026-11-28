@@ -573,6 +573,54 @@ func TestValidateSessionMulticlusterRemoteUserDenialKeepsSignalClear(t *testing.
 	require.False(kialiCache.IsClusterUnreachable("west"), "an API-level denial must not set the shared unreachable signal")
 }
 
+// TestValidateSessionMulticlusterRemoteCancellationKeepsSignalClear verifies that a
+// caller abandoning its request during remote session validation does not set the
+// shared unreachable signal: http.Client wraps a canceled request in a *url.Error,
+// which implements net.Error unconditionally, so cancellation classified as a
+// transport failure and marked the healthy remote (a browser navigate-away took the
+// spoke down for every other user until the prober cleared it). The session is still
+// skipped gracefully and retried on the next request.
+func TestValidateSessionMulticlusterRemoteCancellationKeepsSignalClear(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController, kialiCache := setupOpenshiftAuthControllerWithCache(t, conf, clientFactory)
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The caller walks away mid-request: the remote user-info lookup is canceled.
+	// The cancellation says nothing about the cluster's health.
+	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, context.Canceled
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	_, err := authController.ValidateSession(r, w)
+	require.NoError(err, "a canceled validation must not fail the request")
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-west" {
+			require.False(c.MaxAge < 0, "the canceled session must be skipped, not dropped: the cancellation is not a verdict on the token")
+		}
+	}
+	require.False(kialiCache.IsClusterUnreachable("west"), "a caller cancellation must not set the shared unreachable signal")
+}
+
 func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()

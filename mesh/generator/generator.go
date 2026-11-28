@@ -192,7 +192,16 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					Cluster: wp.Cluster, Namespace: wp.Namespace, WorkloadName: wp.Name,
 				}
 				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
-				mesh.CheckError(err)
+				if err != nil {
+					// A cluster whose cache cannot serve reads (for example, an
+					// authenticated-but-inaccessible remote) must not fail the whole mesh
+					// graph: the waypoint is omitted, like any other data this build
+					// cannot fetch live, and the rest of the mesh still renders from the
+					// retained mesh data. GetWaypoints already skips the same
+					// cluster-level failure when building the waypoint list.
+					log.Debugf("Error fetching waypoint [%s] in cluster [%s]; omitting it from the mesh graph: %s", criteria.WorkloadName, criteria.Cluster, err.Error())
+					continue
+				}
 
 				version := models.DefaultRevisionLabel
 				if rev, ok := wp.Labels[config.IstioRevisionLabel]; ok {

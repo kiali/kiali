@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +31,19 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
+
+// primeRecordingDiscovery records when the startup mesh prime runs. The embedded
+// interface supplies the methods the prime does not use.
+type primeRecordingDiscovery struct {
+	istio.MeshDiscovery
+	primed chan struct{}
+	once   sync.Once
+}
+
+func (p *primeRecordingDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	p.once.Do(func() { close(p.primed) })
+	return &models.Mesh{}, nil
+}
 
 func TestClassifyRemoteProbeError(t *testing.T) {
 	unauthorized := apierrors.NewUnauthorized("the server has asked for the client to provide credentials")
@@ -124,7 +138,7 @@ func (c *syncedCache) WaitForCacheSync(_ context.Context) bool {
 // with an injected timeout; running the real 45s const here would slow the suite.
 func TestWaitForCachesToSyncHomeOnly(t *testing.T) {
 	kubeCaches := map[string]ctrlcache.Cache{"home": &syncedCache{}}
-	waitForCachesToSync(context.Background(), config.NewConfig(), kubeCaches, "home")
+	waitForCachesToSync(context.Background(), config.NewConfig(), kubeCaches, "home", nil)
 }
 
 // TestWaitForCachesToSyncRemotesDoNotBlock pins the startup barrier's shape: with the home
@@ -141,9 +155,67 @@ func TestWaitForCachesToSyncRemotesDoNotBlock(t *testing.T) {
 	t.Cleanup(cancel)
 
 	start := time.Now()
-	waitForCachesToSync(ctx, config.NewConfig(), kubeCaches, "home")
+	waitForCachesToSync(ctx, config.NewConfig(), kubeCaches, "home", nil)
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Errorf("waitForCachesToSync took %s with a never-syncing remote, want a prompt return (the remote wait is backgrounded)", elapsed)
+	}
+}
+
+// TestWaitForCachesToSyncPrimesMeshAfterRemoteSync pins the startup prime's sequencing:
+// the mesh is resolved only after the bounded remote-cache wait completes, so the first
+// resolve sees every cluster that will sync instead of caching a home-only mesh. The
+// /api/config handler reads LastMesh() and ClusterInventory() without blocking on
+// discovery, so without the prime the first login's config carried no control planes
+// or Kiali instances until some other endpoint happened to resolve the mesh.
+func TestWaitForCachesToSyncPrimesMeshAfterRemoteSync(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "home"
+	conf.KialiInternal.KubernetesClient.RemoteCacheSyncTimeout = 50 * time.Millisecond
+
+	discovery := &primeRecordingDiscovery{primed: make(chan struct{})}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	kubeCaches := map[string]ctrlcache.Cache{
+		"home":     &syncedCache{},
+		"never-id": &neverSyncingCache{},
+	}
+	start := time.Now()
+	waitForCachesToSync(ctx, conf, kubeCaches, "home", discovery)
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("waitForCachesToSync took %s with a never-syncing remote, want a prompt return (the remote wait is backgrounded)", elapsed)
+	}
+
+	// The prime must not have run yet: the bounded remote wait is still in flight.
+	select {
+	case <-discovery.primed:
+		t.Error("the mesh was primed before the remote-cache sync wait completed")
+	default:
+	}
+
+	select {
+	case <-discovery.primed:
+	case <-time.After(5 * time.Second):
+		t.Error("the mesh was never primed after the remote-cache sync wait completed")
+	}
+}
+
+// TestWaitForCachesToSyncPrimesMeshSingleCluster covers the single-cluster case: with
+// no remotes to wait for, the prime runs right after the home cache syncs.
+func TestWaitForCachesToSyncPrimesMeshSingleCluster(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "home"
+
+	discovery := &primeRecordingDiscovery{primed: make(chan struct{})}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	waitForCachesToSync(ctx, conf, map[string]ctrlcache.Cache{"home": &syncedCache{}}, "home", discovery)
+
+	select {
+	case <-discovery.primed:
+	case <-time.After(5 * time.Second):
+		t.Error("the mesh was never primed for a single-cluster install")
 	}
 }
 
@@ -364,7 +436,7 @@ func TestMonitorStartupDoesNotWaitForMesh(t *testing.T) {
 	m := blockedStartupMonitor{entered: make(chan struct{})}
 	waitForCachesToSync(ctx, config.NewConfig(), map[string]ctrlcache.Cache{
 		"home": &syncedCache{}, "west": &neverSyncingCache{}, "east": &neverSyncingCache{},
-	}, "home")
+	}, "home", nil)
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
 	defer server.Close()
 	startServerAndMonitors(ctx, server.Start, true, m, nil, nil)

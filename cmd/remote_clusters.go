@@ -243,7 +243,7 @@ func setupRemoteClusters(ctx context.Context, conf *config.Config, clientFactory
 // The informers sync on their own whether or not anyone waits for them; the background
 // wait only surfaces when the remote caches become ready (or give up) in the logs. Reads
 // from an unsynced remote fail (bounded by the cache read timeout) until it syncs.
-func waitForCachesToSync(ctx context.Context, conf *config.Config, kubeCaches map[string]ctrlcache.Cache, homeCluster string) {
+func waitForCachesToSync(ctx context.Context, conf *config.Config, kubeCaches map[string]ctrlcache.Cache, homeCluster string, discovery istio.MeshDiscovery) {
 	log.Infof("Waiting for cluster: %s cache to sync", homeCluster)
 	homeCache, found := kubeCaches[homeCluster]
 	if !found {
@@ -251,6 +251,20 @@ func waitForCachesToSync(ctx context.Context, conf *config.Config, kubeCaches ma
 	}
 	if !homeCache.WaitForCacheSync(ctx) {
 		log.Fatal("Timed out waiting for cache to sync")
+	}
+
+	// The mesh is primed once every cache that will sync has synced: /api/config reads
+	// LastMesh() and ClusterInventory() without blocking on discovery, and resolving the
+	// mesh earlier would cache a partial mesh while remote caches were still syncing.
+	// Mesh() is cached, so this is idempotent with the health-monitor prime that
+	// startServerAndMonitors performs earlier on the Istio-API-disabled path.
+	primeMesh := func() {
+		if discovery == nil {
+			return
+		}
+		if _, err := discovery.Mesh(ctx); err != nil {
+			log.Warningf("Failed to prime the mesh at startup: %s", err)
+		}
 	}
 
 	remoteCaches := maps.Clone(kubeCaches)
@@ -266,7 +280,10 @@ func waitForCachesToSync(ctx context.Context, conf *config.Config, kubeCaches ma
 			} else {
 				log.Info("Remote cluster caches synced; all clusters are being served")
 			}
+			primeMesh()
 		}()
+	} else {
+		go primeMesh()
 	}
 	log.Infof("Cluster [%s] cache synced; serving starts now (remote caches continue to sync in the background)", homeCluster)
 }

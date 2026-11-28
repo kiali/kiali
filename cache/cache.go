@@ -901,11 +901,21 @@ func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) 
 	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
-		// A degraded or uncached cluster is not an unreachable one: a degraded cache
-		// (the SA lost access) recovers through its own probe, and marking it
-		// unreachable here would flap against the background prober, which correctly
-		// sees the cluster answer at the transport level.
-		if !errors.Is(err, ErrClusterDegraded) && !errors.Is(err, ErrClusterNotCached) {
+		// Only a transport-level failure marks the cluster unreachable — the same
+		// classification the background prober uses when it clears the mark — and
+		// never under an already-expired caller context: this check runs under a
+		// shared discovery budget (for example /api/config's capability timeout),
+		// where one stalled remote can consume the budget and every later cluster's
+		// read then fails fast; those failures are attributable to the budget, not
+		// to the clusters that happened to be next. A degraded or uncached cluster
+		// is likewise not an unreachable one: a degraded cache (the SA lost access)
+		// recovers through its own probe, and marking it unreachable here would
+		// flap against the background prober, which correctly sees the cluster
+		// answer at the transport level.
+		if ctx.Err() == nil &&
+			!errors.Is(err, ErrClusterDegraded) &&
+			!errors.Is(err, ErrClusterNotCached) &&
+			kubernetes.IsConnectionError(err) {
 			in.MarkClusterUnreachable(cluster)
 		}
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
@@ -918,13 +928,24 @@ func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) 
 }
 
 // IsAmbientEnabledInAnyCluster returns true when at least one cluster in the
-// supplied slice has the istio Ambient profile enabled. The context bounds the
-// per-cluster daemonset reads (the informer caches), so a caller sharing one
-// discovery budget across clusters is not held by one stalled remote. Per-cluster
+// supplied slice has the istio Ambient profile enabled. The clusters are checked
+// concurrently, each bounded by the context, so a caller sharing one discovery
+// budget across clusters is not held behind one stalled remote. Per-cluster
 // results are reused from the existing ambientChecksPerCluster cache.
 func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(ctx context.Context, clusters []string) bool {
+	var wg sync.WaitGroup
+	enabled := make(chan bool, len(clusters))
 	for _, cluster := range clusters {
-		if in.isAmbientEnabled(ctx, cluster) {
+		wg.Add(1)
+		go func(cluster string) {
+			defer wg.Done()
+			enabled <- in.isAmbientEnabled(ctx, cluster)
+		}(cluster)
+	}
+	wg.Wait()
+	close(enabled)
+	for e := range enabled {
+		if e {
 			return true
 		}
 	}
