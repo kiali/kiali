@@ -4,11 +4,40 @@ import type { Namespace } from '../types/Namespace';
 import type { MeshCluster } from '../types/Mesh';
 import type { EdgeLabelMode, EdgeMode, GraphType, TrafficRate } from '../types/Graph';
 import type { ComponentStatus } from '../types/IstioStatus';
+import type { ClusterSelection } from '../utils/ClusterUtils';
+import { visibleClusterNames } from '../utils/ClusterUtils';
 
 export const activeNamespacesSelector = (state: KialiAppState): Namespace[] => state.namespaces.activeNamespaces;
 
-export const namespacesPerClusterSelector = (state: KialiAppState): Map<string, string[]> =>
-  state.namespaces.namespacesPerCluster;
+// The namespace list is already grouped per cluster, but the cluster selection
+// hides the groups of the clusters that are currently filtered out.
+export const namespacesPerClusterSelector = (state: KialiAppState): Map<string, string[]> => {
+  const perCluster = state.namespaces.namespacesPerCluster;
+  const selection = state.clusters.selectedClusters;
+
+  if (selection === undefined) {
+    return perCluster;
+  }
+
+  const visible = new Set(visibleClusterNames(selection));
+  const filtered = new Map<string, string[]>();
+
+  perCluster.forEach((namespaces, cluster) => {
+    if (visible.has(cluster)) {
+      filtered.set(cluster, namespaces);
+    }
+  });
+
+  return filtered;
+};
+
+export const selectedClustersSelector = (state: KialiAppState): ClusterSelection => state.clusters.selectedClusters;
+
+// The explicit selection resolved against the clusters reported by the backend.
+// Undefined means "everything", an empty list means "nothing", so this is both
+// the list to fetch from and the list to filter rendered data with.
+export const visibleClustersSelector = (state: KialiAppState): string[] =>
+  visibleClusterNames(state.clusters.selectedClusters);
 
 export const activeClustersSelector = (state: KialiAppState): MeshCluster[] => state.clusters.activeClusters;
 
@@ -34,7 +63,27 @@ export const meshFindValueSelector = (state: KialiAppState): string => state.mes
 
 export const meshHideValueSelector = (state: KialiAppState): string => state.mesh.toolbarState.hideValue;
 
-export const namespaceItemsSelector = (state: KialiAppState): Namespace[] | undefined => state.namespaces.items;
+// "items" holds one entry per namespace name, so it cannot tell which cluster
+// the namespace came from. When a cluster selection is active we rebuild the
+// list from "namespaces" (which carries the cluster) and dedupe it by name.
+export const namespaceItemsSelector = (state: KialiAppState): Namespace[] | undefined => {
+  const selection = state.clusters.selectedClusters;
+
+  if (selection === undefined) {
+    return state.namespaces.items;
+  }
+
+  const visible = new Set(visibleClusterNames(selection));
+  const byName = new Map<string, Namespace>();
+
+  state.namespaces.namespaces.forEach(ns => {
+    if (ns.cluster === undefined || visible.has(ns.cluster)) {
+      byName.set(ns.name, ns);
+    }
+  });
+
+  return Array.from(byName.values());
+};
 
 export const refreshIntervalSelector = (state: KialiAppState): number => state.userSettings.refreshInterval;
 

@@ -25,9 +25,11 @@ export const MastheadItems: React.FC = () => {
               <OfflineStatus />
             </ToolbarItem>
           ) : (
-            <ToolbarItem className={centerItemStyle}>
-              <IstioStatus />
-            </ToolbarItem>
+            <>
+              <ToolbarItem className={centerItemStyle}>
+                <IstioStatus />
+              </ToolbarItem>
+            </>
           )}
 
           <ToolbarItem className={centerItemStyle}>

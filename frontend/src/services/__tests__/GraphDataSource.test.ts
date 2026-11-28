@@ -1,7 +1,7 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
-import { GraphDataSource, EMPTY_GRAPH_DATA } from '../GraphDataSource';
-import { DefaultTrafficRates, GraphType } from '../../types/Graph';
+import { GraphDataSource, EMPTY_GRAPH_DATA, filterElementsByClusters } from '../GraphDataSource';
+import { DefaultTrafficRates, GraphElements, GraphType } from '../../types/Graph';
 import MockAdapter from 'axios-mock-adapter';
 
 const GRAPH_EMPTY_RESPONSE = {
@@ -113,5 +113,32 @@ describe('GraphDataSource', () => {
 
       ds.fetchGraphData(FETCH_PARAMS);
     });
+  });
+});
+
+describe('filterElementsByClusters', () => {
+  const elements = {
+    nodes: [
+      { data: { cluster: 'east', id: 'east-box', isBox: 'cluster' } },
+      { data: { cluster: 'east', id: 'east-node' } },
+      { data: { cluster: 'west', id: 'west-box', isBox: 'cluster' } },
+      { data: { cluster: 'west', id: 'west-node' } }
+    ],
+    edges: [
+      { data: { id: 'east-edge', source: 'east-node', target: 'east-box' } },
+      { data: { id: 'cross-edge', source: 'east-node', target: 'west-node' } }
+    ]
+  } as unknown as GraphElements;
+
+  it('keeps everything when no cluster filter is set', () => {
+    expect(filterElementsByClusters(elements, [])).toEqual(elements);
+    expect(filterElementsByClusters(elements, undefined)).toEqual(elements);
+  });
+
+  it('drops the boxes, nodes and dangling edges of the other clusters', () => {
+    const filtered = filterElementsByClusters(elements, ['east']);
+
+    expect(filtered.nodes?.map(node => node.data.id)).toEqual(['east-box', 'east-node']);
+    expect(filtered.edges?.map(edge => edge.data.id)).toEqual(['east-edge']);
   });
 });

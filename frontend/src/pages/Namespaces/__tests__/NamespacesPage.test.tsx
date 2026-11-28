@@ -117,6 +117,7 @@ const defaultReduxProps = {
   minTLS: 'TLS_AUTO',
   navCollapse: false,
   refreshInterval: 15000 as IntervalInMilliseconds,
+  selectedClusters: [] as string[],
   dispatch: rstest.fn()
 };
 

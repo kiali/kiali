@@ -26,14 +26,15 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { IstioActionsNamespaceDropdown } from '../../components/IstioActions/IstioActionsNamespaceDropdown';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, visibleClustersSelector } from '../../store/Selectors';
 import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 interface ReduxProps {
   activeNamespaces: Namespace[];
+  visibleClusters: string[];
 }
 
 type IstioConfigListPageProps = ReduxProps & DispatchProp;
@@ -70,6 +71,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     if (
       !namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
+      this.props.visibleClusters.join(',') !== prevProps.visibleClusters.join(',') ||
       this.state.currentSortField !== prevCurrentSortField ||
       this.state.isSortAscending !== prevIsSortAscending
     ) {
@@ -121,7 +123,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       this.setState({ listItems: [] });
 
       if (isMultiCluster) {
-        for (let cluster in serverConfig.clusters) {
+        this.props.visibleClusters.forEach(cluster => {
           this.fetchConfigs(
             namespacesSelected,
             istioTypeFilters,
@@ -130,7 +132,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
             activeToggles,
             cluster
           );
-        }
+        });
       } else {
         this.fetchConfigs(
           namespacesSelected,
@@ -234,7 +236,8 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  visibleClusters: visibleClustersSelector(state)
 });
 
 export const IstioConfigListPage = connect(mapStateToProps)(IstioConfigListPageComponent);

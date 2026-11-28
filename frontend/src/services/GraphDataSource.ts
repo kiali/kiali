@@ -22,9 +22,28 @@ import { createSelector } from 'reselect';
 import { isMultiCluster, serverConfig } from '../config';
 import { startPerfTimer, endPerfTimer } from '../utils/PerformanceUtils';
 import { capitalize } from '../utils/Common';
+import { isClusterVisible } from '../utils/ClusterUtils';
 
 export const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
+
+// The backend returns every cluster owning a requested namespace. When the user
+// scopes the UI to a subset of clusters, drop the other clusters' nodes (cluster,
+// namespace and app boxes included) and the edges left dangling.
+export const filterElementsByClusters = (elements: GraphElements, clusters?: string[]): GraphElements => {
+  if (!clusters || clusters.length === 0) {
+    return elements;
+  }
+
+  const nodes = (elements.nodes ?? []).filter(node => isClusterVisible(clusters, node.data.cluster));
+  const visibleIds = new Set(nodes.map(node => node.data.id));
+
+  return {
+    ...elements,
+    edges: (elements.edges ?? []).filter(edge => visibleIds.has(edge.data.source) && visibleIds.has(edge.data.target)),
+    nodes
+  };
+};
 
 // GraphDataSource allows us to have multiple graphs in play, which functionally allows us to maintain
 // the master graph page as well as to offer mini-graphs in the detail pages.
@@ -60,6 +79,8 @@ type EmitEvents = {
 export interface FetchParams {
   boxByCluster?: boolean;
   boxByNamespace?: boolean;
+  // Clusters to display. An empty or undefined list means "all clusters".
+  clusters?: string[];
   duration: DurationInSeconds;
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
@@ -323,6 +344,7 @@ export class GraphDataSource {
     const isPreviousDataInvalid =
       previousFetchParams.namespaces.map(ns => ns.name).join() !==
         this.fetchParameters.namespaces.map(ns => ns.name).join() ||
+      (previousFetchParams.clusters ?? []).join() !== (this.fetchParameters.clusters ?? []).join() ||
       previousFetchParams.node !== this.fetchParameters.node ||
       previousFetchParams.graphType !== this.fetchParameters.graphType ||
       previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
@@ -559,7 +581,10 @@ export class GraphDataSource {
       response => {
         endPerfTimer(perfKey);
         const responseData: any = response.data;
-        this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
+        this.graphElements =
+          responseData && responseData.elements
+            ? filterElementsByClusters(responseData.elements, this.fetchParameters.clusters)
+            : EMPTY_GRAPH_DATA;
         this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
         this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
         const decoratedGraphElements = this.graphData;
@@ -598,7 +623,10 @@ export class GraphDataSource {
         response => {
           endPerfTimer(perfKey);
           const responseData: any = response.data;
-          this.graphElements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
+          this.graphElements =
+            responseData && responseData.elements
+              ? filterElementsByClusters(responseData.elements, this.fetchParameters.clusters)
+              : EMPTY_GRAPH_DATA;
           this.graphTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
           this.graphDuration = responseData && responseData.duration ? responseData.duration : 0;
           const decoratedGraphElements = this.graphData;

@@ -49,8 +49,14 @@ export interface GlobalState {
 }
 
 export interface ClusterState {
+  // "activeClusters" is the cluster selection of the Istio config wizard.
   readonly activeClusters: MeshCluster[];
   readonly filter: string;
+  // "selectedClusters" is the global cluster visibility filter, driven by the
+  // cluster selector in the masthead. Undefined means "never filtered", so
+  // single-cluster and multi-cluster installations show everything by default;
+  // an explicit list, including an empty one, is applied as-is.
+  readonly selectedClusters?: string[];
 }
 
 export interface NamespaceState {

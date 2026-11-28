@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { SecondaryMasthead } from 'components/Nav/SecondaryMasthead';
 import { NamespaceDropdown } from 'components/Dropdown/NamespaceDropdown';
+import { ClusterSelector } from 'components/Nav/Masthead/ClusterSelector';
+import { isMultiCluster } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
@@ -59,6 +61,13 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
   return (
     <SecondaryMasthead>
       <>
+        {isMultiCluster && (
+          <>
+            <ClusterSelector />
+            <span className={vrStyle} />
+          </>
+        )}
+
         <NamespaceDropdown disabled={props.isNodeGraph} />
 
         <span className={vrStyle} />

@@ -38,7 +38,8 @@ import {
   refreshIntervalSelector,
   replayActiveSelector,
   replayQueryTimeSelector,
-  trafficRatesSelector
+  trafficRatesSelector,
+  visibleClustersSelector
 } from '../../store/Selectors';
 import type { KialiAppState } from '../../store/Store';
 import { GraphActions } from '../../actions/GraphActions';
@@ -143,6 +144,7 @@ type ReduxStateProps = {
   summaryData: SummaryData | null;
   trace?: JaegerTrace;
   trafficRates: TrafficRate[];
+  visibleClusters: string[];
 };
 type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
@@ -426,9 +428,12 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       curr.refreshInterval === RefreshIntervalManual ||
       (prev.refreshInterval === curr.refreshInterval && HistoryManager.getRefresh() === RefreshIntervalManual);
 
+    const visibleClustersChanged = prev.visibleClusters.join() !== curr.visibleClusters.join();
+
     if (
       // refresh the graph but keep the side-panel
       (prev.lastRefreshAt !== curr.lastRefreshAt && curr.replayQueryTime === 0) ||
+      (!manualRefresh && visibleClustersChanged) ||
       (!manualRefresh &&
         (prev.duration !== curr.duration ||
           (prev.edgeLabels !== curr.edgeLabels && // test for edge labels that invoke graph gen appenders
@@ -789,6 +794,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.graphDataSource.fetchGraphData({
       boxByCluster: this.props.boxByCluster,
       boxByNamespace: this.props.boxByNamespace,
+      clusters: this.props.visibleClusters,
       duration: this.props.duration,
       edgeLabels: this.props.edgeLabels,
       graphType: this.props.graphType,
@@ -855,7 +861,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showWaypoints: state.graph.toolbarState.showWaypoints,
   summaryData: state.graph.summaryData,
   trace: state.tracingState?.selectedTrace,
-  trafficRates: trafficRatesSelector(state)
+  trafficRates: trafficRatesSelector(state),
+  visibleClusters: visibleClustersSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

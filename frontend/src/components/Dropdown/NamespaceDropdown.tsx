@@ -34,6 +34,9 @@ import { KialiIcon } from 'config/KialiIcon';
 import { TourStop } from '../Tour/TourStop';
 import { GraphTourStops } from '../../pages/Graph/GraphHelpTour';
 import { t } from 'utils/I18nUtils';
+import { isHomeCluster, isMultiCluster } from 'config/ServerConfig';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontWeight } from 'styles/PfTypography';
 
 interface ReduxStateProps {
   activeNamespaces: Namespace[];
@@ -70,6 +73,15 @@ const optionBulkStyle = kialiStyle({
 const optionStyle = kialiStyle({ marginLeft: '0.75rem' });
 
 const optionLabelStyle = kialiStyle({ marginLeft: '0.5rem' });
+
+const clusterHeaderStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  fontWeight: PFFontWeight.BodyBold,
+  gap: PFSpacer.xs,
+  marginLeft: PFSpacer.sm,
+  marginTop: PFSpacer.sm
+});
 
 const headerStyle = kialiStyle({
   margin: '0.5rem 0.25rem',
@@ -248,23 +260,8 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         map[namespace.name] = namespace.name;
         return map;
       }, {});
-      const namespaces = this.filtered()
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((namespace: Namespace) => (
-          <div
-            className={optionStyle}
-            id={`namespace-list-item[${namespace.name}]`}
-            key={`namespace-list-item[${namespace.name}]`}
-          >
-            <input
-              type="checkbox"
-              value={namespace.name}
-              checked={!!selectedMap[namespace.name]}
-              onChange={this.onNamespaceToggled}
-            />
-            <span className={optionLabelStyle}>{namespace.name}</span>
-          </div>
-        ));
+
+      const namespaces = this.filtered().sort((a, b) => a.name.localeCompare(b.name));
 
       return (
         <>
@@ -272,12 +269,60 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             className={namespaceContainerStyle}
             maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: 20 }}
           >
-            {namespaces}
+            {this.getClusterFirstNamespaces(namespaces, selectedMap)}
           </BoundingClientAwareComponent>
         </>
       );
     }
     return <div className={optionStyle}>{t('No namespaces found')}</div>;
+  }
+
+  /**
+   * In a multi-cluster installation the same namespace name can exist in several
+   * clusters, so the list is grouped by cluster to make the origin explicit.
+   * Single cluster installations keep the plain, sorted list.
+   */
+  private getClusterFirstNamespaces(namespaces: Namespace[], selectedMap: { [name: string]: string }): JSX.Element[] {
+    const clusterNames = Array.from(new Set(namespaces.map(ns => ns.cluster).filter(Boolean) as string[])).sort();
+
+    if (!isMultiCluster || clusterNames.length === 0) {
+      return namespaces.map(namespace => this.getNamespaceItem(namespace, selectedMap));
+    }
+
+    const items: JSX.Element[] = [];
+
+    clusterNames.forEach(cluster => {
+      items.push(
+        <div className={clusterHeaderStyle} key={`namespace-list-cluster[${cluster}]`}>
+          <span>{cluster}</span>
+          {isHomeCluster(cluster) && <KialiIcon.Star />}
+        </div>
+      );
+
+      namespaces
+        .filter(namespace => namespace.cluster === cluster)
+        .forEach(namespace => items.push(this.getNamespaceItem(namespace, selectedMap)));
+    });
+
+    return items;
+  }
+
+  private getNamespaceItem(namespace: Namespace, selectedMap: { [name: string]: string }): JSX.Element {
+    return (
+      <div
+        className={optionStyle}
+        id={`namespace-list-item[${namespace.name}]`}
+        key={`namespace-list-item[${namespace.name}]`}
+      >
+        <input
+          type="checkbox"
+          value={namespace.name}
+          checked={!!selectedMap[namespace.name]}
+          onChange={this.onNamespaceToggled}
+        />
+        <span className={optionLabelStyle}>{namespace.name}</span>
+      </div>
+    );
   }
 
   private onToggle = (isOpen: boolean): void => {
